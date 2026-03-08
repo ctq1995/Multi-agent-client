@@ -1,8 +1,10 @@
 "use client"
 
+import { useCallback, useSyncExternalStore } from "react"
 import { Coins } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useSessionStats } from "@/contexts/session-stats-context"
+import { useConnectionStore } from "@/contexts/acp-connections-context"
 import {
   Popover,
   PopoverContent,
@@ -31,13 +33,49 @@ function formatPercent(percent: number | null): string {
 
 export function StatusBarTokens() {
   const t = useTranslations("Folder.statusBar.tokens")
+  const store = useConnectionStore()
   const { sessionStats } = useSessionStats()
   const usage = sessionStats?.total_usage
 
-  const contextUsed = sessionStats?.context_window_used_tokens ?? null
-  const contextMax = sessionStats?.context_window_max_tokens ?? null
+  const subscribeActiveKey = useCallback(
+    (cb: () => void) => store.subscribeActiveKey(cb),
+    [store]
+  )
+  const getActiveKey = useCallback(() => store.getActiveKey(), [store])
+  const activeKey = useSyncExternalStore(
+    subscribeActiveKey,
+    getActiveKey,
+    getActiveKey
+  )
+
+  const subscribeConn = useCallback(
+    (cb: () => void) => {
+      if (!activeKey) return () => {}
+      return store.subscribeKey(activeKey, cb)
+    },
+    [store, activeKey]
+  )
+  const getConnSnapshot = useCallback(
+    () => (activeKey ? store.getConnection(activeKey) : undefined),
+    [store, activeKey]
+  )
+  const activeConn = useSyncExternalStore(
+    subscribeConn,
+    getConnSnapshot,
+    getConnSnapshot
+  )
+
+  const liveContextUsed = activeConn?.usage?.used ?? null
+  const liveContextMax = activeConn?.usage?.size ?? null
+
+  const contextUsed =
+    liveContextUsed ?? sessionStats?.context_window_used_tokens ?? null
+  const contextMax =
+    liveContextMax ?? sessionStats?.context_window_max_tokens ?? null
   const contextPercentRaw =
-    sessionStats?.context_window_usage_percent ??
+    (liveContextUsed != null && liveContextMax != null && liveContextMax > 0
+      ? (liveContextUsed / liveContextMax) * 100
+      : sessionStats?.context_window_usage_percent) ??
     (contextUsed != null && contextMax != null && contextMax > 0
       ? (contextUsed / contextMax) * 100
       : null)

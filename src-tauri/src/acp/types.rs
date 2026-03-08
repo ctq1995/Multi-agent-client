@@ -129,6 +129,12 @@ pub enum AcpEvent {
         connection_id: String,
         commands: Vec<AvailableCommandInfo>,
     },
+    /// Session usage/context window updated during conversation
+    UsageUpdate {
+        connection_id: String,
+        used: u64,
+        size: u64,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

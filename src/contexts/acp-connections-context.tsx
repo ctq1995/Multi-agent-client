@@ -33,6 +33,7 @@ import type {
   PermissionOptionInfo,
   SessionConfigOptionInfo,
   SessionModeStateInfo,
+  SessionUsageUpdateInfo,
   FixAction,
   PromptCapabilitiesInfo,
   PromptInputBlock,
@@ -88,6 +89,7 @@ export interface ConnectionState {
   modes: SessionModeStateInfo | null
   configOptions: SessionConfigOptionInfo[] | null
   availableCommands: AvailableCommandInfo[] | null
+  usage: SessionUsageUpdateInfo | null
   liveMessage: LiveMessage | null
   pendingPermission: PendingPermission | null
   error: string | null
@@ -176,6 +178,11 @@ type Action =
       type: "AVAILABLE_COMMANDS"
       contextKey: string
       commands: AvailableCommandInfo[]
+    }
+  | {
+      type: "USAGE_UPDATE"
+      contextKey: string
+      usage: SessionUsageUpdateInfo
     }
 
 type StreamingAction =
@@ -441,6 +448,7 @@ function connectionsReducer(
         modes: null,
         configOptions: null,
         availableCommands: null,
+        usage: null,
         liveMessage: null,
         pendingPermission: null,
         error: null,
@@ -879,6 +887,23 @@ function connectionsReducer(
       next.set(action.contextKey, {
         ...conn,
         availableCommands: action.commands,
+      })
+      return next
+    }
+
+    case "USAGE_UPDATE": {
+      const conn = state.get(action.contextKey)
+      if (!conn) return state
+      if (
+        conn.usage?.used === action.usage.used &&
+        conn.usage?.size === action.usage.size
+      ) {
+        return state
+      }
+      const next = new Map(state)
+      next.set(action.contextKey, {
+        ...conn,
+        usage: action.usage,
       })
       return next
     }
@@ -1393,6 +1418,17 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
             type: "AVAILABLE_COMMANDS",
             contextKey,
             commands: e.commands,
+          })
+          break
+        case "usage_update":
+          flushStreamingQueue()
+          dispatch({
+            type: "USAGE_UPDATE",
+            contextKey,
+            usage: {
+              used: e.used,
+              size: e.size,
+            },
           })
           break
       }

@@ -402,6 +402,11 @@ export interface AvailableCommandInfo {
   input_hint?: string | null
 }
 
+export interface SessionUsageUpdateInfo {
+  used: number
+  size: number
+}
+
 // ACP events pushed from Rust backend (discriminated by "type" field)
 export type AcpEvent =
   | { type: "content_delta"; connection_id: string; text: string }
@@ -480,6 +485,12 @@ export type AcpEvent =
       type: "available_commands"
       connection_id: string
       commands: AvailableCommandInfo[]
+    }
+  | {
+      type: "usage_update"
+      connection_id: string
+      used: number
+      size: number
     }
 
 // Connection info returned by acp_list_connections

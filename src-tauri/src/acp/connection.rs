@@ -1653,6 +1653,10 @@ fn emit_conversation_update(
     update: SessionUpdate,
 ) {
     match update {
+        SessionUpdate::UserMessageChunk(_) => {
+            // User echo chunks are informational for transcript sync and
+            // currently not rendered in live ACP UI.
+        }
         SessionUpdate::AgentMessageChunk(ContentChunk {
             content: ContentBlock::Text(text),
             ..
@@ -1665,6 +1669,9 @@ fn emit_conversation_update(
                 },
             );
         }
+        SessionUpdate::AgentMessageChunk(_) => {
+            // Non-text chunks are currently not surfaced in live streaming UI.
+        }
         SessionUpdate::AgentThoughtChunk(ContentChunk {
             content: ContentBlock::Text(text),
             ..
@@ -1676,6 +1683,9 @@ fn emit_conversation_update(
                     text: text.text,
                 },
             );
+        }
+        SessionUpdate::AgentThoughtChunk(_) => {
+            // Non-text thought chunks are currently ignored.
         }
         SessionUpdate::ToolCall(tc) => {
             let content = serialize_tool_call_content(&tc.content);
@@ -1759,6 +1769,16 @@ fn emit_conversation_update(
                 AcpEvent::AvailableCommands {
                     connection_id: connection_id.into(),
                     commands,
+                },
+            );
+        }
+        SessionUpdate::UsageUpdate(update) => {
+            let _ = app_handle.emit(
+                "acp://event",
+                AcpEvent::UsageUpdate {
+                    connection_id: connection_id.into(),
+                    used: update.used,
+                    size: update.size,
                 },
             );
         }
