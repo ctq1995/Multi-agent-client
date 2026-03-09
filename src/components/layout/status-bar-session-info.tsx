@@ -33,10 +33,6 @@ export function StatusBarSessionInfo() {
           {summary.git_branch}
         </span>
       )}
-      <span className="flex items-center gap-1">
-        <MessageSquare className="h-3 w-3" />
-        {summary.message_count}
-      </span>
     </div>
   )
 }
