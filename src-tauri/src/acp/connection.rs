@@ -1343,6 +1343,7 @@ async fn run_conversation_loop<'a>(
                                         "acp://event",
                                         AcpEvent::TurnComplete {
                                             connection_id: conn_id.into(),
+                                            session_id: sid.0.to_string(),
                                             stop_reason: reason_str.into(),
                                         },
                                     );
@@ -1372,6 +1373,7 @@ async fn run_conversation_loop<'a>(
                                 "acp://event",
                                 AcpEvent::TurnComplete {
                                     connection_id: conn_id.into(),
+                                    session_id: sid.0.to_string(),
                                     stop_reason: reason_str.into(),
                                 },
                             );

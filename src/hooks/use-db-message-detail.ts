@@ -6,6 +6,7 @@ import type { DbConversationDetail } from "@/lib/types"
 
 // Module-level cache: survives component unmount/remount
 const detailCache = new Map<number, DbConversationDetail>()
+const detailInFlight = new Map<number, Promise<DbConversationDetail>>()
 const detailListeners = new Map<
   number,
   Set<(detail: DbConversationDetail) => void>
@@ -48,6 +49,38 @@ function subscribeDetail(
 /** Invalidate cached detail so the next mount re-fetches from disk. */
 export function invalidateDetailCache(conversationId: number) {
   detailCache.delete(conversationId)
+}
+
+async function loadAndCacheDetail(
+  conversationId: number
+): Promise<DbConversationDetail> {
+  const existing = detailInFlight.get(conversationId)
+  if (existing) return existing
+
+  const promise = getFolderConversation(conversationId)
+    .then((detail) => {
+      setCachedDetail(conversationId, detail)
+      return detail
+    })
+    .finally(() => {
+      detailInFlight.delete(conversationId)
+    })
+
+  detailInFlight.set(conversationId, promise)
+  return promise
+}
+
+export async function warmupDetailCache(
+  conversationId: number
+): Promise<DbConversationDetail> {
+  return loadAndCacheDetail(conversationId)
+}
+
+export async function refreshDetailCache(
+  conversationId: number
+): Promise<DbConversationDetail> {
+  detailCache.delete(conversationId)
+  return loadAndCacheDetail(conversationId)
 }
 
 interface State {
@@ -109,9 +142,8 @@ export function useDbMessageDetail(conversationId: number) {
     if (detailCache.has(conversationId)) return
 
     let cancelled = false
-    getFolderConversation(conversationId)
+    loadAndCacheDetail(conversationId)
       .then((d) => {
-        setCachedDetail(conversationId, d)
         if (!cancelled) {
           setState((prev) =>
             prev.key === conversationId

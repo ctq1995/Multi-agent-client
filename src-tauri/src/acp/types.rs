@@ -80,6 +80,7 @@ pub enum AcpEvent {
     /// Turn completed
     TurnComplete {
         connection_id: String,
+        session_id: String,
         stop_reason: String,
     },
     /// Session established with agent-assigned session ID

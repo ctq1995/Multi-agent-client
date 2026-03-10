@@ -440,7 +440,12 @@ export type AcpEvent =
       tool_call: unknown
       options: PermissionOptionInfo[]
     }
-  | { type: "turn_complete"; connection_id: string; stop_reason: string }
+  | {
+      type: "turn_complete"
+      connection_id: string
+      session_id: string
+      stop_reason: string
+    }
   | {
       type: "session_started"
       connection_id: string

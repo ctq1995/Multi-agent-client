@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Plus, RefreshCw, X } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
+import { disposeTauriListener } from "@/lib/tauri-listener"
 import { useFolderContext } from "@/contexts/folder-context"
 import { useTabContext } from "@/contexts/tab-context"
 import { useConnectionLifecycle } from "@/hooks/use-connection-lifecycle"
@@ -11,8 +12,11 @@ import { MessageListView } from "@/components/message/message-list-view"
 import { ConversationShell } from "@/components/chat/conversation-shell"
 import { WelcomeInputPanel } from "@/components/chat/welcome-input-panel"
 import { updateConversationStatus } from "@/lib/tauri"
-import { useDbMessageDetail } from "@/hooks/use-db-message-detail"
-import type { AgentType, PromptDraft } from "@/lib/types"
+import {
+  useDbMessageDetail,
+  warmupDetailCache,
+} from "@/hooks/use-db-message-detail"
+import type { AcpEvent, AgentType, PromptDraft } from "@/lib/types"
 import type { AdaptedMessage } from "@/lib/adapters/ai-elements-adapter"
 import {
   buildUserMessageTextPartsFromDraft,
@@ -246,10 +250,129 @@ const ExistingConversationView = memo(function ExistingConversationView({
 
 export function ConversationDetailPanel() {
   const t = useTranslations("Folder.conversation")
-  const { folder, newConversation } = useFolderContext()
+  const { folder, newConversation, conversations, refreshConversations } =
+    useFolderContext()
   const { tabs, activeTabId, openNewConversationTab, closeTab } =
     useTabContext()
   const [reloadByTabId, setReloadByTabId] = useState<Record<string, number>>({})
+  const tabsRef = useRef(tabs)
+  const conversationsRef = useRef(conversations)
+  const pendingClosedConversationIdsRef = useRef<Set<number>>(new Set())
+  const pendingRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  )
+
+  useEffect(() => {
+    tabsRef.current = tabs
+  }, [tabs])
+
+  useEffect(() => {
+    conversationsRef.current = conversations
+  }, [conversations])
+
+  const flushClosedConversationRefresh = useCallback(() => {
+    const conversationIds = Array.from(pendingClosedConversationIdsRef.current)
+    if (conversationIds.length === 0) return
+    pendingClosedConversationIdsRef.current.clear()
+
+    void (async () => {
+      await Promise.all(
+        conversationIds.map(async (conversationId) => {
+          const summary =
+            conversationsRef.current.find(
+              (item) => item.id === conversationId
+            ) ?? null
+          if (summary?.status === "in_progress") {
+            try {
+              await updateConversationStatus(conversationId, "pending_review")
+            } catch (error) {
+              console.error(
+                "[ConversationDetailPanel] background update status failed:",
+                error
+              )
+            }
+          }
+
+          try {
+            await warmupDetailCache(conversationId)
+          } catch (error) {
+            console.error(
+              "[ConversationDetailPanel] background detail cache refresh failed:",
+              error
+            )
+          }
+        })
+      )
+
+      refreshConversations()
+    })()
+  }, [refreshConversations])
+
+  const scheduleClosedConversationRefresh = useCallback(
+    (conversationId: number) => {
+      pendingClosedConversationIdsRef.current.add(conversationId)
+      if (pendingRefreshTimerRef.current) return
+
+      // Delay briefly so local session file writes can settle.
+      pendingRefreshTimerRef.current = setTimeout(() => {
+        pendingRefreshTimerRef.current = null
+        flushClosedConversationRefresh()
+      }, 1200)
+    },
+    [flushClosedConversationRefresh]
+  )
+
+  useEffect(() => {
+    let cancelled = false
+    let unlisten: (() => void | Promise<void>) | null = null
+    const pendingClosedConversationIds = pendingClosedConversationIdsRef.current
+
+    void import("@tauri-apps/api/event")
+      .then(({ listen }) =>
+        listen<AcpEvent>("acp://event", (event) => {
+          const payload = event.payload
+          if (payload.type !== "turn_complete") return
+
+          const summary = conversationsRef.current.find(
+            (item) => item.external_id === payload.session_id
+          )
+          if (!summary) return
+
+          const isOpenInTabs = tabsRef.current.some(
+            (tab) => tab.conversationId === summary.id
+          )
+          if (isOpenInTabs) return
+
+          scheduleClosedConversationRefresh(summary.id)
+        })
+      )
+      .then((dispose) => {
+        if (cancelled) {
+          disposeTauriListener(
+            dispose,
+            "ConversationDetailPanel.backgroundRefresh"
+          )
+          return
+        }
+        unlisten = dispose
+      })
+      .catch(() => {
+        // Ignore when non-tauri runtime.
+      })
+
+    return () => {
+      cancelled = true
+      if (pendingRefreshTimerRef.current) {
+        clearTimeout(pendingRefreshTimerRef.current)
+        pendingRefreshTimerRef.current = null
+      }
+      pendingClosedConversationIds.clear()
+      disposeTauriListener(
+        unlisten,
+        "ConversationDetailPanel.backgroundRefresh"
+      )
+    }
+  }, [scheduleClosedConversationRefresh])
 
   const conversationTabs = useMemo(
     () =>
