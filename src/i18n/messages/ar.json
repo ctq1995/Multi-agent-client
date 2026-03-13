@@ -13,7 +13,7 @@
     "arabic": "العربية"
   },
   "WelcomePage": {
-    "title": "مرحبًا بك في Codeg",
+    "title": "مرحبًا بك في Multi-agent-client",
     "openSettings": "فتح الإعدادات",
     "searchPlaceholder": "ابحث في المجلدات...",
     "loading": "جارٍ التحميل...",
@@ -27,7 +27,8 @@
       "openFolderFailed": "فشل فتح المجلد",
       "removeFromHistoryFailed": "فشل إزالة المجلد من السجل",
       "openSettingsFailed": "فشل فتح الإعدادات",
-      "cloneFailed": "فشل استنساخ المستودع"
+      "cloneFailed": "فشل استنساخ المستودع",
+      "cloneProgressUnavailable": "???? ?????? ??? ???? ????????? (?????? ?????????)."
     },
     "errors": {
       "unknown": "حدث خطأ غير متوقع",

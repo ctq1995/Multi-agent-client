@@ -281,8 +281,10 @@ pub async fn open_commit_window(
     let builder = WebviewWindowBuilder::new(&app, &label, url)
         .title(format!("提交代码 - {}", folder.name))
         .inner_size(1220.0, 820.0)
-        .min_inner_size(980.0, 620.0)
-        .always_on_top(true)
+        .min_inner_size(980.0, 620.0);
+    let builder = builder
+        .parent(&window)
+        .map_err(|e| AppCommandError::window("Failed to set commit window parent", e.to_string()))?
         .center();
     let commit_window = apply_platform_window_style(builder)
         .build()
@@ -338,8 +340,12 @@ pub async fn open_settings_window(
     let builder = WebviewWindowBuilder::new(&app, "settings", url)
         .title("Settings")
         .inner_size(1080.0, 700.0)
-        .min_inner_size(1080.0, 600.0)
-        .always_on_top(true)
+        .min_inner_size(1080.0, 600.0);
+    let builder = builder
+        .parent(&window)
+        .map_err(|e| {
+            AppCommandError::window("Failed to set settings window parent", e.to_string())
+        })?
         .center();
     let settings_window = apply_platform_window_style(builder)
         .build()
@@ -398,7 +404,7 @@ pub fn open_welcome_window(app: &AppHandle) -> Result<(), AppCommandError> {
     }
     let url = WebviewUrl::App("welcome".into());
     let builder = WebviewWindowBuilder::new(app, "welcome", url)
-        .title("Codeg")
+        .title("Multi-agent-client")
         .inner_size(800.0, 520.0)
         .min_inner_size(600.0, 400.0)
         .center();

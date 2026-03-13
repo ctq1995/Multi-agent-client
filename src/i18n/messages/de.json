@@ -13,7 +13,7 @@
     "arabic": "Arabisch"
   },
   "WelcomePage": {
-    "title": "Willkommen bei Codeg",
+    "title": "Willkommen bei Multi-agent-client",
     "openSettings": "Einstellungen öffnen",
     "searchPlaceholder": "Ordner suchen...",
     "loading": "Wird geladen...",
@@ -27,7 +27,8 @@
       "openFolderFailed": "Ordner konnte nicht geöffnet werden",
       "removeFromHistoryFailed": "Ordner konnte nicht entfernt werden",
       "openSettingsFailed": "Einstellungen konnten nicht geöffnet werden",
-      "cloneFailed": "Repository konnte nicht geklont werden"
+      "cloneFailed": "Repository konnte nicht geklont werden",
+      "cloneProgressUnavailable": "Klon-Fortschritt ist nicht verf?gbar (Klonen l?uft weiter)."
     },
     "errors": {
       "unknown": "Unerwarteter Fehler",

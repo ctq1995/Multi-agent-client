@@ -13,7 +13,7 @@
     "arabic": "Árabe"
   },
   "WelcomePage": {
-    "title": "Bem-vindo ao Codeg",
+    "title": "Bem-vindo ao Multi-agent-client",
     "openSettings": "Abrir configurações",
     "searchPlaceholder": "Pesquisar pastas...",
     "loading": "Carregando...",
@@ -27,7 +27,8 @@
       "openFolderFailed": "Falha ao abrir a pasta",
       "removeFromHistoryFailed": "Falha ao remover a pasta",
       "openSettingsFailed": "Falha ao abrir as configurações",
-      "cloneFailed": "Falha ao clonar o repositório"
+      "cloneFailed": "Falha ao clonar o repositório",
+      "cloneProgressUnavailable": "O progresso de clonagem n?o est? dispon?vel (a clonagem continuar?)."
     },
     "errors": {
       "unknown": "Erro inesperado",

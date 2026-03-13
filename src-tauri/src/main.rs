@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    codeg_lib::run()
+    multi_agent_client_lib::run()
 }

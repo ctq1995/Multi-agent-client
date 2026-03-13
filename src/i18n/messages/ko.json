@@ -13,7 +13,7 @@
     "arabic": "아랍어"
   },
   "WelcomePage": {
-    "title": "Codeg에 오신 것을 환영합니다",
+    "title": "Multi-agent-client에 오신 것을 환영합니다",
     "openSettings": "설정 열기",
     "searchPlaceholder": "폴더 검색...",
     "loading": "로딩 중...",
@@ -27,7 +27,8 @@
       "openFolderFailed": "폴더를 열지 못했습니다",
       "removeFromHistoryFailed": "기록에서 제거하지 못했습니다",
       "openSettingsFailed": "설정을 열지 못했습니다",
-      "cloneFailed": "저장소 클론에 실패했습니다"
+      "cloneFailed": "저장소 클론에 실패했습니다",
+      "cloneProgressUnavailable": "?? ???? ??? ? ????(??? ?????)."
     },
     "errors": {
       "unknown": "예기치 않은 오류가 발생했습니다",

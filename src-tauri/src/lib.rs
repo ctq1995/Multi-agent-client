@@ -2,6 +2,7 @@ mod acp;
 mod app_error;
 mod commands;
 mod db;
+mod git_clone;
 mod models;
 mod network;
 mod parsers;

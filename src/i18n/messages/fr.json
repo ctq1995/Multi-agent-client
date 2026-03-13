@@ -13,7 +13,7 @@
     "arabic": "Arabe"
   },
   "WelcomePage": {
-    "title": "Bienvenue sur Codeg",
+    "title": "Bienvenue sur Multi-agent-client",
     "openSettings": "Ouvrir les paramètres",
     "searchPlaceholder": "Rechercher des dossiers...",
     "loading": "Chargement...",
@@ -27,7 +27,8 @@
       "openFolderFailed": "Échec de l’ouverture du dossier",
       "removeFromHistoryFailed": "Échec de la suppression du dossier",
       "openSettingsFailed": "Échec de l’ouverture des paramètres",
-      "cloneFailed": "Échec du clonage du dépôt"
+      "cloneFailed": "Échec du clonage du dépôt",
+      "cloneProgressUnavailable": "La progression du clonage est indisponible (le clonage continue)."
     },
     "errors": {
       "unknown": "Erreur inattendue",

@@ -13,7 +13,7 @@
     "arabic": "アラビア語"
   },
   "WelcomePage": {
-    "title": "Codegへようこそ",
+    "title": "Multi-agent-clientへようこそ",
     "openSettings": "設定を開く",
     "searchPlaceholder": "フォルダを検索...",
     "loading": "読み込み中...",
@@ -27,7 +27,8 @@
       "openFolderFailed": "フォルダを開けませんでした",
       "removeFromHistoryFailed": "履歴からの削除に失敗しました",
       "openSettingsFailed": "設定を開けませんでした",
-      "cloneFailed": "リポジトリのクローンに失敗しました"
+      "cloneFailed": "リポジトリのクローンに失敗しました",
+      "cloneProgressUnavailable": "???????????????????????????"
     },
     "errors": {
       "unknown": "予期しないエラーが発生しました",

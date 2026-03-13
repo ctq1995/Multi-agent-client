@@ -13,7 +13,7 @@
     "arabic": "阿拉伯语"
   },
   "WelcomePage": {
-    "title": "欢迎使用Codeg",
+    "title": "欢迎使用Multi-agent-client",
     "openSettings": "打开设置",
     "searchPlaceholder": "搜索文件夹...",
     "loading": "加载中...",
@@ -27,7 +27,8 @@
       "openFolderFailed": "打开文件夹失败",
       "removeFromHistoryFailed": "移除历史记录失败",
       "openSettingsFailed": "打开设置失败",
-      "cloneFailed": "克隆仓库失败"
+      "cloneFailed": "克隆仓库失败",
+      "cloneProgressUnavailable": "???????????????"
     },
     "errors": {
       "unknown": "发生未知错误",

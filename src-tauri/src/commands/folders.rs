@@ -352,75 +352,12 @@ pub async fn create_folder_directory(path: String) -> Result<(), AppCommandError
 }
 
 #[tauri::command]
-pub async fn clone_repository(url: String, target_dir: String) -> Result<(), AppCommandError> {
-    if url.trim().is_empty() || target_dir.trim().is_empty() {
-        return Err(AppCommandError::invalid_input(
-            "Repository URL and target directory are required",
-        ));
-    }
-
-    let output = crate::process::tokio_command("git")
-        .args(["clone", &url, &target_dir])
-        .output()
-        .await
-        .map_err(|e| {
-            if e.kind() == std::io::ErrorKind::NotFound {
-                AppCommandError::dependency_missing(
-                    "Git is not installed. Please install Git first.",
-                )
-                .with_detail("https://git-scm.com")
-            } else {
-                AppCommandError::external_command("Failed to run git clone", e.to_string())
-            }
-        })?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(classify_git_clone_error(stderr.trim()));
-    }
-    Ok(())
-}
-
-fn classify_git_clone_error(stderr: &str) -> AppCommandError {
-    let normalized = stderr.to_lowercase();
-
-    if normalized.contains("already exists and is not an empty directory") {
-        return AppCommandError::already_exists("Target directory already exists and is not empty")
-            .with_detail(stderr.to_string());
-    }
-
-    if normalized.contains("repository not found") {
-        return AppCommandError::not_found(
-            "Repository not found. Check URL and access permissions.",
-        )
-        .with_detail(stderr.to_string());
-    }
-
-    if normalized.contains("could not resolve host")
-        || normalized.contains("network is unreachable")
-        || normalized.contains("connection timed out")
-        || normalized.contains("failed to connect")
-    {
-        return AppCommandError::network("Network is unavailable while cloning repository")
-            .with_detail(stderr.to_string());
-    }
-
-    if normalized.contains("authentication failed")
-        || normalized.contains("could not read username")
-        || normalized.contains("permission denied (publickey)")
-    {
-        return AppCommandError::authentication_failed(
-            "Authentication failed while cloning repository",
-        )
-        .with_detail(stderr.to_string());
-    }
-
-    if normalized.contains("permission denied") {
-        return AppCommandError::permission_denied("Permission denied while cloning repository")
-            .with_detail(stderr.to_string());
-    }
-
-    AppCommandError::external_command("Git clone failed", stderr.to_string())
+pub async fn clone_repository(
+    app: tauri::AppHandle,
+    url: String,
+    target_dir: String,
+) -> Result<(), AppCommandError> {
+    crate::git_clone::clone_repository_with_progress(&app, &url, &target_dir).await
 }
 
 #[tauri::command]
