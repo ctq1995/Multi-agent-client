@@ -79,6 +79,11 @@
     "light": "Claro",
     "dark": "Oscuro",
     "currentTheme": "Tema efectivo actual: {theme}",
+    "messageSectionTitle": "Visualización de mensajes",
+    "messageSectionDescription": "Controla cómo se muestran los mensajes largos del usuario en el chat.",
+    "autoCollapseLongUserMessages": "Contraer automáticamente mensajes largos del usuario",
+    "autoCollapseLongUserMessagesDescription": "Los mensajes largos del usuario se contraerán por defecto para mantener el hilo legible.",
+    "autoCollapseLongUserMessagesAria": "Contraer automáticamente mensajes largos del usuario",
     "resolvedTheme": {
       "light": "Claro",
       "dark": "Oscuro",
@@ -1129,7 +1134,8 @@
       },
       "messageThread": {
         "emptyTitle": "Aún no hay mensajes",
-        "emptyDescription": "Inicia una conversación para ver mensajes aquí"
+        "emptyDescription": "Inicia una conversación para ver mensajes aquí",
+        "scrollToBottom": "Desplazarse al final"
       },
       "chatInput": {
         "connecting": "Conectando...",
@@ -1247,6 +1253,10 @@
         "showingTailOutput": "Mostrando la salida final durante el streaming para mejorar el rendimiento.",
         "result": "Resultado",
         "unknown": "desconocido",
+        "userText": {
+          "expand": "Expandir",
+          "collapse": "Contraer"
+        },
         "replaceAll": "REEMPLAZAR TODO",
         "filesCount": "Archivos: {count}",
         "update": "actualizar",

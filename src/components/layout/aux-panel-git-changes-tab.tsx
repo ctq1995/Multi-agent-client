@@ -115,26 +115,6 @@ const TRACKED_ROOT_PATH = "__working_tree_tracked_root__"
 const UNTRACKED_ROOT_PATH = "__working_tree_untracked_root__"
 const UNTRACKED_STATUS = "??"
 
-type GitFileState =
-  | "untracked"
-  | "modified"
-  | "staged"
-  | "conflicted"
-  | "deleted"
-  | "renamed"
-
-function classifyGitFileState(status: string): GitFileState | null {
-  const code = status.trim().toUpperCase()
-  if (!code) return null
-  if (code === UNTRACKED_STATUS) return "untracked"
-  if (code.includes("U")) return "conflicted"
-  if (code.includes("R") || code.includes("C")) return "renamed"
-  if (code.includes("D")) return "deleted"
-  if (code.includes("M") || code.includes("T")) return "modified"
-  if (code.includes("A")) return "staged"
-  return null
-}
-
 function normalizePathSegments(path: string): string[] {
   const normalized = path.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "")
   if (!normalized) return []
@@ -196,10 +176,7 @@ function filterDirectoryGitCandidates(
     return entries.filter((entry) => entry.status.trim().length > 0)
   }
 
-  return entries.filter((entry) => {
-    const fileState = classifyGitFileState(entry.status)
-    return fileState !== "untracked"
-  })
+  return entries.filter((entry) => entry.status.trim().length > 0)
 }
 
 function normalizeDiffPath(rawPath: string): string | null {
@@ -473,6 +450,11 @@ export function GitChangesTab() {
     const parts = path.split(/[\\/]/).filter(Boolean)
     return (parts[parts.length - 1] ?? path) || t("workspace")
   }, [folder?.path, t])
+
+  const rootActionTarget = useMemo<GitActionTarget | null>(() => {
+    if (!folder?.path) return null
+    return { kind: "dir", path: "", name: folderName }
+  }, [folder?.path, folderName])
 
   const trackedChanges = useMemo(
     () => changes.filter((change) => !isUntrackedStatus(change.status)),
@@ -1236,15 +1218,56 @@ export function GitChangesTab() {
                   expanded={expandedTrackedPaths}
                   onExpandedChange={setExpandedTrackedPaths}
                 >
-                  <FileTreeFolder
-                    path={TRACKED_ROOT_PATH}
-                    name={folderName}
-                    suffix={`(${trackedChanges.length})`}
-                    suffixClassName="text-muted-foreground/45"
-                    title={folderName}
-                  >
-                    {trackedTreeNodes.map(renderTrackedNode)}
-                  </FileTreeFolder>
+                  <ContextMenu>
+                    <ContextMenuTrigger asChild>
+                      <FileTreeFolder
+                        path={TRACKED_ROOT_PATH}
+                        name={folderName}
+                        suffix={`(${trackedChanges.length})`}
+                        suffixClassName="text-muted-foreground/45"
+                        title={folderName}
+                      >
+                        {trackedTreeNodes.map(renderTrackedNode)}
+                      </FileTreeFolder>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem
+                        onSelect={() => {
+                          handleOpenCommitWindow()
+                        }}
+                      >
+                        {t("actions.commitCode")}
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onSelect={() => {
+                          void openWorkingTreeDiff(undefined, {
+                            mode: "overview",
+                          })
+                        }}
+                      >
+                        {tCommon("viewDiff")}
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onSelect={() => {
+                          if (!rootActionTarget) return
+                          handleRequestRollback(rootActionTarget)
+                        }}
+                        variant="destructive"
+                        disabled={!rootActionTarget}
+                      >
+                        {t("actions.rollback")}
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onSelect={() => {
+                          if (!rootActionTarget) return
+                          void handleAddToVcs(rootActionTarget)
+                        }}
+                        disabled={!rootActionTarget}
+                      >
+                        {t("actions.addToVcs")}
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
                 </FileTree>
               </section>
             )}
@@ -1284,15 +1307,46 @@ export function GitChangesTab() {
                   expanded={expandedUntrackedPaths}
                   onExpandedChange={setExpandedUntrackedPaths}
                 >
-                  <FileTreeFolder
-                    path={UNTRACKED_ROOT_PATH}
-                    name={folderName}
-                    suffix={`(${untrackedChanges.length})`}
-                    suffixClassName="text-muted-foreground/45"
-                    title={folderName}
-                  >
-                    {untrackedTreeNodes.map(renderUntrackedNode)}
-                  </FileTreeFolder>
+                  <ContextMenu>
+                    <ContextMenuTrigger asChild>
+                      <FileTreeFolder
+                        path={UNTRACKED_ROOT_PATH}
+                        name={folderName}
+                        suffix={`(${untrackedChanges.length})`}
+                        suffixClassName="text-muted-foreground/45"
+                        title={folderName}
+                      >
+                        {untrackedTreeNodes.map(renderUntrackedNode)}
+                      </FileTreeFolder>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem
+                        onSelect={() => {
+                          handleOpenCommitWindow()
+                        }}
+                      >
+                        {t("actions.commitCode")}
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onSelect={() => {
+                          void openWorkingTreeDiff(undefined, {
+                            mode: "overview",
+                          })
+                        }}
+                      >
+                        {tCommon("viewDiff")}
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onSelect={() => {
+                          if (!rootActionTarget) return
+                          void handleAddToVcs(rootActionTarget)
+                        }}
+                        disabled={!rootActionTarget}
+                      >
+                        {t("actions.addToVcs")}
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
                 </FileTree>
               </section>
             )}

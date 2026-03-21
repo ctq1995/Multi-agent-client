@@ -4,6 +4,8 @@ import type { AdaptedContentPart } from "@/lib/adapters/ai-elements-adapter"
 import type { MessageRole } from "@/lib/types"
 import { normalizeToolName } from "@/lib/tool-call-normalization"
 import { useTranslations } from "next-intl"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import {
   countUnifiedDiffLineChanges,
   estimateChangedLineStats,
@@ -39,6 +41,8 @@ import {
   MinusIcon,
   PlusIcon,
   WrenchIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from "lucide-react"
 
 // ── helpers ────────────────────────────────────────────────────────────
@@ -2049,17 +2053,83 @@ function stripCliExecutionEnvelope(text: string): string {
 const TextPart = memo(function TextPart({
   text,
   preserveNewlines = false,
+  autoCollapse = false,
 }: {
   text: string
   preserveNewlines?: boolean
+  autoCollapse?: boolean
 }) {
   if (preserveNewlines) {
+    if (autoCollapse) {
+      return <CollapsibleUserText text={text} />
+    }
     return <div className="whitespace-pre-wrap break-words text-sm">{text}</div>
   }
 
   return (
     <div className="break-words text-sm prose prose-sm dark:prose-invert max-w-none [&_ul]:list-inside [&_ol]:list-inside">
       <MessageResponse>{text}</MessageResponse>
+    </div>
+  )
+})
+
+const LONG_USER_TEXT_CHAR_THRESHOLD = 800
+const LONG_USER_TEXT_LINE_THRESHOLD = 12
+const COLLAPSED_USER_TEXT_MAX_HEIGHT_CLASS = "max-h-40"
+
+function countTextLines(text: string): number {
+  if (!text) return 0
+  let count = 1
+  for (let i = 0; i < text.length; i += 1) {
+    if (text.charCodeAt(i) === 10) count += 1
+  }
+  return count
+}
+
+function shouldCollapseUserText(text: string): boolean {
+  if (text.length >= LONG_USER_TEXT_CHAR_THRESHOLD) return true
+  return countTextLines(text) >= LONG_USER_TEXT_LINE_THRESHOLD
+}
+
+const CollapsibleUserText = memo(function CollapsibleUserText({
+  text,
+}: {
+  text: string
+}) {
+  const t = useTranslations("Folder.chat.contentParts")
+  const isLong = useMemo(() => shouldCollapseUserText(text), [text])
+  const [collapsed, setCollapsed] = useState(true)
+
+  if (!isLong) {
+    return <div className="whitespace-pre-wrap break-words text-sm">{text}</div>
+  }
+
+  return (
+    <div className="space-y-1">
+      <div
+        className={cn(
+          "whitespace-pre-wrap break-words text-sm",
+          collapsed && `overflow-hidden ${COLLAPSED_USER_TEXT_MAX_HEIGHT_CLASS}`
+        )}
+      >
+        {text}
+      </div>
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+          onClick={() => setCollapsed((v) => !v)}
+        >
+          {collapsed ? t("userText.expand") : t("userText.collapse")}
+          {collapsed ? (
+            <ChevronDownIcon className="size-3.5" />
+          ) : (
+            <ChevronUpIcon className="size-3.5" />
+          )}
+        </Button>
+      </div>
     </div>
   )
 })
@@ -2300,11 +2370,13 @@ const ReasoningPart = memo(function ReasoningPart({
 interface ContentPartsRendererProps {
   parts: AdaptedContentPart[]
   role?: MessageRole
+  autoCollapseLongUserMessages?: boolean
 }
 
 export const ContentPartsRenderer = memo(function ContentPartsRenderer({
   parts,
   role,
+  autoCollapseLongUserMessages = true,
 }: ContentPartsRendererProps) {
   return (
     <div className="space-y-2">
@@ -2315,6 +2387,7 @@ export const ContentPartsRenderer = memo(function ContentPartsRenderer({
               key={`text-${i}`}
               text={part.text}
               preserveNewlines={role === "user"}
+              autoCollapse={role === "user" && autoCollapseLongUserMessages}
             />
           )
         }

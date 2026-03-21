@@ -273,10 +273,7 @@ function filterDirectoryGitCandidates(
     return entries.filter((entry) => entry.status.trim().length > 0)
   }
 
-  return entries.filter((entry) => {
-    const fileState = classifyGitFileState(entry.status)
-    return fileState !== "untracked"
-  })
+  return entries.filter((entry) => entry.status.trim().length > 0)
 }
 
 function buildDirectoryGitTree(
@@ -1701,6 +1698,34 @@ export function FileTreeTab() {
     return baseName(folder.path)
   }, [folder?.path, t])
 
+  const rootActionTarget = useMemo<FileActionTarget | null>(() => {
+    if (!folder?.path) return null
+    return {
+      kind: "dir",
+      path: "",
+      name: rootNodeName,
+    }
+  }, [folder?.path, rootNodeName])
+
+  const rootSystemExplorerLabel = useMemo(() => {
+    if (typeof navigator === "undefined") return t("openInFileManager")
+    const platform =
+      `${navigator.platform} ${navigator.userAgent}`.toLowerCase()
+    if (platform.includes("mac")) return t("openInFinder")
+    if (platform.includes("win")) return t("openInExplorer")
+    return t("openInFileManager")
+  }, [t])
+
+  const handleOpenRootInSystemExplorer = useCallback(async () => {
+    if (!folder?.path) return
+    try {
+      await revealItemInDir(folder.path)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      toast.error(t("toasts.openDirectoryFailed"), { description: message })
+    }
+  }, [folder?.path, t])
+
   useEffect(() => {
     if (!isFileTreeTabActive) return
     void fetchTree()
@@ -2053,6 +2078,79 @@ export function FileTreeTab() {
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
+          {folder?.path && (
+            <>
+              <ContextMenuSub>
+                <ContextMenuSubTrigger disabled={!gitEnabled}>
+                  {t("git")}
+                </ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                  <ContextMenuItem
+                    onSelect={() => handleOpenCommitWindow()}
+                    disabled={!gitEnabled}
+                  >
+                    {t("actions.commitCode")}
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onSelect={() => {
+                      if (!rootActionTarget) return
+                      void handleAddToVcs(rootActionTarget)
+                    }}
+                    disabled={!gitEnabled || !rootActionTarget}
+                  >
+                    {t("actions.addToVcs")}
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onSelect={() => {
+                      void openWorkingTreeDiff()
+                    }}
+                    disabled={!gitEnabled}
+                  >
+                    {tCommon("viewDiff")}
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onSelect={() => {
+                      if (!rootActionTarget) return
+                      handleRequestCompareWithBranch(rootActionTarget)
+                    }}
+                    disabled={!gitEnabled || !rootActionTarget}
+                  >
+                    {t("compareWithBranch")}
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    variant="destructive"
+                    onSelect={() => {
+                      if (!rootActionTarget) return
+                      handleRequestRollback(rootActionTarget)
+                    }}
+                    disabled={!gitEnabled || !rootActionTarget}
+                  >
+                    {t("actions.rollback")}
+                  </ContextMenuItem>
+                </ContextMenuSubContent>
+              </ContextMenuSub>
+
+              <ContextMenuSub>
+                <ContextMenuSubTrigger>{t("openIn")}</ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                  <ContextMenuItem
+                    onSelect={() => {
+                      void handleOpenRootInSystemExplorer()
+                    }}
+                  >
+                    {rootSystemExplorerLabel}
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onSelect={() => {
+                      void handleOpenDirInTerminal(folder.path, rootNodeName)
+                    }}
+                  >
+                    {t("openInTerminal")}
+                  </ContextMenuItem>
+                </ContextMenuSubContent>
+              </ContextMenuSub>
+            </>
+          )}
           <ContextMenuItem
             onSelect={() => {
               void fetchTree()

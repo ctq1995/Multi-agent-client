@@ -1,5 +1,8 @@
-use std::collections::{HashMap, HashSet};
-use std::sync::Mutex;
+mod routes;
+mod state;
+mod style;
+
+use std::collections::HashSet;
 
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 
@@ -7,106 +10,13 @@ use crate::app_error::AppCommandError;
 use crate::db::AppDatabase;
 use crate::models::FolderHistoryEntry;
 
-pub struct SettingsWindowState {
-    owner_window_label: Mutex<Option<String>>,
-    disabled_windows: Mutex<HashSet<String>>,
-}
-
-pub struct CommitWindowState {
-    owner_by_commit_label: Mutex<HashMap<String, String>>,
-}
+pub use state::{restore_window_after_commit, restore_windows_after_settings};
+pub use state::{CommitWindowState, SettingsWindowState};
+pub(crate) use routes::to_tauri_app_path;
+pub(crate) use style::apply_platform_window_style;
 
 pub fn folder_window_label(folder_id: i32) -> String {
     format!("folder-{folder_id}")
-}
-
-pub(crate) fn apply_platform_window_style<'a, R, M>(
-    builder: WebviewWindowBuilder<'a, R, M>,
-) -> WebviewWindowBuilder<'a, R, M>
-where
-    R: tauri::Runtime,
-    M: tauri::Manager<R>,
-{
-    #[cfg(target_os = "macos")]
-    {
-        builder
-            .hidden_title(true)
-            .title_bar_style(tauri::TitleBarStyle::Overlay)
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        return builder.decorations(false);
-    }
-
-    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-    {
-        builder
-    }
-}
-
-#[cfg(target_os = "windows")]
-fn ensure_windows_undecorated(window: &tauri::WebviewWindow) {
-    let _ = window.set_decorations(false);
-}
-
-#[cfg(not(target_os = "windows"))]
-fn ensure_windows_undecorated(_window: &tauri::WebviewWindow) {}
-
-impl SettingsWindowState {
-    pub fn new() -> Self {
-        Self {
-            owner_window_label: Mutex::new(None),
-            disabled_windows: Mutex::new(HashSet::new()),
-        }
-    }
-
-    fn set_owner(&self, label: String) {
-        if let Ok(mut owner) = self.owner_window_label.lock() {
-            *owner = Some(label);
-        }
-    }
-
-    fn take_owner(&self) -> Option<String> {
-        self.owner_window_label
-            .lock()
-            .ok()
-            .and_then(|mut owner| owner.take())
-    }
-
-    fn set_disabled_windows(&self, labels: HashSet<String>) {
-        if let Ok(mut disabled) = self.disabled_windows.lock() {
-            *disabled = labels;
-        }
-    }
-
-    fn take_disabled_windows(&self) -> HashSet<String> {
-        self.disabled_windows
-            .lock()
-            .map(|mut disabled| std::mem::take(&mut *disabled))
-            .unwrap_or_default()
-    }
-}
-
-impl CommitWindowState {
-    pub fn new() -> Self {
-        Self {
-            owner_by_commit_label: Mutex::new(HashMap::new()),
-        }
-    }
-
-    fn set_owner(&self, commit_label: String, owner_label: String) {
-        if let Ok(mut owners) = self.owner_by_commit_label.lock() {
-            owners.insert(commit_label, owner_label);
-        }
-    }
-
-    fn take_owner(&self, commit_label: &str) -> Option<String> {
-        self.owner_by_commit_label
-            .lock()
-            .ok()
-            .and_then(|mut owners| owners.remove(commit_label))
-    }
 }
 
 fn get_folder_id_from_window(window: &tauri::WebviewWindow) -> Option<i32> {
@@ -114,42 +24,6 @@ fn get_folder_id_from_window(window: &tauri::WebviewWindow) -> Option<i32> {
     url.query_pairs()
         .find(|(key, _)| key == "id")
         .and_then(|(_, value)| value.parse::<i32>().ok())
-}
-
-fn resolve_settings_route(section: Option<&str>) -> &'static str {
-    match section {
-        Some("appearance") => "settings/appearance",
-        Some("agents") => "settings/agents",
-        Some("mcp") => "settings/mcp",
-        Some("skills") => "settings/skills",
-        Some("shortcuts") => "settings/shortcuts",
-        Some("system") => "settings/system",
-        _ => "settings/system",
-    }
-}
-
-fn normalize_agent_query(agent_type: Option<&str>) -> Option<String> {
-    let raw = agent_type?.trim();
-    if raw.is_empty() {
-        return None;
-    }
-    if raw
-        .chars()
-        .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '_')
-    {
-        return Some(raw.to_string());
-    }
-    None
-}
-
-fn resolve_settings_target(section: Option<&str>, agent_type: Option<&str>) -> String {
-    let route = resolve_settings_route(section);
-    if route == "settings/agents" {
-        if let Some(agent) = normalize_agent_query(agent_type) {
-            return format!("{route}?agent={agent}");
-        }
-    }
-    route.to_string()
 }
 
 #[tauri::command]
@@ -214,7 +88,7 @@ pub async fn open_folder_window(
 
     let label = folder_window_label(entry.id);
     if let Some(existing) = app.get_webview_window(&label) {
-        ensure_windows_undecorated(&existing);
+        style::ensure_windows_undecorated(&existing);
         let _ = existing.unminimize();
         existing
             .set_focus()
@@ -225,7 +99,8 @@ pub async fn open_folder_window(
         return Ok(());
     }
 
-    let url = WebviewUrl::App(format!("folder?id={}", entry.id).into());
+    let route = format!("folder?id={}", entry.id);
+    let url = WebviewUrl::App(to_tauri_app_path(&route).into());
     let builder = WebviewWindowBuilder::new(&app, &label, url)
         .title(&entry.name)
         .inner_size(1260.0, 860.0)
@@ -233,7 +108,7 @@ pub async fn open_folder_window(
     let folder_window = apply_platform_window_style(builder)
         .build()
         .map_err(|e| AppCommandError::window("Failed to open folder window", e.to_string()))?;
-    ensure_windows_undecorated(&folder_window);
+    style::ensure_windows_undecorated(&folder_window);
 
     // Close welcome window
     if let Some(w) = app.get_webview_window("welcome") {
@@ -277,7 +152,8 @@ pub async fn open_commit_window(
                 .with_detail(format!("folder_id={folder_id}"))
         })?;
 
-    let url = WebviewUrl::App(format!("commit?folderId={folder_id}").into());
+    let route = format!("commit?folderId={folder_id}");
+    let url = WebviewUrl::App(to_tauri_app_path(&route).into());
     let builder = WebviewWindowBuilder::new(&app, &label, url)
         .title(format!("提交代码 - {}", folder.name))
         .inner_size(1220.0, 820.0)
@@ -289,7 +165,7 @@ pub async fn open_commit_window(
     let commit_window = apply_platform_window_style(builder)
         .build()
         .map_err(|e| AppCommandError::window("Failed to open commit window", e.to_string()))?;
-    ensure_windows_undecorated(&commit_window);
+    style::ensure_windows_undecorated(&commit_window);
     if let Some(owner_window) = app.get_webview_window(&owner_label) {
         if let Err(err) = owner_window.set_enabled(false) {
             let _ = commit_window.close();
@@ -315,11 +191,11 @@ pub async fn open_settings_window(
     agent_type: Option<String>,
     state: tauri::State<'_, SettingsWindowState>,
 ) -> Result<(), AppCommandError> {
-    let target_route = resolve_settings_target(section.as_deref(), agent_type.as_deref());
+    let target_route = routes::resolve_settings_target(section.as_deref(), agent_type.as_deref());
     if let Some(existing) = app.get_webview_window("settings") {
-        ensure_windows_undecorated(&existing);
+        style::ensure_windows_undecorated(&existing);
         if section.is_some() || agent_type.is_some() {
-            let target_path = format!("/{target_route}");
+            let target_path = routes::to_tauri_nav_url(&target_route);
             let target_json = serde_json::to_string(&target_path).map_err(|e| {
                 AppCommandError::window("Failed to build settings navigation target", e.to_string())
             })?;
@@ -336,7 +212,7 @@ pub async fn open_settings_window(
     }
 
     let owner_label = window.label().to_string();
-    let url = WebviewUrl::App(target_route.into());
+    let url = WebviewUrl::App(to_tauri_app_path(&target_route).into());
     let builder = WebviewWindowBuilder::new(&app, "settings", url)
         .title("Settings")
         .inner_size(1080.0, 700.0)
@@ -350,7 +226,7 @@ pub async fn open_settings_window(
     let settings_window = apply_platform_window_style(builder)
         .build()
         .map_err(|e| AppCommandError::window("Failed to open settings window", e.to_string()))?;
-    ensure_windows_undecorated(&settings_window);
+    style::ensure_windows_undecorated(&settings_window);
 
     let mut disabled = HashSet::new();
     for (label, webview) in app.webview_windows() {
@@ -370,39 +246,12 @@ pub async fn open_settings_window(
     Ok(())
 }
 
-pub fn restore_windows_after_settings(app: &AppHandle, state: &SettingsWindowState) {
-    for label in state.take_disabled_windows() {
-        if let Some(window) = app.get_webview_window(&label) {
-            let _ = window.set_enabled(true);
-        }
-    }
-
-    if let Some(owner_label) = state.take_owner() {
-        if let Some(window) = app.get_webview_window(&owner_label) {
-            let _ = window.set_focus();
-        }
-    }
-}
-
-pub fn restore_window_after_commit(
-    app: &AppHandle,
-    state: &CommitWindowState,
-    commit_window_label: &str,
-) {
-    if let Some(owner_label) = state.take_owner(commit_window_label) {
-        if let Some(window) = app.get_webview_window(&owner_label) {
-            let _ = window.set_enabled(true);
-            let _ = window.set_focus();
-        }
-    }
-}
-
 pub fn open_welcome_window(app: &AppHandle) -> Result<(), AppCommandError> {
     if let Some(existing) = app.get_webview_window("welcome") {
-        ensure_windows_undecorated(&existing);
+        style::ensure_windows_undecorated(&existing);
         return Ok(());
     }
-    let url = WebviewUrl::App("welcome".into());
+    let url = WebviewUrl::App(to_tauri_app_path("welcome").into());
     let builder = WebviewWindowBuilder::new(app, "welcome", url)
         .title("Multi-agent-client")
         .inner_size(800.0, 520.0)
@@ -411,6 +260,6 @@ pub fn open_welcome_window(app: &AppHandle) -> Result<(), AppCommandError> {
     let welcome_window = apply_platform_window_style(builder)
         .build()
         .map_err(|e| AppCommandError::window("Failed to open welcome window", e.to_string()))?;
-    ensure_windows_undecorated(&welcome_window);
+    style::ensure_windows_undecorated(&welcome_window);
     Ok(())
 }

@@ -1,0 +1,81 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="128" y1="96" x2="896" y2="928" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1220" />
+      <stop offset="1" stop-color="#111827" />
+    </linearGradient>
+    <linearGradient id="stroke" x1="220" y1="220" x2="804" y2="804" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22D3EE" />
+      <stop offset="0.55" stop-color="#A855F7" />
+      <stop offset="1" stop-color="#F59E0B" />
+    </linearGradient>
+    <filter
+      id="glow"
+      x="0"
+      y="0"
+      width="1024"
+      height="1024"
+      filterUnits="userSpaceOnUse"
+      color-interpolation-filters="sRGB"
+    >
+      <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+      <feColorMatrix
+        in="blur"
+        type="matrix"
+        values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.35 0"
+        result="blurAlpha"
+      />
+      <feMerge>
+        <feMergeNode in="blurAlpha" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect x="96" y="96" width="832" height="832" rx="190" fill="url(#bg)" />
+
+  <g filter="url(#glow)">
+    <path
+      d="M512 222 C565 222 607 244 636 287 L784 548 C813 598 813 663 784 713 C754 763 705 795 648 798 L376 798 C319 795 270 763 240 713 C211 663 211 598 240 548 L388 287 C417 244 459 222 512 222 Z"
+      stroke="url(#stroke)"
+      stroke-width="84"
+      stroke-linejoin="round"
+      fill="none"
+    />
+
+    <circle
+      cx="512"
+      cy="222"
+      r="66"
+      fill="#0B1220"
+      stroke="#22D3EE"
+      stroke-width="22"
+    />
+    <circle
+      cx="784"
+      cy="702"
+      r="66"
+      fill="#0B1220"
+      stroke="#F59E0B"
+      stroke-width="22"
+    />
+    <circle
+      cx="240"
+      cy="702"
+      r="66"
+      fill="#0B1220"
+      stroke="#A855F7"
+      stroke-width="22"
+    />
+
+    <circle
+      cx="512"
+      cy="548"
+      r="84"
+      fill="#0B1220"
+      stroke="url(#stroke)"
+      stroke-width="22"
+    />
+  </g>
+</svg>
+

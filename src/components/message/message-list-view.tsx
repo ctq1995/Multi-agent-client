@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from "react"
 import { useConversationRuntime } from "@/contexts/conversation-runtime-context"
 import { ContentPartsRenderer } from "./content-parts-renderer"
+import { MessageThreadScrollButton } from "@/components/ai-elements/message-thread"
 import {
   adaptMessageTurns,
   type AdaptedContentPart,
@@ -26,6 +27,7 @@ import {
 import type { AgentType, ConnectionStatus, SessionStats } from "@/lib/types"
 import { VirtualizedMessageThread } from "@/components/message/virtualized-message-thread"
 import { useStickToBottomContext } from "use-stick-to-bottom"
+import { useChatDisplaySettings } from "@/hooks/use-chat-display-settings"
 
 interface MessageListViewProps {
   conversationId: number
@@ -66,9 +68,11 @@ type ThreadRenderItem =
 const HistoricalMessageGroup = memo(function HistoricalMessageGroup({
   group,
   dimmed = false,
+  autoCollapseLongUserMessages = true,
 }: {
   group: ResolvedMessageGroup
   dimmed?: boolean
+  autoCollapseLongUserMessages?: boolean
 }) {
   return (
     <div className={dimmed ? "opacity-70" : undefined}>
@@ -77,7 +81,11 @@ const HistoricalMessageGroup = memo(function HistoricalMessageGroup({
           <UserImageAttachments images={group.images} className="self-end" />
         ) : null}
         <MessageContent>
-          <ContentPartsRenderer parts={group.parts} role={group.role} />
+          <ContentPartsRenderer
+            parts={group.parts}
+            role={group.role}
+            autoCollapseLongUserMessages={autoCollapseLongUserMessages}
+          />
         </MessageContent>
         {group.role === "user" && group.resources.length > 0 ? (
           <UserResourceLinks resources={group.resources} className="self-end" />
@@ -146,6 +154,8 @@ export function MessageListView({
 }: MessageListViewProps) {
   const t = useTranslations("Folder.chat.messageList")
   const sharedT = useTranslations("Folder.chat.shared")
+  const tThread = useTranslations("Folder.chat.messageThread")
+  const { settings: chatDisplaySettings } = useChatDisplaySettings()
   const { getSession, getTimelineTurns } = useConversationRuntime()
   const session = getSession(conversationId)
   const liveMessage = session?.liveMessage ?? null
@@ -198,7 +208,9 @@ export function MessageListView({
       const phase = timelineTurns[i].phase
       const role = msg.role === "tool" ? "assistant" : msg.role
       return {
-        key: `${phase}-${msg.id}-${i}`,
+        // Stable key is required for virtualization correctness. Avoid index/phase
+        // so items don't "shuffle" when they move optimistic -> persisted.
+        key: `turn-${msg.id}`,
         kind: "turn" as const,
         group: {
           id: msg.id,
@@ -219,7 +231,7 @@ export function MessageListView({
       lastPhase === "optimistic" &&
       (connStatus === "prompting" || sessionSyncState === "awaiting_persist")
     ) {
-      items.push({ key: "pending-typing", kind: "typing" })
+      items.push({ key: "typing-pending", kind: "typing" })
     }
 
     return { threadItems: items, nonStreamingAdapted: nonStreaming }
@@ -234,21 +246,27 @@ export function MessageListView({
     [historicalPlanEntries]
   )
 
-  const renderThreadItem = useCallback((item: ThreadRenderItem) => {
-    switch (item.kind) {
-      case "turn":
-        return (
-          <HistoricalMessageGroup
-            group={item.group}
-            dimmed={item.phase === "optimistic"}
-          />
-        )
-      case "typing":
-        return <PendingTypingIndicator />
-      default:
-        return null
-    }
-  }, [])
+  const renderThreadItem = useCallback(
+    (item: ThreadRenderItem) => {
+      switch (item.kind) {
+        case "turn":
+          return (
+            <HistoricalMessageGroup
+              group={item.group}
+              dimmed={item.phase === "optimistic"}
+              autoCollapseLongUserMessages={
+                chatDisplaySettings.autoCollapseLongUserMessages
+              }
+            />
+          )
+        case "typing":
+          return <PendingTypingIndicator />
+        default:
+          return null
+      }
+    },
+    [chatDisplaySettings.autoCollapseLongUserMessages]
+  )
 
   const emptyState = useMemo(
     () =>
@@ -303,6 +321,12 @@ export function MessageListView({
           emptyState={emptyState}
           estimateSize={180}
           overscan={10}
+        />
+        <MessageThreadScrollButton
+          className="bottom-2 right-4 left-auto translate-x-0 shadow-md"
+          title={tThread("scrollToBottom")}
+          aria-label={tThread("scrollToBottom")}
+          size="icon-sm"
         />
       </MessageThread>
       {liveMessage && connStatus === "prompting" && (

@@ -269,7 +269,9 @@ function importantEnvKeysByAgent(agentType: AgentType): ImportantEnvKeys {
   if (agentType === "claude_code") {
     return {
       apiBaseUrl: ["ANTHROPIC_BASE_URL", "OPENAI_BASE_URL", "API_BASE_URL"],
-      apiKey: ["ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY", "OPENAI_API_KEY"],
+      // Prefer the official Anthropic key. ANTHROPIC_AUTH_TOKEN is kept as a
+      // legacy fallback for existing env setups.
+      apiKey: ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "OPENAI_API_KEY"],
       model: ["ANTHROPIC_MODEL", "OPENAI_MODEL", "MODEL"],
     }
   }

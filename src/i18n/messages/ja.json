@@ -79,6 +79,11 @@
     "light": "ライト",
     "dark": "ダーク",
     "currentTheme": "現在の有効テーマ: {theme}",
+    "messageSectionTitle": "メッセージ表示",
+    "messageSectionDescription": "チャットで長いユーザーメッセージの表示方法を設定します。",
+    "autoCollapseLongUserMessages": "長いユーザーメッセージを自動折りたたむ",
+    "autoCollapseLongUserMessagesDescription": "長いユーザー入力を既定で折りたたみ、スレッドを読みやすくします。",
+    "autoCollapseLongUserMessagesAria": "長いユーザーメッセージを自動折りたたむ",
     "resolvedTheme": {
       "light": "ライト",
       "dark": "ダーク",
@@ -1129,7 +1134,8 @@
       },
       "messageThread": {
         "emptyTitle": "まだメッセージはありません",
-        "emptyDescription": "会話を開始するとここにメッセージが表示されます"
+        "emptyDescription": "会話を開始するとここにメッセージが表示されます",
+        "scrollToBottom": "一番下へスクロール"
       },
       "chatInput": {
         "connecting": "接続中...",
@@ -1247,6 +1253,10 @@
         "showingTailOutput": "パフォーマンスのため、ストリーミング中は末尾出力を表示しています。",
         "result": "結果",
         "unknown": "不明",
+        "userText": {
+          "expand": "全文を表示",
+          "collapse": "折りたたむ"
+        },
         "replaceAll": "すべて置換",
         "filesCount": "ファイル: {count}",
         "update": "更新",

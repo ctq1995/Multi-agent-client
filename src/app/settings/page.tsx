@@ -1,14 +1,5 @@
-"use client"
-
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { AppearanceSettings } from "@/components/settings/appearance-settings"
 
 export default function SettingsPage() {
-  const router = useRouter()
-
-  useEffect(() => {
-    router.replace("/settings/appearance")
-  }, [router])
-
-  return null
+  return <AppearanceSettings />
 }

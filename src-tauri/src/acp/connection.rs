@@ -41,6 +41,7 @@ use crate::models::agent::AgentType;
 use crate::network::proxy;
 
 const DEFAULT_COMMAND_COLOR_ENV: [(&str, &str); 1] = [("CLICOLOR_FORCE", "1")];
+const TURN_COMPLETE_DRAIN_TIMEOUT_MS: u64 = 30;
 
 fn merge_agent_env(
     env: &[(&'static str, &'static str)],
@@ -1147,6 +1148,116 @@ async fn poll_tracked_terminal_tool_calls(
     }
 }
 
+fn stop_reason_to_str(reason: &StopReason) -> &'static str {
+    match reason {
+        StopReason::EndTurn => "end_turn",
+        StopReason::Cancelled => "cancelled",
+        _ => "unknown",
+    }
+}
+
+async fn handle_prompt_notification_update(
+    update: SessionUpdate,
+    tracked: &mut HashMap<String, TrackedTerminalToolCall>,
+    terminal_runtime: &TerminalRuntime,
+    session_id: &SessionId,
+    connection_id: &str,
+    app_handle: &tauri::AppHandle,
+) {
+    let should_poll_now = track_terminal_tool_calls(&update, tracked);
+    emit_conversation_update(connection_id, app_handle, update);
+    if should_poll_now {
+        poll_tracked_terminal_tool_calls(
+            terminal_runtime,
+            session_id,
+            connection_id,
+            app_handle,
+            tracked,
+        )
+        .await;
+    }
+}
+
+async fn emit_turn_complete_after_drain<'a>(
+    session: &mut sacp::ActiveSession<'a, Agent>,
+    initial_reason: StopReason,
+    connection_id: &str,
+    session_id: &SessionId,
+    app_handle: &tauri::AppHandle,
+    terminal_runtime: &TerminalRuntime,
+    tracked: &mut HashMap<String, TrackedTerminalToolCall>,
+) {
+    let mut final_reason = initial_reason;
+
+    loop {
+        let next_update = tokio::time::timeout(
+            std::time::Duration::from_millis(TURN_COMPLETE_DRAIN_TIMEOUT_MS),
+            session.read_update(),
+        )
+        .await;
+
+        let Ok(next_update) = next_update else {
+            break;
+        };
+
+        let next_update = match next_update {
+            Ok(update) => update,
+            Err(err) => {
+                eprintln!("[ACP] Ignoring unrecognized drained session update: {err}");
+                continue;
+            }
+        };
+
+        match next_update {
+            SessionMessage::SessionMessage(dispatch) => {
+                let runtime = terminal_runtime;
+                if let Err(err) = MatchDispatch::new(dispatch)
+                    .if_notification(async |notif: SessionNotification| {
+                        handle_prompt_notification_update(
+                            notif.update,
+                            tracked,
+                            runtime,
+                            session_id,
+                            connection_id,
+                            app_handle,
+                        )
+                        .await;
+                        Ok(())
+                    })
+                    .await
+                    .otherwise_ignore()
+                {
+                    eprintln!("[ACP] Ignoring drained dispatch parse error: {err}");
+                }
+            }
+            SessionMessage::StopReason(reason) => {
+                final_reason = reason;
+            }
+            _ => {}
+        }
+    }
+
+    if !tracked.is_empty() {
+        poll_tracked_terminal_tool_calls(
+            terminal_runtime,
+            session_id,
+            connection_id,
+            app_handle,
+            tracked,
+        )
+        .await;
+    }
+
+    let _ = app_handle.emit(
+        "acp://event",
+        AcpEvent::TurnComplete {
+            connection_id: connection_id.into(),
+            session_id: session_id.0.to_string(),
+            stop_reason: stop_reason_to_str(&final_reason).into(),
+        },
+    );
+}
+
 fn map_prompt_blocks(blocks: Vec<PromptInputBlock>) -> Vec<ContentBlock> {
     blocks
         .into_iter()
@@ -1292,28 +1403,19 @@ async fn run_conversation_loop<'a>(
                             };
                             match update {
                                 SessionMessage::SessionMessage(dispatch) => {
-                                    let cid = conn_id.to_string();
-                                    let h = handle.clone();
                                     let runtime = terminal_runtime.clone();
-                                    let session_id = sid.clone();
                                     if let Err(e) = MatchDispatch::new(dispatch)
                                         .if_notification(
                                             async |notif: SessionNotification| {
-                                                let should_poll_now = track_terminal_tool_calls(
-                                                    &notif.update,
+                                                handle_prompt_notification_update(
+                                                    notif.update,
                                                     &mut tracked_terminal_tool_calls,
-                                                );
-                                                emit_conversation_update(&cid, &h, notif.update);
-                                                if should_poll_now {
-                                                    poll_tracked_terminal_tool_calls(
-                                                        runtime.as_ref(),
-                                                        &session_id,
-                                                        &cid,
-                                                        &h,
-                                                        &mut tracked_terminal_tool_calls,
-                                                    )
-                                                    .await;
-                                                }
+                                                    runtime.as_ref(),
+                                                    &sid,
+                                                    conn_id,
+                                                    handle,
+                                                )
+                                                .await;
                                                 Ok(())
                                             },
                                         )
@@ -1324,29 +1426,16 @@ async fn run_conversation_loop<'a>(
                                     }
                                 }
                                 SessionMessage::StopReason(reason) => {
-                                    if !tracked_terminal_tool_calls.is_empty() {
-                                        poll_tracked_terminal_tool_calls(
-                                            terminal_runtime.as_ref(),
-                                            &sid,
-                                            conn_id,
-                                            handle,
-                                            &mut tracked_terminal_tool_calls,
-                                        )
-                                        .await;
-                                    }
-                                    let reason_str = match reason {
-                                        StopReason::EndTurn => "end_turn",
-                                        StopReason::Cancelled => "cancelled",
-                                        _ => "unknown",
-                                    };
-                                    let _ = handle.emit(
-                                        "acp://event",
-                                        AcpEvent::TurnComplete {
-                                            connection_id: conn_id.into(),
-                                            session_id: sid.0.to_string(),
-                                            stop_reason: reason_str.into(),
-                                        },
-                                    );
+                                    emit_turn_complete_after_drain(
+                                        session,
+                                        reason,
+                                        conn_id,
+                                        &sid,
+                                        handle,
+                                        terminal_runtime.as_ref(),
+                                        &mut tracked_terminal_tool_calls,
+                                    )
+                                    .await;
                                     break;
                                 }
                                 _ => {}
@@ -1354,29 +1443,16 @@ async fn run_conversation_loop<'a>(
                         }
                         prompt_result = &mut prompt_response => {
                             let reason = prompt_result?.stop_reason;
-                            if !tracked_terminal_tool_calls.is_empty() {
-                                poll_tracked_terminal_tool_calls(
-                                    terminal_runtime.as_ref(),
-                                    &sid,
-                                    conn_id,
-                                    handle,
-                                    &mut tracked_terminal_tool_calls,
-                                )
-                                .await;
-                            }
-                            let reason_str = match reason {
-                                StopReason::EndTurn => "end_turn",
-                                StopReason::Cancelled => "cancelled",
-                                _ => "unknown",
-                            };
-                            let _ = handle.emit(
-                                "acp://event",
-                                AcpEvent::TurnComplete {
-                                    connection_id: conn_id.into(),
-                                    session_id: sid.0.to_string(),
-                                    stop_reason: reason_str.into(),
-                                },
-                            );
+                            emit_turn_complete_after_drain(
+                                session,
+                                reason,
+                                conn_id,
+                                &sid,
+                                handle,
+                                terminal_runtime.as_ref(),
+                                &mut tracked_terminal_tool_calls,
+                            )
+                            .await;
                             break;
                         }
                         _ = terminal_poll_interval.tick(), if !tracked_terminal_tool_calls.is_empty() => {

@@ -79,6 +79,11 @@
     "light": "浅色",
     "dark": "深色",
     "currentTheme": "当前生效主题：{theme}",
+    "messageSectionTitle": "消息显示",
+    "messageSectionDescription": "控制聊天中长用户消息的显示方式。",
+    "autoCollapseLongUserMessages": "自动折叠长用户消息",
+    "autoCollapseLongUserMessagesDescription": "默认折叠过长的用户输入，避免消息列表被撑开。",
+    "autoCollapseLongUserMessagesAria": "自动折叠长用户消息",
     "resolvedTheme": {
       "light": "浅色",
       "dark": "深色",
@@ -1129,7 +1134,8 @@
       },
       "messageThread": {
         "emptyTitle": "暂无消息",
-        "emptyDescription": "开始一个会话后，消息会显示在这里"
+        "emptyDescription": "开始一个会话后，消息会显示在这里",
+        "scrollToBottom": "滚动到最后"
       },
       "chatInput": {
         "connecting": "连接中...",
@@ -1247,6 +1253,10 @@
         "showingTailOutput": "为保证性能，流式输出时仅显示尾部内容。",
         "result": "结果",
         "unknown": "未知",
+        "userText": {
+          "expand": "展开全文",
+          "collapse": "收起"
+        },
         "replaceAll": "全部替换",
         "filesCount": "文件：{count}",
         "update": "更新",

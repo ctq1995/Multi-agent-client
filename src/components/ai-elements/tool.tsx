@@ -28,7 +28,10 @@ export type ToolProps = ComponentProps<typeof Collapsible>
 
 export const Tool = ({ className, ...props }: ToolProps) => (
   <Collapsible
-    className={cn("group mb-4 w-full rounded-md border", className)}
+    className={cn(
+      "ai-tool-surface group mb-4 w-full rounded-md border",
+      className
+    )}
     {...props}
   />
 )
@@ -97,7 +100,7 @@ export const ToolHeader = ({
   return (
     <CollapsibleTrigger
       className={cn(
-        "flex w-full min-w-0 items-center justify-between gap-4 p-3",
+        "ai-tool-header flex w-full min-w-0 items-center justify-between gap-4 border-b border-border/60 p-3",
         className
       )}
       {...props}
@@ -152,7 +155,7 @@ export const ToolInput = ({ className, input, ...props }: ToolInputProps) => {
       <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
         {t("parameters")}
       </h4>
-      <div className="rounded-md bg-muted/50">
+      <div className="ai-tool-input rounded-md border">
         <CodeBlock code={formattedCode} language="json" />
       </div>
     </div>
@@ -387,10 +390,8 @@ export const ToolOutput = ({
       </h4>
       <div
         className={cn(
-          "overflow-x-auto rounded-md text-xs [&_table]:w-full",
-          errorText
-            ? "bg-destructive/10 text-destructive"
-            : "bg-muted/50 text-foreground"
+          "overflow-x-auto rounded-md border text-xs [&_table]:w-full",
+          errorText ? "ai-tool-error" : "ai-tool-output text-foreground"
         )}
       >
         {typeof errorText === "string" && renderErrorText(errorText)}

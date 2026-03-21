@@ -79,6 +79,11 @@
     "light": "Light",
     "dark": "Dark",
     "currentTheme": "Current effective theme: {theme}",
+    "messageSectionTitle": "Message Display",
+    "messageSectionDescription": "Control how long user messages are displayed in chat.",
+    "autoCollapseLongUserMessages": "Auto-collapse long user messages",
+    "autoCollapseLongUserMessagesDescription": "Long user messages will be collapsed by default to keep the thread readable.",
+    "autoCollapseLongUserMessagesAria": "Auto-collapse long user messages",
     "resolvedTheme": {
       "light": "Light",
       "dark": "Dark",
@@ -1129,7 +1134,8 @@
       },
       "messageThread": {
         "emptyTitle": "No messages yet",
-        "emptyDescription": "Start a conversation to see messages here"
+        "emptyDescription": "Start a conversation to see messages here",
+        "scrollToBottom": "Scroll to bottom"
       },
       "chatInput": {
         "connecting": "Connecting...",
@@ -1247,6 +1253,10 @@
         "showingTailOutput": "Showing tail output while streaming for performance.",
         "result": "Result",
         "unknown": "unknown",
+        "userText": {
+          "expand": "Expand",
+          "collapse": "Collapse"
+        },
         "replaceAll": "REPLACE ALL",
         "filesCount": "Files: {count}",
         "update": "update",

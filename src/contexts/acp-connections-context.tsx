@@ -220,80 +220,180 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>
 }
 
+function asJsonRecord(value: unknown): Record<string, unknown> | null {
+  const record = asRecord(value)
+  if (record) return record
+  if (typeof value !== "string") return null
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  try {
+    return asRecord(JSON.parse(trimmed))
+  } catch {
+    return null
+  }
+}
+
+function collectPermissionToolCallRecords(
+  toolCall: unknown
+): Record<string, unknown>[] {
+  const outer = asJsonRecord(toolCall)
+  if (!outer) return []
+  const inner = asJsonRecord(
+    outer.tool_call ?? outer.toolCall ?? outer.tool ?? outer.call
+  )
+  if (!inner || inner === outer) return [outer]
+  return [outer, inner]
+}
+
+function extractOpenAiFunctionName(
+  record: Record<string, unknown>
+): string | null {
+  const fn = asJsonRecord(record.function)
+  const name = fn?.name
+  if (typeof name !== "string") return null
+  const trimmed = name.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
 function extractPermissionToolCallId(toolCall: unknown): string | null {
-  const record = asRecord(toolCall)
-  if (!record) return null
-  const candidates = [
-    record.call_id,
-    record.callId,
-    record.tool_call_id,
-    record.toolCallId,
-    record.id,
-  ]
-  for (const candidate of candidates) {
-    if (typeof candidate === "string" && candidate.trim().length > 0) {
-      return candidate
+  const records = collectPermissionToolCallRecords(toolCall)
+  if (records.length === 0) return null
+  for (const record of records) {
+    const candidates = [
+      record.call_id,
+      record.callId,
+      record.tool_call_id,
+      record.toolCallId,
+      record.id,
+    ]
+    for (const candidate of candidates) {
+      if (typeof candidate === "string" && candidate.trim().length > 0) {
+        return candidate
+      }
     }
   }
   return null
 }
 
+const PERMISSION_TOOL_RAW_INPUT_KEYS = [
+  "rawInput",
+  "raw_input",
+  "input",
+  "arguments",
+  "params",
+  "payload",
+] as const
+
+const PERMISSION_TOOL_FUNCTION_INPUT_KEYS = [
+  "arguments",
+  "args",
+  "input",
+  "params",
+  "payload",
+] as const
+
+function extractPermissionToolRawInputValue(
+  records: Record<string, unknown>[]
+): unknown | null {
+  for (const record of records) {
+    for (const key of PERMISSION_TOOL_RAW_INPUT_KEYS) {
+      const value = record[key]
+      if (value !== undefined && value !== null) return value
+    }
+    const fn = asJsonRecord(record.function)
+    if (!fn) continue
+    for (const key of PERMISSION_TOOL_FUNCTION_INPUT_KEYS) {
+      const value = fn[key]
+      if (value !== undefined && value !== null) return value
+    }
+  }
+  return null
+}
+
+function serializePermissionToolCallWrapper(
+  record: Record<string, unknown>
+): string {
+  // Strip wrapper-only fields to avoid rendering internal permission structure as raw text.
+  const wrapperKeys = new Set([
+    "content",
+    "kind",
+    "title",
+    "toolCallId",
+    "tool_call_id",
+    "callId",
+    "call_id",
+    "rawInput",
+    "raw_input",
+  ])
+  const rest: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(record)) {
+    if (!wrapperKeys.has(k)) rest[k] = v
+  }
+  return Object.keys(rest).length > 0
+    ? JSON.stringify(rest)
+    : JSON.stringify(record)
+}
+
 function serializePermissionToolCall(toolCall: unknown): string | null {
-  const record = asRecord(toolCall)
-  if (!record) return null
+  const records = collectPermissionToolCallRecords(toolCall)
+  if (records.length === 0) {
+    if (typeof toolCall === "string" && toolCall.trim().length > 0) {
+      return toolCall
+    }
+    return null
+  }
+  const record = records[0]!
   try {
-    // Extract the actual tool input from the nested rawInput/raw_input field
-    // rather than serializing the entire permission wrapper (which includes
-    // internal fields like content, kind, title, toolCallId).
-    const nestedInput = record.rawInput ?? record.raw_input
-    if (nestedInput !== undefined && nestedInput !== null) {
-      if (typeof nestedInput === "string") return nestedInput
-      return JSON.stringify(nestedInput)
+    // Prefer nested input fields (raw_input/input/arguments, or OpenAI function.arguments).
+    const rawInputValue = extractPermissionToolRawInputValue(records)
+    if (rawInputValue !== null) {
+      return typeof rawInputValue === "string"
+        ? rawInputValue
+        : JSON.stringify(rawInputValue)
     }
-    // Fallback: strip wrapper-only fields to avoid rendering internal
-    // permission structure as raw text.
-    const wrapperKeys = new Set([
-      "content",
-      "kind",
-      "title",
-      "toolCallId",
-      "tool_call_id",
-      "callId",
-      "call_id",
-      "rawInput",
-      "raw_input",
-    ])
-    const rest: Record<string, unknown> = {}
-    for (const [k, v] of Object.entries(record)) {
-      if (!wrapperKeys.has(k)) rest[k] = v
-    }
-    return Object.keys(rest).length > 0
-      ? JSON.stringify(rest)
-      : JSON.stringify(record)
+    return serializePermissionToolCallWrapper(record)
   } catch {
     return null
   }
 }
 
 function extractPermissionToolTitle(toolCall: unknown): string | null {
-  const record = asRecord(toolCall)
-  if (!record) return null
-  const candidates = [record.title, record.tool_name, record.name, record.type]
-  for (const candidate of candidates) {
-    if (typeof candidate === "string" && candidate.trim().length > 0) {
-      return candidate
+  const records = collectPermissionToolCallRecords(toolCall)
+  if (records.length === 0) return null
+  for (const record of records) {
+    const candidates = [
+      record.title,
+      extractOpenAiFunctionName(record),
+      record.tool_name,
+      record.toolName,
+      record.name,
+      record.type,
+    ]
+    for (const candidate of candidates) {
+      if (typeof candidate === "string" && candidate.trim().length > 0) {
+        return candidate
+      }
     }
   }
   return null
 }
 
 function extractPermissionToolKind(toolCall: unknown): string | null {
-  const record = asRecord(toolCall)
-  if (!record) return null
-  const candidates = [record.kind, record.tool_name, record.name, record.type]
-  for (const candidate of candidates) {
-    if (typeof candidate === "string" && candidate.trim().length > 0) {
-      return candidate
+  const records = collectPermissionToolCallRecords(toolCall)
+  if (records.length === 0) return null
+  for (const record of records) {
+    const candidates = [
+      record.kind,
+      extractOpenAiFunctionName(record),
+      record.tool_name,
+      record.toolName,
+      record.name,
+      record.type,
+    ]
+    for (const candidate of candidates) {
+      if (typeof candidate === "string" && candidate.trim().length > 0) {
+        return candidate
+      }
     }
   }
   return null

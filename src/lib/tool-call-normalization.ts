@@ -39,7 +39,6 @@ const EXACT_TOOL_NAME_ALIASES: Record<string, string> = {
   writefile: "write",
   editfile: "edit",
   // Codex
-  update_plan: "task",
   request_user_input: "question",
   // OpenCode
   delegate_task: "task",

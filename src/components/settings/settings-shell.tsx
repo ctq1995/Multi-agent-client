@@ -66,6 +66,14 @@ function normalizePath(path: string): string {
   return noTrailingSlash || "/"
 }
 
+function toStaticExportPath(path: string): string {
+  const [pathname, query = ""] = path.split("?")
+  const normalizedPath = normalizePath(pathname)
+  const htmlPath =
+    normalizedPath === "/" ? "/index.html" : `${normalizedPath}.html`
+  return query ? `${htmlPath}?${query}` : htmlPath
+}
+
 function isWindowsRuntime(): boolean {
   if (typeof navigator === "undefined") return false
   const platform = navigator.platform.toLowerCase()
@@ -89,7 +97,7 @@ export function SettingsShell({ children }: SettingsShellProps) {
 
       if (isWindowsRuntime()) {
         // WebView2 on Windows: hard navigation is more reliable than client routing.
-        window.location.assign(target)
+        window.location.assign(toStaticExportPath(target))
         return
       }
 
@@ -117,6 +125,8 @@ export function SettingsShell({ children }: SettingsShellProps) {
               const Icon = item.icon
               const translationKey = `nav.${item.labelKey}` as const
               const active =
+                (normalizedPathname === "/settings" &&
+                  item.href === "/settings/appearance") ||
                 normalizedPathname === item.href ||
                 normalizedPathname.startsWith(`${item.href}/`)
               return (

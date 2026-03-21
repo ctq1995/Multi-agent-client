@@ -76,7 +76,9 @@ pub fn run() {
             } else {
                 for entry in &open_folders {
                     let label = windows::folder_window_label(entry.id);
-                    let url = tauri::WebviewUrl::App(format!("folder?id={}", entry.id).into());
+                    let route = format!("folder?id={}", entry.id);
+                    let url =
+                        tauri::WebviewUrl::App(windows::to_tauri_app_path(&route).into());
                     let builder = tauri::WebviewWindowBuilder::new(app, &label, url)
                         .title(&entry.name)
                         .inner_size(1260.0, 860.0)

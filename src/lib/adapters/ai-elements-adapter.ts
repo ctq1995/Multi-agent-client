@@ -704,11 +704,16 @@ export function adaptMessageTurn(
     }
   }
 
-  // Mark the last reasoning block as streaming if the turn is actively streaming
+  // Mark the last reasoning block (if any) as streaming while the turn is streaming.
+  // Reasoning blocks are not guaranteed to be the last content part (tool calls
+  // can follow), so we scan from the end.
   if (isStreaming) {
-    const last = adaptedContent[adaptedContent.length - 1]
-    if (last?.type === "reasoning") {
-      last.isStreaming = true
+    for (let i = adaptedContent.length - 1; i >= 0; i -= 1) {
+      const part = adaptedContent[i]
+      if (part?.type === "reasoning") {
+        part.isStreaming = true
+        break
+      }
     }
   }
 

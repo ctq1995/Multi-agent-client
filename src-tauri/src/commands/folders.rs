@@ -3,7 +3,7 @@ use std::fs::{File, OpenOptions};
 use std::hash::{Hash, Hasher};
 use std::io::{Read, Write};
 use std::path::{Component, Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::sync::{mpsc, LazyLock, Mutex};
 use std::time::{Duration, Instant, UNIX_EPOCH};
 
@@ -879,12 +879,60 @@ pub async fn git_commit(
 
 #[tauri::command]
 pub async fn git_rollback_file(path: String, file: String) -> Result<(), AppCommandError> {
-    let target = file.trim();
-    if target.is_empty() {
+    let raw_target = file.trim();
+    if raw_target.is_empty() {
         return Err(AppCommandError::invalid_input("File path cannot be empty"));
     }
 
-    let literal_file = to_git_literal_pathspec(target);
+    let repo_root = PathBuf::from(&path);
+    if !repo_root.exists() || !repo_root.is_dir() {
+        return Err(AppCommandError::not_found("Folder does not exist"));
+    }
+
+    let target = raw_target.replace('\\', "/");
+    let fs_target = resolve_tree_path(&repo_root, &target)?;
+    if fs_target.exists() {
+        let meta = std::fs::symlink_metadata(&fs_target).map_err(AppCommandError::io)?;
+        if meta.is_dir() && !meta.file_type().is_symlink() {
+            return Err(AppCommandError::invalid_input("Rollback target must be a file"));
+        }
+    }
+
+    let literal_file = to_git_literal_pathspec(&target);
+    if !is_git_tracked(&path, &literal_file).await? {
+        rollback_untracked_fs_path(&fs_target)?;
+        return Ok(());
+    }
+
+    restore_tracked_path(&path, &literal_file).await
+}
+
+async fn is_git_tracked(repo_path: &str, literal_file: &str) -> Result<bool, AppCommandError> {
+    let output = crate::process::tokio_command("git")
+        .args(["ls-files", "--error-unmatch", "--", literal_file])
+        .current_dir(repo_path)
+        .output()
+        .await
+        .map_err(AppCommandError::io)?;
+    Ok(output.status.success())
+}
+
+fn rollback_untracked_fs_path(target: &Path) -> Result<(), AppCommandError> {
+    if !target.exists() {
+        return Ok(());
+    }
+
+    let meta = std::fs::symlink_metadata(target).map_err(AppCommandError::io)?;
+    if meta.file_type().is_symlink() || !meta.is_dir() {
+        std::fs::remove_file(target).map_err(AppCommandError::io)?;
+        return Ok(());
+    }
+
+    std::fs::remove_dir_all(target).map_err(AppCommandError::io)?;
+    Ok(())
+}
+
+async fn restore_tracked_path(repo_path: &str, literal_file: &str) -> Result<(), AppCommandError> {
     let restore_output = crate::process::tokio_command("git")
         .args([
             "restore",
@@ -892,9 +940,9 @@ pub async fn git_rollback_file(path: String, file: String) -> Result<(), AppComm
             "--staged",
             "--worktree",
             "--",
-            &literal_file,
+            literal_file,
         ])
-        .current_dir(&path)
+        .current_dir(repo_path)
         .output()
         .await
         .map_err(AppCommandError::io)?;
@@ -903,32 +951,37 @@ pub async fn git_rollback_file(path: String, file: String) -> Result<(), AppComm
         return Ok(());
     }
 
-    let restore_stderr = String::from_utf8_lossy(&restore_output.stderr)
+    let stderr = String::from_utf8_lossy(&restore_output.stderr)
         .trim()
         .to_string();
-    let restore_stderr_lower = restore_stderr.to_lowercase();
-    let supports_restore = !restore_stderr_lower.contains("unknown option")
-        && !restore_stderr_lower.contains("unknown switch")
-        && !restore_stderr_lower.contains("not a git command")
-        && !restore_stderr_lower.contains("did you mean");
+    let stderr_lower = stderr.to_lowercase();
+    let restore_supported = !stderr_lower.contains("unknown option")
+        && !stderr_lower.contains("unknown switch")
+        && !stderr_lower.contains("not a git command")
+        && !stderr_lower.contains("did you mean");
 
-    if supports_restore {
-        return Err(AppCommandError::external_command(
-            "git restore failed",
-            restore_stderr,
-        ));
+    if restore_supported {
+        return Err(AppCommandError::external_command("git restore failed", stderr));
     }
 
-    let _ = crate::process::tokio_command("git")
-        .args(["reset", "HEAD", "--", &literal_file])
-        .current_dir(&path)
+    reset_and_checkout(repo_path, literal_file).await
+}
+
+async fn reset_and_checkout(repo_path: &str, literal_file: &str) -> Result<(), AppCommandError> {
+    let reset_output = crate::process::tokio_command("git")
+        .args(["reset", "HEAD", "--", literal_file])
+        .current_dir(repo_path)
         .output()
         .await
         .map_err(AppCommandError::io)?;
 
+    if !reset_output.status.success() {
+        return Err(git_command_error("reset HEAD --", &reset_output.stderr));
+    }
+
     let checkout_output = crate::process::tokio_command("git")
-        .args(["checkout", "--", &literal_file])
-        .current_dir(&path)
+        .args(["checkout", "--", literal_file])
+        .current_dir(repo_path)
         .output()
         .await
         .map_err(AppCommandError::io)?;
@@ -1163,7 +1216,7 @@ fn git_check_ignored_paths(
         return Ok(HashSet::new());
     }
 
-    let mut child = Command::new("git")
+    let mut child = crate::process::std_command("git")
         .args(["check-ignore", "--stdin", "-z"])
         .current_dir(repo_path)
         .stdin(Stdio::piped())

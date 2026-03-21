@@ -1,12 +1,5 @@
-"use client"
-
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { WelcomeScreen } from "@/components/welcome/welcome-screen"
 
 export default function Page() {
-  const router = useRouter()
-  useEffect(() => {
-    router.replace("/welcome")
-  }, [router])
-  return null
+  return <WelcomeScreen />
 }
