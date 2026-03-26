@@ -2,10 +2,12 @@
 
 export interface ChatDisplaySettings {
   autoCollapseLongUserMessages: boolean
+  showTurnNavigator: boolean
 }
 
 export const DEFAULT_CHAT_DISPLAY_SETTINGS: ChatDisplaySettings = {
   autoCollapseLongUserMessages: true,
+  showTurnNavigator: true,
 }
 
 export const CHAT_DISPLAY_SETTINGS_STORAGE_KEY = "settings:chat-display:v1"
@@ -19,6 +21,9 @@ function normalizeChatDisplaySettings(input: unknown): ChatDisplaySettings {
   const record = input as Record<string, unknown>
   if (typeof record.autoCollapseLongUserMessages === "boolean") {
     next.autoCollapseLongUserMessages = record.autoCollapseLongUserMessages
+  }
+  if (typeof record.showTurnNavigator === "boolean") {
+    next.showTurnNavigator = record.showTurnNavigator
   }
 
   return next

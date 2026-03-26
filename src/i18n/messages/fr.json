@@ -106,7 +106,10 @@
       "light": "Clair",
       "dark": "Sombre",
       "unknown": "--"
-    }
+    },
+    "chatSection": "Affichage du chat",
+    "showTurnNavigator": "Afficher le navigateur de tours",
+    "showTurnNavigatorDescription": "Affiche une barre de navigation flottante en bas du chat pour passer rapidement d'un tour à l'autre."
   },
   "SystemSettings": {
     "loading": "Chargement...",

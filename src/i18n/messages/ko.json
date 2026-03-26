@@ -106,7 +106,10 @@
       "light": "라이트",
       "dark": "다크",
       "unknown": "--"
-    }
+    },
+    "chatSection": "채팅 표시",
+    "showTurnNavigator": "턴 내비게이터 표시",
+    "showTurnNavigatorDescription": "채팅 하단에 내비게이터 바를 표시하여 사용자 턴 간에 빠르게 이동할 수 있습니다."
   },
   "SystemSettings": {
     "loading": "로딩 중...",

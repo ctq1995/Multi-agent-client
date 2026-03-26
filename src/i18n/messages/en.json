@@ -106,7 +106,10 @@
       "light": "Light",
       "dark": "Dark",
       "unknown": "--"
-    }
+    },
+    "chatSection": "Chat Display",
+    "showTurnNavigator": "Show turn navigator",
+    "showTurnNavigatorDescription": "Show a floating navigation bar at the bottom of the chat to jump between user turns."
   },
   "SystemSettings": {
     "loading": "Loading...",

@@ -13,6 +13,7 @@ import {
 interface UseChatDisplaySettingsResult {
   settings: ChatDisplaySettings
   setAutoCollapseLongUserMessages: (enabled: boolean) => void
+  setShowTurnNavigator: (enabled: boolean) => void
   resetChatDisplaySettings: () => void
 }
 
@@ -59,6 +60,14 @@ export function useChatDisplaySettings(): UseChatDisplaySettingsResult {
     })
   }, [])
 
+  const setShowTurnNavigator = useCallback((enabled: boolean) => {
+    setSettings((prev) => {
+      const next = { ...prev, showTurnNavigator: enabled }
+      writeChatDisplaySettings(next)
+      return next
+    })
+  }, [])
+
   const resetChatDisplaySettings = useCallback(() => {
     setSettings(DEFAULT_CHAT_DISPLAY_SETTINGS)
     writeChatDisplaySettings(DEFAULT_CHAT_DISPLAY_SETTINGS)
@@ -67,6 +76,7 @@ export function useChatDisplaySettings(): UseChatDisplaySettingsResult {
   return {
     settings,
     setAutoCollapseLongUserMessages,
+    setShowTurnNavigator,
     resetChatDisplaySettings,
   }
 }

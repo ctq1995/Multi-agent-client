@@ -106,7 +106,10 @@
       "light": "浅色",
       "dark": "深色",
       "unknown": "未知"
-    }
+    },
+    "chatSection": "对话显示",
+    "showTurnNavigator": "显示对话导航栏",
+    "showTurnNavigatorDescription": "在对话底部显示悬浮导航栏，可快速跳转到任意用户轮次。"
   },
   "SystemSettings": {
     "loading": "加载中...",

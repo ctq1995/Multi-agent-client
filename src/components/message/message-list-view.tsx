@@ -15,6 +15,8 @@ import { UserResourceLinks } from "./user-resource-links"
 import { UserImageAttachments } from "./user-image-attachments"
 import { useSessionStats } from "@/contexts/session-stats-context"
 import { AgentPlanOverlay } from "@/components/chat/agent-plan-overlay"
+import { TurnNavigator } from "@/components/chat/turn-navigator"
+import { useChatDisplaySettings } from "@/hooks/use-chat-display-settings"
 import {
   MessageThread,
   MessageThreadScrollButton,
@@ -308,8 +310,9 @@ export function MessageListView({
     switch (item.kind) {
       case "turn": {
         const pt = item.isRoleTransition ? 16 : 0
+        const id = item.group.role === "user" ? `turn-user-${item.group.id}` : undefined
         return (
-          <div style={pt > 0 ? { paddingTop: pt } : undefined}>
+          <div id={id} style={pt > 0 ? { paddingTop: pt } : undefined}>
             <HistoricalMessageGroup
               group={item.group}
               dimmed={item.phase === "optimistic"}
@@ -338,6 +341,16 @@ export function MessageListView({
   )
 
   const agentPlanOverlayKey = liveMessage?.id ?? `history-${conversationId}`
+
+  const { settings, setShowTurnNavigator } = useChatDisplaySettings()
+
+  const userTurnIds = useMemo(
+    () =>
+      threadItems
+        .filter((item) => item.kind === "turn" && item.group.role === "user")
+        .map((item) => `turn-user-${item.kind === "turn" ? item.group.id : ""}`),
+    [threadItems]
+  )
 
   const hasRenderableContent = threadItems.length > 0 || Boolean(liveMessage)
 
@@ -393,6 +406,12 @@ export function MessageListView({
         planKey={historicalPlanKey}
         defaultExpanded={connStatus === "prompting"}
       />
+      {settings.showTurnNavigator && userTurnIds.length > 1 && (
+        <TurnNavigator
+          userTurnIds={userTurnIds}
+          onClose={() => setShowTurnNavigator(false)}
+        />
+      )}
     </div>
   )
 }

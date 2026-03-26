@@ -106,7 +106,10 @@
       "light": "Claro",
       "dark": "Oscuro",
       "unknown": "--"
-    }
+    },
+    "chatSection": "Visualización del chat",
+    "showTurnNavigator": "Mostrar navegador de turnos",
+    "showTurnNavigatorDescription": "Muestra una barra de navegación flotante en la parte inferior del chat para saltar entre turnos de usuario."
   },
   "SystemSettings": {
     "loading": "Cargando...",

@@ -106,7 +106,10 @@
       "light": "فاتح",
       "dark": "داكن",
       "unknown": "--"
-    }
+    },
+    "chatSection": "عرض المحادثة",
+    "showTurnNavigator": "إظهار شريط التنقل بين الأدوار",
+    "showTurnNavigatorDescription": "يعرض شريط تنقل عائمًا أسفل المحادثة للانتقال السريع بين أدوار المستخدم."
   },
   "SystemSettings": {
     "loading": "جارٍ التحميل...",

@@ -106,7 +106,10 @@
       "light": "ライト",
       "dark": "ダーク",
       "unknown": "--"
-    }
+    },
+    "chatSection": "チャット表示",
+    "showTurnNavigator": "ターンナビゲーターを表示",
+    "showTurnNavigatorDescription": "チャット下部にナビゲーターバーを表示し、ユーザーターン間を素早く移動できます。"
   },
   "SystemSettings": {
     "loading": "読み込み中...",

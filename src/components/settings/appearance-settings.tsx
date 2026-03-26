@@ -10,12 +10,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { useChatDisplaySettings } from "@/hooks/use-chat-display-settings"
 
 type ThemeMode = "system" | "light" | "dark"
 
 export function AppearanceSettings() {
   const t = useTranslations("AppearanceSettings")
   const { theme, resolvedTheme, setTheme } = useTheme()
+  const { settings, setShowTurnNavigator } = useChatDisplaySettings()
   const resolvedThemeLabel =
     resolvedTheme === "dark"
       ? t("resolvedTheme.dark")
@@ -74,6 +77,22 @@ export function AppearanceSettings() {
             >
               {t("currentTheme", { theme: resolvedThemeLabel })}
             </p>
+          </div>
+        </section>
+
+        <section className="rounded-xl border bg-card p-4 space-y-4">
+          <h2 className="text-sm font-semibold">{t("chatSection")}</h2>
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <p className="text-xs font-medium">{t("showTurnNavigator")}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {t("showTurnNavigatorDescription")}
+              </p>
+            </div>
+            <Switch
+              checked={settings.showTurnNavigator}
+              onCheckedChange={setShowTurnNavigator}
+            />
           </div>
         </section>
       </div>

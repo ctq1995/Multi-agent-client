@@ -106,7 +106,10 @@
       "light": "Hell",
       "dark": "Dunkel",
       "unknown": "--"
-    }
+    },
+    "chatSection": "Chat-Anzeige",
+    "showTurnNavigator": "Gesprächsnavigator anzeigen",
+    "showTurnNavigatorDescription": "Zeigt eine schwebende Navigationsleiste am unteren Rand des Chats an, um zwischen Benutzer-Turns zu springen."
   },
   "SystemSettings": {
     "loading": "Wird geladen...",
