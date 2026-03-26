@@ -1,130 +1,93 @@
 # Multi-agent-client
 
 [![License](https://img.shields.io/github/license/xintaofei/codeg)](./LICENSE)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)](./package.json)
 [![Tauri](https://img.shields.io/badge/Tauri-2.x-24C8DB)](https://tauri.app/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
-[![基于](https://img.shields.io/badge/基于-codeg%20v0.4.1-orange)](https://github.com/xintaofei/codeg)
 
-> 本项目 fork 自 [xintaofei/codeg](https://github.com/xintaofei/codeg)，当前基于上游 `v0.1.4` 分支进行定制开发，上游最新版本为 `v0.4.1`。
-
-**Multi-agent-client** 是一个桌面应用，用于聚合和浏览本地 AI 编码代理的会话记录。它从多个代理（Claude Code、Codex CLI、OpenCode、Gemini CLI 等）的本地文件系统中读取会话数据，统一格式后在 UI 中展示，并支持多种远程模型接口配置。
+**Multi-agent-client** 是一个桌面应用，用于聚合和管理本地 AI 编码代理的会话记录。支持实时连接多种 AI 代理进程，统一管理会话、文件、Git 工作流，并内置 Web 服务模式供远程访问。
 
 ---
 
-## 功能现状与上游对比
+## 功能特性
 
-本分支基于上游 `v0.1.4` 标签 fork，并在此基础上进行了独立的功能增强。上游目前已迭代至 `v0.4.1`，以下是详细的功能对比说明。
+### 多代理会话聚合
 
-### 本分支已有 / 独有的功能
-
-| 功能 | 说明 |
-|------|------|
-| **多 AI 代理会话聚合** | 支持 Claude Code、Codex CLI、OpenCode 会话读取与展示 |
-| **多语言 UI** | 支持中文（简/繁）、英、日、韩、法、德、西、葡、阿拉伯语 |
-| **ACP（Agent Control Protocol）** | 实时连接本地代理进程，发送消息、查看响应 |
-| **MCP 管理** | 本地扫描 + 注册表搜索/安装 MCP 服务 |
-| **Skills 管理** | 全局和项目级别的 Skills 配置 |
-| **Git 工作流集成** | 文件树、diff 查看、git 变更、提交、终端 |
-| **GitHub 克隆进度条** | 克隆远程仓库时显示实时进度 |
-| **窗口置顶修复** | 修复设置窗口打开时遮挡其他应用的问题 |
-| **更多权限请求格式支持** | 兼容更多代理发出的权限请求格式 |
-| **远程模型选择器** | 支持配置自定义 API 接口并从远端拉取模型列表 |
-| **多接口自动适配** | 自动识别 Anthropic / Gemini / OpenAI 兼容接口，使用对应鉴权方式和路径格式 |
-| **模型列表精简显示** | 只显示模型名称 + 上下文长度能力标签，界面简洁清晰 |
-| **欢迎页版本号动态读取** | 版本号从 Tauri 运行时动态获取，随 `tauri.conf.json` 自动变化 |
-| **通知系统** | 支持系统通知推送 |
-
-### 上游已有、本分支尚未合并的功能
-
-| 功能模块 | 上游版本引入 | 说明 |
-|----------|-------------|------|
-| **Web 服务模式** | v0.3.0+ | 内置 HTTP 服务器，可从任意浏览器远程访问 Codeg，实现远程开发。包含完整的 Web API、WebSocket 事件桥接、身份验证 |
-| **OpenClaw 代理支持** | v0.2.x+ | 新增 OpenClaw 代理的会话解析器 |
-| **Gemini CLI 解析器** | v0.2.x+ | 新增 Gemini CLI 会话历史读取 |
-| **版本控制增强** | v0.2.x+ | Push、Pull、Stash、Merge 冲突解决 UI，三栏 Merge 编辑器 |
-| **Git 账号管理** | v0.2.x+ | GitHub 及其他 Git 服务器的账号凭据管理（基于系统 Keyring） |
-| **图片预览** | v0.2.x+ | 在软件内预览会话中引用的图片文件 |
-| **虚拟化消息列表** | v0.2.x+ | 使用 Virtua 替换 @tanstack/react-virtual，提升长会话滚动性能 |
-| **Monaco 代码编辑器集成** | v0.2.x+ | 内置 Monaco Editor，支持本地文件编辑 |
-| **Agent Fork 支持** | v0.2.x+ | ACP 代理进程 fork 管理 |
-| **Transport 抽象层** | v0.3.0+ | 统一 Tauri IPC 和 Web HTTP 两种传输方式，同一套前端代码适配桌面和 Web |
-| **登录页面** | v0.3.0+ | Web 模式下的身份验证登录页 |
-| **会话块级虚拟化渲染** | v0.2.x+ | 重构消息渲染，支持块级虚拟化，减少卡顿 |
-| **并行命令执行结果修复** | v0.2.x+ | 修复并行命令的执行结果与命令块的对应关系 |
-| **Mermaid 版本统一** | v0.2.x+ | 统一 Mermaid 图表渲染版本 |
-
-### 功能异同摘要
-
-```
-上游 v0.4.1 核心新增:
-  ✦ Web 服务模式（最大差异，约 25+ 新文件）
-  ✦ 更多代理适配（Gemini CLI、OpenClaw）
-  ✦ 完整 Git 高级操作（Push/Merge/Stash/凭据管理）
-  ✦ 性能优化（块级虚拟化、Virtua 替换）
-  ✦ Monaco 代码编辑器
-
-本分支独有:
-  ✦ 多接口 API 自动适配（Anthropic/Gemini/OpenAI）
-  ✦ 模型列表精简 UI
-  ✦ 窗口置顶问题修复
-  ✦ GitHub 克隆进度条
-  ✦ 通知系统
-```
-
----
-
-## 技术栈
-
-- **桌面运行时**：Tauri 2（Rust 后端 + WebView 前端）
-- **前端**：Next.js 16（静态导出）+ React 19 + TypeScript（strict 模式）
-- **样式**：Tailwind CSS v4 + shadcn/ui
-- **包管理器**：pnpm
-- **数据库**：SeaORM + SQLite（会话索引）
-
----
-
-## 支持的代理
-
-### 会话历史读取
-
-| 代理 | 环境变量路径 | macOS/Linux 默认路径 | Windows 默认路径 |
-|------|-------------|---------------------|------------------|
-| Claude Code | `$CLAUDE_CONFIG_DIR/projects` | `~/.claude/projects` | `%USERPROFILE%\.claude\projects` |
-| Codex CLI | `$CODEX_HOME` | `~/.codex/sessions` | `%USERPROFILE%\.codex\sessions` |
-| OpenCode | — | `~/.local/share/opencode` | `%APPDATA%\opencode` |
+- 支持读取和展示 **Claude Code**、**Codex CLI**、**OpenCode**、**Gemini CLI**、**OpenClaw** 的本地会话历史
+- 统一格式渲染，支持代码块高亮、工具调用、推理内容等富文本元素
 
 ### ACP 实时连接
 
-支持通过 ACP 协议实时连接以下代理进程：
-- Claude Code、Codex CLI、OpenCode 等
+- 通过 ACP（Agent Control Protocol）实时连接本地代理进程
+- 支持发送消息、取消操作、权限请求响应、模式切换、配置下发
+- 支持 Agent Fork（并行子任务分支）
+- 兼容多种权限请求格式
+
+### Git 工作流集成
+
+- 文件树浏览、文件内容查看与编辑（Monaco Editor）
+- Git 状态、diff 查看、提交、推送、拉取、分支管理
+- Stash 管理（push/pop/apply/drop/show）
+- 合并冲突可视化解决（三栏 Merge 编辑器）
+- Remote 管理、GitHub 账号凭据管理（基于系统 Keyring）
+- GitHub 仓库克隆（含实时进度显示）
+
+### 模型管理
+
+- 支持配置自定义 API 接口，从远端拉取模型列表
+- 自动识别 **Anthropic** / **Gemini** / **OpenAI 兼容**接口，使用对应鉴权方式和路径
+- 模型拉取通过 Rust 后端执行，绕过浏览器 CORS 限制
+- 支持 OpenAI 兼容第三方接口（如 `https://free.9977.me/v1`）
+
+### Web 服务模式
+
+- 内置 HTTP 服务器，可从任意浏览器远程访问应用
+- 完整 Web API + WebSocket 事件桥接
+- 支持身份验证配置
+
+### MCP 管理
+
+- 本地 MCP 服务扫描
+- 注册表市场搜索与一键安装
+
+### Skills 管理
+
+- 全局和项目级别的 Skills 配置与管理
+
+### 多语言支持
+
+- 支持中文（简体/繁体）、英语、日语、韩语、法语、德语、西班牙语、葡萄牙语、阿拉伯语
+
+### 其他
+
+- 图片文件预览
+- 系统通知推送
+- 系统代理配置（适用于企业网络）
+- 虚拟化消息列表，提升长会话滚动性能
 
 ---
 
-## 快速开始
+## 下载安装
+
+前往 [Releases](../../releases) 页面下载最新版本：
+
+- `Multi-agent-client_1.0.0_x64_en-US.msi` — Windows 安装包（MSI）
+- `Multi-agent-client_1.0.0_x64-setup.exe` — Windows 安装包（NSIS）
+
+---
+
+## 本地开发
 
 ### 环境要求
 
-- Node.js `>=22`
-- pnpm `>=10`
-- Rust stable（2021 edition）
-- Tauri 2 构建依赖
+- Node.js 20+，pnpm 9+
+- Rust 1.77+（含 `cargo`）
+- Tauri CLI v2
 
-Linux（Debian/Ubuntu）额外依赖：
-
-```bash
-sudo apt-get install -y \
-  libwebkit2gtk-4.1-dev \
-  libayatana-appindicator3-dev \
-  librsvg2-dev \
-  patchelf
-```
-
-### 开发
+### 开发命令
 
 ```bash
-pnpm install
-
-# 启动完整应用（Tauri + Next.js Turbopack）
+# 启动完整应用（Tauri + Next.js Turbopack 开发服务器）
 pnpm tauri dev
 
 # 仅启动前端
@@ -151,14 +114,16 @@ cargo clippy
 ```text
 Next.js 16 (Static Export) + React 19
         |
-        | invoke()
+        | invoke() / Web Transport
         v
 Tauri 2 Commands (Rust)
   |- ACP Manager          ← 代理进程实时连接
-  |- Parsers              ← 本地会话文件解析
+  |- Parsers              ← 本地会话文件解析（Claude/Codex/OpenCode/Gemini/OpenClaw）
   |- Git / File / Terminal
   |- MCP marketplace
-  |- Model Catalog        ← 远程模型列表拉取（本分支增强）
+  |- Model Catalog        ← 远程模型列表拉取（Rust 后端，绕过 CORS）
+  |- Web Server           ← 内置 HTTP + WebSocket 服务
+  |- Git Credential       ← 系统 Keyring 凭据管理
   |- SeaORM + SQLite
         |
         v
@@ -172,6 +137,7 @@ Tauri 2 Commands (Rust)
 - 默认本地优先：所有解析、存储和项目操作均在本地执行
 - 网络请求仅在用户主动触发时发生（如拉取远程模型列表）
 - 支持系统代理，适用于企业网络环境
+- Git 凭据通过系统 Keyring 安全存储
 
 ---
 
