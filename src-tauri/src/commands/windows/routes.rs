@@ -1,6 +1,9 @@
 fn normalize_route(route: &str) -> (String, Option<String>) {
     let (path, query) = route.split_once('?').unwrap_or((route, ""));
-    let normalized_path = path.trim_start_matches('/').trim_end_matches('/').to_string();
+    let normalized_path = path
+        .trim_start_matches('/')
+        .trim_end_matches('/')
+        .to_string();
     let normalized_query = if query.is_empty() {
         None
     } else {

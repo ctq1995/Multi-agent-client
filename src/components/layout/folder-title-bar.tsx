@@ -33,6 +33,7 @@ import {
   formatShortcutLabel,
   matchShortcutEvent,
 } from "@/lib/keyboard-shortcuts"
+import { AGENT_DISPLAY_ORDER } from "@/lib/types"
 import { AppTitleBar } from "./app-title-bar"
 import { FolderNameDropdown } from "./folder-name-dropdown"
 import { BranchDropdown } from "./branch-dropdown"
@@ -151,7 +152,7 @@ export function FolderTitleBar() {
       if (matchShortcutEvent(e, shortcuts.new_conversation)) {
         if (!folderPath) return
         e.preventDefault()
-        openNewConversationTab("codex", folderPath)
+        openNewConversationTab(AGENT_DISPLAY_ORDER[0], folderPath)
         return
       }
       if (matchShortcutEvent(e, shortcuts.open_folder)) {

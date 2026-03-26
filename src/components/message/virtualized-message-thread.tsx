@@ -1,8 +1,8 @@
 "use client"
 
-import { useCallback } from "react"
+import { useCallback, useRef } from "react"
 import type { ReactNode } from "react"
-import { useVirtualizer } from "@tanstack/react-virtual"
+import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual"
 import { useStickToBottomContext } from "use-stick-to-bottom"
 import {
   MessageThreadContent,
@@ -34,12 +34,21 @@ export function VirtualizedMessageThread<T>({
   contentProps,
 }: VirtualizedMessageThreadProps<T>) {
   const { scrollRef } = useStickToBottomContext()
+  const measurementCacheRef = useRef(new Map<string, number>())
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: items.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => estimateSize,
+    estimateSize: (index) => {
+      const item = items[index]
+      if (!item) {
+        return estimateSize
+      }
+
+      const cached = measurementCacheRef.current.get(getItemKey(item, index))
+      return cached ?? estimateSize
+    },
     overscan,
     useAnimationFrameWithResizeObserver: true,
     isScrollingResetDelay: 100,
@@ -52,15 +61,38 @@ export function VirtualizedMessageThread<T>({
     },
   })
 
+  const measureRowElement = useCallback(
+    (element: HTMLDivElement | null) => {
+      if (!element) {
+        return
+      }
+
+      const index = Number(element.dataset.index)
+      if (!Number.isFinite(index)) {
+        return
+      }
+
+      const item = items[index]
+      if (item) {
+        measurementCacheRef.current.set(
+          getItemKey(item, index),
+          element.getBoundingClientRect().height
+        )
+      }
+      virtualizer.measureElement(element)
+    },
+    [getItemKey, items, virtualizer]
+  )
+
   const renderVirtualRow = useCallback(
-    (virtualItem: ReturnType<typeof virtualizer.getVirtualItems>[number]) => {
+    (virtualItem: VirtualItem) => {
       const item = items[virtualItem.index]
       if (!item) return null
 
       return (
         <div
           key={virtualItem.key}
-          ref={virtualizer.measureElement}
+          ref={measureRowElement}
           data-index={virtualItem.index}
           className="absolute left-0 top-0 w-full"
           style={{
@@ -74,7 +106,7 @@ export function VirtualizedMessageThread<T>({
         </div>
       )
     },
-    [className, items, renderItem, virtualizer]
+    [className, items, measureRowElement, renderItem]
   )
 
   return (

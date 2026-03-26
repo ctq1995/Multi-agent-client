@@ -93,7 +93,10 @@ async fn read_git_progress_stream(
 
     let mut buffer = vec![0u8; IO_BUFFER_SIZE];
     loop {
-        let read = stderr.read(&mut buffer).await.map_err(AppCommandError::io)?;
+        let read = stderr
+            .read(&mut buffer)
+            .await
+            .map_err(AppCommandError::io)?;
         if read == 0 {
             break;
         }
@@ -254,8 +257,10 @@ fn classify_git_clone_error(stderr: &str) -> AppCommandError {
     }
 
     if normalized.contains("repository not found") {
-        return AppCommandError::not_found("Repository not found. Check URL and access permissions.")
-            .with_detail(stderr.to_string());
+        return AppCommandError::not_found(
+            "Repository not found. Check URL and access permissions.",
+        )
+        .with_detail(stderr.to_string());
     }
 
     if normalized.contains("could not resolve host")
@@ -271,8 +276,10 @@ fn classify_git_clone_error(stderr: &str) -> AppCommandError {
         || normalized.contains("could not read username")
         || normalized.contains("permission denied (publickey)")
     {
-        return AppCommandError::authentication_failed("Authentication failed while cloning repository")
-            .with_detail(stderr.to_string());
+        return AppCommandError::authentication_failed(
+            "Authentication failed while cloning repository",
+        )
+        .with_detail(stderr.to_string());
     }
 
     if normalized.contains("permission denied") {

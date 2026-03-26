@@ -400,6 +400,14 @@ export interface SessionUsageUpdateInfo {
   size: number
 }
 
+export interface RemoteModelInfo {
+  id: string
+  name: string
+  owned_by?: string | null
+  context_window?: number | null
+  description?: string | null
+}
+
 // ACP events pushed from Rust backend (discriminated by "type" field)
 export type AcpEvent =
   | { type: "content_delta"; connection_id: string; text: string }

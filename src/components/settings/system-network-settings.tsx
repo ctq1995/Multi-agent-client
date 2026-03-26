@@ -68,7 +68,6 @@ export function SystemNetworkSettings() {
   const [installingUpdate, setInstallingUpdate] = useState(false)
   const [updateError, setUpdateError] = useState<string | null>(null)
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null)
-
   const [appLanguage, setAppLanguage] = useState<LanguageSelectValue>(
     languageSettings.mode === "system" ? "system" : languageSettings.language
   )

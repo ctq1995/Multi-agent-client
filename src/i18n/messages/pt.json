@@ -531,6 +531,18 @@
       "upgradeAvailable": "{versionText}. Atualização disponível.",
       "remoteUnavailable": "{versionText}. A versão remota está indisponível no momento.",
       "latest": "{versionText}. Já está na versão mais recente."
+    },
+    "modelSelector": {
+      "fetchModels": "Fetch models",
+      "fetchedCount": "{count} models loaded",
+      "fetchFirst": "Fill API URL and API key first",
+      "fetchProviderFirst": "Fill current provider API URL and API key first",
+      "fetchCurrentProviderModelsFirst": "Fetch current provider models first",
+      "configureProviderFirst": "Configure a provider first",
+      "empty": "No models available",
+      "filterHint": "Type to automatically filter models",
+      "select": "Select",
+      "contextWindow": "Context {count}"
     }
   },
   "SettingsPages": {
@@ -1110,7 +1122,8 @@
         "autoLinkPreflightFailed": "Pré-voo do vínculo automático falhou: {message}",
         "connectFailedTitle": "Falha na conexão de {agent}",
         "toolFallbackTitle": "Ferramenta",
-        "eventErrorTitle": "Erro do agente"
+        "eventErrorTitle": "Erro do agente",
+        "notificationTurnComplete": "{agent} concluiu a resposta"
       },
       "connectionLifecycle": {
         "tasks": {

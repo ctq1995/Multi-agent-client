@@ -29,6 +29,7 @@ import type {
   FolderCommand,
   TerminalInfo,
   PromptInputBlock,
+  RemoteModelInfo,
   FileTreeNode,
   FilePreviewContent,
   FileEditContent,
@@ -210,6 +211,16 @@ export async function acpPreflight(
   agentType: AgentType
 ): Promise<PreflightResult> {
   return invoke("acp_preflight", { agentType })
+}
+
+export async function fetchRemoteModels(params: {
+  baseUrl: string
+  apiKey?: string | null
+}): Promise<RemoteModelInfo[]> {
+  return invoke("fetch_remote_models", {
+    baseUrl: params.baseUrl,
+    apiKey: params.apiKey ?? null,
+  })
 }
 
 export async function acpListAgentSkills(params: {

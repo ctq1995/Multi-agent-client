@@ -1,6 +1,11 @@
 "use client"
 
-import type { ComponentProps, CSSProperties, HTMLAttributes } from "react"
+import type {
+  ComponentProps,
+  CSSProperties,
+  HTMLAttributes,
+  ReactNode,
+} from "react"
 import type {
   BundledLanguage,
   BundledTheme,
@@ -21,6 +26,7 @@ import { CheckIcon, CopyIcon } from "lucide-react"
 import {
   createContext,
   memo,
+  startTransition,
   useCallback,
   useContext,
   useEffect,
@@ -29,6 +35,8 @@ import {
   useState,
 } from "react"
 import { createHighlighter } from "shiki"
+import { useNearViewport } from "@/hooks/use-near-viewport"
+import { getLruValue, setLruValue } from "@/lib/lru-cache"
 
 // Shiki uses bitflags for font styles: 1=italic, 2=bold, 4=underline
 // biome-ignore lint/suspicious/noBitwiseOperators: shiki bitflag check
@@ -113,10 +121,18 @@ interface CodeBlockContextType {
   code: string
 }
 
+interface CodeBlockVisibilityContextType {
+  isVisible: boolean
+}
+
 // Context
 const CodeBlockContext = createContext<CodeBlockContextType>({
   code: "",
 })
+const CodeBlockVisibilityContext =
+  createContext<CodeBlockVisibilityContextType>({
+    isVisible: true,
+  })
 
 // Highlighter cache (singleton per language)
 const highlighterCache = new Map<
@@ -126,9 +142,16 @@ const highlighterCache = new Map<
 
 // Token cache
 const tokensCache = new Map<string, TokenizedCode>()
+const MAX_TOKEN_CACHE_ENTRIES = 200
+const HIGHLIGHT_ROOT_MARGIN = "400px"
+const EAGER_HIGHLIGHT_CODE_CHAR_THRESHOLD = 1200
 
 // Subscribers for async token updates
 const subscribers = new Map<string, Set<(result: TokenizedCode) => void>>()
+
+function shouldEagerlyHighlight(code: string): boolean {
+  return code.length <= EAGER_HIGHLIGHT_CODE_CHAR_THRESHOLD
+}
 
 const getTokensCacheKey = (code: string, language: BundledLanguage) => {
   const start = code.slice(0, 100)
@@ -179,7 +202,7 @@ export const highlightCode = (
   const tokensCacheKey = getTokensCacheKey(code, language)
 
   // Return cached result if available
-  const cached = tokensCache.get(tokensCacheKey)
+  const cached = getLruValue(tokensCache, tokensCacheKey)
   if (cached) {
     return cached
   }
@@ -214,7 +237,12 @@ export const highlightCode = (
       }
 
       // Cache the result
-      tokensCache.set(tokensCacheKey, tokenized)
+      setLruValue(
+        tokensCache,
+        tokensCacheKey,
+        tokenized,
+        MAX_TOKEN_CACHE_ENTRIES
+      )
 
       // Notify all subscribers
       const subs = subscribers.get(tokensCacheKey)
@@ -374,6 +402,21 @@ export const CodeBlockActions = ({
   </div>
 )
 
+export function CodeBlockVisibilityProvider({
+  isVisible,
+  children,
+}: {
+  isVisible: boolean
+  children: ReactNode
+}) {
+  const value = useMemo(() => ({ isVisible }), [isVisible])
+  return (
+    <CodeBlockVisibilityContext.Provider value={value}>
+      {children}
+    </CodeBlockVisibilityContext.Provider>
+  )
+}
+
 export const CodeBlockContent = ({
   code,
   language,
@@ -383,13 +426,23 @@ export const CodeBlockContent = ({
   language: BundledLanguage
   showLineNumbers?: boolean
 }) => {
+  const { isNearViewport, ref: viewportRef } = useNearViewport<HTMLDivElement>(
+    HIGHLIGHT_ROOT_MARGIN
+  )
+  const { isVisible } = useContext(CodeBlockVisibilityContext)
+  const shouldHighlight =
+    isVisible && (isNearViewport || shouldEagerlyHighlight(code))
+
   // Memoized raw tokens for immediate display
   const rawTokens = useMemo(() => createRawTokens(code), [code])
 
   // Synchronous cached-or-raw value, recomputed when code/language changes
   const syncTokenized = useMemo(
-    () => highlightCode(code, language) ?? rawTokens,
-    [code, language, rawTokens]
+    () =>
+      shouldHighlight
+        ? (highlightCode(code, language) ?? rawTokens)
+        : rawTokens,
+    [code, language, rawTokens, shouldHighlight]
   )
 
   // Async highlighted result, tagged with its source code/language
@@ -400,19 +453,25 @@ export const CodeBlockContent = ({
   } | null>(null)
 
   useEffect(() => {
+    if (!shouldHighlight) {
+      return
+    }
+
     let cancelled = false
 
     // Subscribe to async highlighting result
     highlightCode(code, language, (result) => {
       if (!cancelled) {
-        setAsyncState({ code, language, tokenized: result })
+        startTransition(() => {
+          setAsyncState({ code, language, tokenized: result })
+        })
       }
     })
 
     return () => {
       cancelled = true
     }
-  }, [code, language])
+  }, [code, language, shouldHighlight])
 
   // Use async result only if it matches current code/language
   const tokenized =
@@ -421,7 +480,7 @@ export const CodeBlockContent = ({
       : syncTokenized
 
   return (
-    <div className="relative overflow-auto">
+    <div ref={viewportRef} className="relative overflow-auto">
       <CodeBlockBody showLineNumbers={showLineNumbers} tokenized={tokenized} />
     </div>
   )

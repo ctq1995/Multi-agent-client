@@ -32,4 +32,3 @@ pub(crate) fn ensure_windows_undecorated(window: &tauri::WebviewWindow) {
 
 #[cfg(not(target_os = "windows"))]
 pub(crate) fn ensure_windows_undecorated(_window: &tauri::WebviewWindow) {}
-

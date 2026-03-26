@@ -29,19 +29,24 @@ import {
   updateConversationExternalId,
   updateConversationStatus,
 } from "@/lib/tauri"
-import { useConversationRuntime } from "@/contexts/conversation-runtime-context"
+import { useAcpActions } from "@/contexts/acp-connections-context"
+import {
+  useConversationRuntime,
+  useConversationSession,
+} from "@/contexts/conversation-runtime-context"
 import { useConversationDetail } from "@/hooks/use-conversation-detail"
 import {
   extractUserImagesFromDraft,
   extractUserResourcesFromDraft,
   getPromptDraftDisplayText,
 } from "@/lib/prompt-draft"
-import type {
-  AcpEvent,
-  AgentType,
-  ContentBlock,
-  MessageTurn,
-  PromptDraft,
+import {
+  AGENT_DISPLAY_ORDER,
+  type AcpEvent,
+  type AgentType,
+  type ContentBlock,
+  type MessageTurn,
+  type PromptDraft,
 } from "@/lib/types"
 import {
   buildConversationDraftStorageKey,
@@ -67,6 +72,7 @@ interface ConversationTabViewProps {
   agentType: AgentType
   workingDir?: string
   isActive: boolean
+  isVisible: boolean
   reloadSignal: number
 }
 
@@ -131,18 +137,19 @@ const ConversationTabView = memo(function ConversationTabView({
   agentType,
   workingDir,
   isActive,
+  isVisible,
   reloadSignal,
 }: ConversationTabViewProps) {
   const t = useTranslations("Folder.conversation")
   const tWelcome = useTranslations("Folder.chat.welcomeInputPanel")
   const sharedT = useTranslations("Folder.chat.shared")
+  const { setRetainedContext } = useAcpActions()
   const { folder, folderId, refreshConversations } = useFolderContext()
   const { bindConversationTab, setTabRuntimeConversationId } = useTabContext()
   const { setSessionStats } = useSessionStats()
   const {
     appendOptimisticTurn,
     completeTurn,
-    getSession,
     refetchDetail,
     syncTurnMetadata,
     removeConversation,
@@ -177,8 +184,14 @@ const ConversationTabView = memo(function ConversationTabView({
   const canAutoConnect =
     hasPersistedConversation || (agentsLoaded && usableAgentCount > 0)
 
-  // Expose the runtime session key to the tab so the aux panel (Diff sidebar)
-  // can look up live turns even before the DB conversation is created.
+  // Keep visible tabs resident so idle sweep can reclaim only background tabs.
+  useEffect(() => {
+    setRetainedContext(tabId, isVisible)
+    return () => {
+      setRetainedContext(tabId, false)
+    }
+  }, [isVisible, setRetainedContext, tabId])
+
   useEffect(() => {
     if (effectiveConversationId !== conversationId) {
       setTabRuntimeConversationId(tabId, effectiveConversationId)
@@ -223,7 +236,7 @@ const ConversationTabView = memo(function ConversationTabView({
     error: detailError,
   } = useConversationDetail(effectiveConversationId)
 
-  const runtimeSession = getSession(effectiveConversationId)
+  const runtimeSession = useConversationSession(effectiveConversationId)
   const effectiveSessionStats = runtimeSession?.sessionStats ?? null
 
   useEffect(() => {
@@ -625,25 +638,34 @@ const ConversationTabView = memo(function ConversationTabView({
       setDraftAgentType(nextAgentType)
       setModeId(null)
       setAgentConnectError(null)
+
+      const doConnect = () => {
+        if (!workingDirForConnection) return
+        connConnect(nextAgentType, workingDirForConnection, undefined, {
+          source: "auto_link",
+        })
+          .then(() => {
+            setAgentConnectError(null)
+          })
+          .catch((e) => {
+            setAgentConnectError(normalizeErrorMessage(e))
+            if (!isExpectedAutoLinkError(e)) {
+              console.error("[ConversationTabView] switch agent:", e)
+            }
+          })
+      }
+
+      const s = connStatusRef.current
+      if (!s || s === "disconnected" || s === "error") {
+        doConnect()
+        return
+      }
+
       connDisconnect()
         .catch((e) =>
           console.error("[ConversationTabView] disconnect old agent:", e)
         )
-        .finally(() => {
-          if (!workingDirForConnection) return
-          connConnect(nextAgentType, workingDirForConnection, undefined, {
-            source: "auto_link",
-          })
-            .then(() => {
-              setAgentConnectError(null)
-            })
-            .catch((e) => {
-              setAgentConnectError(normalizeErrorMessage(e))
-              if (!isExpectedAutoLinkError(e)) {
-                console.error("[ConversationTabView] switch agent:", e)
-              }
-            })
-        })
+        .finally(doConnect)
     },
     [connConnect, connDisconnect, workingDirForConnection]
   )
@@ -714,6 +736,7 @@ const ConversationTabView = memo(function ConversationTabView({
       agentType={selectedAgent}
       connStatus={connStatus}
       isActive={isActive}
+      isVisible={isVisible}
       sendSignal={sendSignal}
       sessionStats={effectiveSessionStats}
       detailLoading={detailLoading}
@@ -986,7 +1009,7 @@ export function ConversationDetailPanel() {
 
   const handleNewConversation = useCallback(() => {
     if (!folder) return
-    openNewConversationTab("codex", folder.path)
+    openNewConversationTab(AGENT_DISPLAY_ORDER[0], folder.path)
   }, [folder, openNewConversationTab])
 
   const handleCloseActiveTab = useCallback(() => {
@@ -1000,7 +1023,7 @@ export function ConversationDetailPanel() {
 
     if (hasNoTabs) {
       openNewConversationTab(
-        newConversation?.agentType ?? "codex",
+        newConversation?.agentType ?? AGENT_DISPLAY_ORDER[0],
         newConversation?.workingDir ?? folder.path
       )
     }
@@ -1052,6 +1075,7 @@ export function ConversationDetailPanel() {
                           agentType={tab.agentType}
                           workingDir={tab.workingDir ?? folder?.path}
                           isActive={active}
+                          isVisible={true}
                           reloadSignal={reloadByTabId[tab.id] ?? 0}
                         />
                       </div>
@@ -1078,6 +1102,7 @@ export function ConversationDetailPanel() {
                     agentType={tab.agentType}
                     workingDir={tab.workingDir ?? folder?.path}
                     isActive={active}
+                    isVisible={active}
                     reloadSignal={reloadByTabId[tab.id] ?? 0}
                   />
                 </div>

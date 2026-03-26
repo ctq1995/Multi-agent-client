@@ -536,6 +536,18 @@
       "upgradeAvailable": "{versionText}. 업그레이드가 가능합니다.",
       "remoteUnavailable": "{versionText}. 현재 원격 버전을 사용할 수 없습니다.",
       "latest": "{versionText}. 이미 최신입니다."
+    },
+    "modelSelector": {
+      "fetchModels": "Fetch models",
+      "fetchedCount": "{count} models loaded",
+      "fetchFirst": "Fill API URL and API key first",
+      "fetchProviderFirst": "Fill current provider API URL and API key first",
+      "fetchCurrentProviderModelsFirst": "Fetch current provider models first",
+      "configureProviderFirst": "Configure a provider first",
+      "empty": "No models available",
+      "filterHint": "Type to automatically filter models",
+      "select": "Select",
+      "contextWindow": "Context {count}"
     }
   },
   "SettingsPages": {
@@ -1115,7 +1127,8 @@
         "autoLinkPreflightFailed": "자동 연결 사전 점검 실패: {message}",
         "connectFailedTitle": "{agent} 연결 실패",
         "toolFallbackTitle": "도구",
-        "eventErrorTitle": "에이전트 오류"
+        "eventErrorTitle": "에이전트 오류",
+        "notificationTurnComplete": "{agent} 응답이 완료되었습니다"
       },
       "connectionLifecycle": {
         "tasks": {

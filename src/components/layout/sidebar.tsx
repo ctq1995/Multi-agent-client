@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { useFolderContext } from "@/contexts/folder-context"
 import { useTabContext } from "@/contexts/tab-context"
 import { useSidebarContext } from "@/contexts/sidebar-context"
+import { AGENT_DISPLAY_ORDER } from "@/lib/types"
 import {
   SidebarConversationList,
   type SidebarConversationListHandle,
@@ -21,7 +22,7 @@ export function Sidebar() {
 
   const handleNewConversation = useCallback(() => {
     if (!folder) return
-    openNewConversationTab("codex", folder.path)
+    openNewConversationTab(AGENT_DISPLAY_ORDER[0], folder.path)
   }, [folder, openNewConversationTab])
 
   if (!isOpen) return null

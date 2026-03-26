@@ -14,7 +14,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use acp::manager::ConnectionManager;
 use commands::{
     acp as acp_commands, conversations, folder_commands, folders, mcp as mcp_commands,
-    system_settings, terminal as terminal_commands, windows,
+    model_catalog, notification, system_settings, terminal as terminal_commands, windows,
 };
 use tauri::Manager;
 use terminal::manager::TerminalManager;
@@ -39,6 +39,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_notification::init())
         .manage(ConnectionManager::new())
         .manage(TerminalManager::new())
         .manage(windows::SettingsWindowState::new())
@@ -77,8 +78,7 @@ pub fn run() {
                 for entry in &open_folders {
                     let label = windows::folder_window_label(entry.id);
                     let route = format!("folder?id={}", entry.id);
-                    let url =
-                        tauri::WebviewUrl::App(windows::to_tauri_app_path(&route).into());
+                    let url = tauri::WebviewUrl::App(windows::to_tauri_app_path(&route).into());
                     let builder = tauri::WebviewWindowBuilder::new(app, &label, url)
                         .title(&entry.name)
                         .inner_size(1260.0, 860.0)
@@ -223,6 +223,8 @@ pub fn run() {
             windows::open_settings_window,
             windows::list_open_folders,
             windows::focus_folder_window,
+            model_catalog::fetch_remote_models,
+            notification::send_notification,
             system_settings::get_system_proxy_settings,
             system_settings::update_system_proxy_settings,
             system_settings::get_system_language_settings,

@@ -44,7 +44,9 @@ import {
   CONNECTION_IDLE_TIMEOUT_MS,
   IDLE_SWEEP_INTERVAL_MS,
 } from "@/lib/constants"
+import { notifyTurnComplete } from "@/lib/notification"
 import { useAlertContext, type AlertAction } from "@/contexts/alert-context"
+import { useFolderContext } from "@/contexts/folder-context"
 
 // ── Shared types (re-exported for consumers) ──
 
@@ -1157,6 +1159,7 @@ export interface AcpActionsValue {
   ): Promise<void>
   setActiveKey(key: string | null): void
   touchActivity(contextKey: string): void
+  setRetainedContext(contextKey: string, retained: boolean): void
 }
 
 const AcpActionsContext = createContext<AcpActionsValue | null>(null)
@@ -1201,6 +1204,11 @@ function isAlertedError(error: unknown): error is AlertedError {
 export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
   const t = useTranslations("Folder.chat.acpConnections")
   const { pushAlert } = useAlertContext()
+  const { folder } = useFolderContext()
+  const folderNameRef = useRef(folder?.name)
+  useEffect(() => {
+    folderNameRef.current = folder?.name
+  }, [folder?.name])
   const pushAlertRef = useRef(pushAlert)
   useEffect(() => {
     pushAlertRef.current = pushAlert
@@ -1216,6 +1224,7 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
 
   // connectionId → contextKey reverse mapping
   const reverseMapRef = useRef(new Map<string, string>())
+  const retainedContextKeysRef = useRef(new Set<string>())
 
   // Guard against concurrent connect() calls
   const connectingKeysRef = useRef(new Set<string>())
@@ -1376,6 +1385,17 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
   const touchActivity = useCallback((contextKey: string) => {
     lastActivityRef.current.set(contextKey, Date.now())
   }, [])
+
+  const setRetainedContext = useCallback(
+    (contextKey: string, retained: boolean) => {
+      if (retained) {
+        retainedContextKeysRef.current.add(contextKey)
+        return
+      }
+      retainedContextKeysRef.current.delete(contextKey)
+    },
+    []
+  )
 
   const flushStreamingQueue = useCallback(() => {
     flushTimerRef.current = null
@@ -1614,6 +1634,20 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
               }
             }
           }
+          if (turnConn) {
+            const agentLabel = AGENT_LABELS[turnConn.agentType]
+            const folderName = folderNameRef.current
+            const title = folderName ? `${folderName} - Codeg` : "Codeg"
+            notifyTurnComplete(
+              title,
+              t("notificationTurnComplete", { agent: agentLabel })
+            ).catch((error) => {
+              console.error(
+                "[AcpConnections] turn completion notification failed:",
+                error
+              )
+            })
+          }
           break
         }
         case "error":
@@ -1699,6 +1733,7 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
       const toDisconnect: { contextKey: string; connectionId: string }[] = []
       for (const [contextKey, conn] of storeRef.current.connections) {
         if (contextKey === currentActiveKey) continue
+        if (retainedContextKeysRef.current.has(contextKey)) continue
         if (
           conn.status === "prompting" ||
           conn.status === "connecting" ||
@@ -1945,6 +1980,7 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
       await acpDisconnect(conn.connectionId)
       reverseMapRef.current.delete(conn.connectionId)
       lastActivityRef.current.delete(contextKey)
+      retainedContextKeysRef.current.delete(contextKey)
       pendingUnmappedEventsRef.current.delete(conn.connectionId)
       dispatch({ type: "CONNECTION_REMOVED", contextKey })
     },
@@ -1959,6 +1995,7 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
       pendingUnmappedEventsRef.current.delete(conn.connectionId)
     }
     lastActivityRef.current.clear()
+    retainedContextKeysRef.current.clear()
     await Promise.all(promises)
     dispatch({ type: "REMOVE_ALL" })
   }, [dispatch])
@@ -2030,6 +2067,7 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
       respondPermission,
       setActiveKey,
       touchActivity,
+      setRetainedContext,
     }),
     [
       connect,
@@ -2042,6 +2080,7 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
       respondPermission,
       setActiveKey,
       touchActivity,
+      setRetainedContext,
     ]
   )
 

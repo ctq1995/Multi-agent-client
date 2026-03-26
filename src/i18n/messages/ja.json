@@ -536,6 +536,18 @@
       "upgradeAvailable": "{versionText}。アップグレード可能です。",
       "remoteUnavailable": "{versionText}。現在リモートバージョンは取得できません。",
       "latest": "{versionText}。すでに最新です。"
+    },
+    "modelSelector": {
+      "fetchModels": "Fetch models",
+      "fetchedCount": "{count} models loaded",
+      "fetchFirst": "Fill API URL and API key first",
+      "fetchProviderFirst": "Fill current provider API URL and API key first",
+      "fetchCurrentProviderModelsFirst": "Fetch current provider models first",
+      "configureProviderFirst": "Configure a provider first",
+      "empty": "No models available",
+      "filterHint": "Type to automatically filter models",
+      "select": "Select",
+      "contextWindow": "Context {count}"
     }
   },
   "SettingsPages": {
@@ -1115,7 +1127,8 @@
         "autoLinkPreflightFailed": "自動リンクの事前チェックに失敗しました: {message}",
         "connectFailedTitle": "{agent} の接続に失敗しました",
         "toolFallbackTitle": "ツール",
-        "eventErrorTitle": "エージェントエラー"
+        "eventErrorTitle": "エージェントエラー",
+        "notificationTurnComplete": "{agent} の応答が完了しました"
       },
       "connectionLifecycle": {
         "tasks": {

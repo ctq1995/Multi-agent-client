@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react"
 import { toErrorMessage } from "@/lib/app-error"
+import { getLruValue, setLruValue } from "@/lib/lru-cache"
 import { getFolder, listFolderConversations } from "@/lib/tauri"
 import type {
   AgentType,
@@ -83,6 +84,7 @@ function computeStats(conversations: DbConversationSummary[]): AgentStats {
 
 /** Module-level cache — survives component unmounts / page navigations. */
 const cache = new Map<string, DbConversationSummary[]>()
+const MAX_FOLDER_CACHE_ENTRIES = 20
 
 interface FolderProviderProps {
   children: ReactNode
@@ -104,7 +106,7 @@ export function FolderProvider({
   // Conversations
   const cacheKey = String(folderId)
   const [conversations, setConversations] = useState<DbConversationSummary[]>(
-    () => cache.get(cacheKey) ?? []
+    () => getLruValue(cache, cacheKey) ?? []
   )
   const [loading, setLoading] = useState(() => !cache.has(cacheKey))
   const [refreshing, setRefreshing] = useState(false)
@@ -153,7 +155,7 @@ export function FolderProvider({
   }, [folderId])
 
   const fetchConversations = useCallback(async () => {
-    const cached = cache.get(cacheKey)
+    const cached = getLruValue(cache, cacheKey)
 
     if (cached) {
       setConversations(cached)
@@ -170,7 +172,7 @@ export function FolderProvider({
         status: null,
       })
       if (!mountedRef.current) return
-      cache.set(cacheKey, data)
+      setLruValue(cache, cacheKey, data, MAX_FOLDER_CACHE_ENTRIES)
       setConversations(data)
     } catch (e) {
       if (!mountedRef.current) return

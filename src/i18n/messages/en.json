@@ -536,6 +536,18 @@
       "upgradeAvailable": "{versionText}. Upgrade available.",
       "remoteUnavailable": "{versionText}. Remote version is currently unavailable.",
       "latest": "{versionText}. Already latest."
+    },
+    "modelSelector": {
+      "fetchModels": "Fetch models",
+      "fetchedCount": "{count} models loaded",
+      "fetchFirst": "Fill API URL and API key first",
+      "fetchProviderFirst": "Fill current provider API URL and API key first",
+      "fetchCurrentProviderModelsFirst": "Fetch current provider models first",
+      "configureProviderFirst": "Configure a provider first",
+      "empty": "No models available",
+      "filterHint": "Type to automatically filter models",
+      "select": "Select",
+      "contextWindow": "Context {count}"
     }
   },
   "SettingsPages": {
@@ -1115,7 +1127,8 @@
         "autoLinkPreflightFailed": "Auto-link preflight failed: {message}",
         "connectFailedTitle": "{agent} connection failed",
         "toolFallbackTitle": "Tool",
-        "eventErrorTitle": "Agent Error"
+        "eventErrorTitle": "Agent Error",
+        "notificationTurnComplete": "{agent} has finished responding"
       },
       "connectionLifecycle": {
         "tasks": {

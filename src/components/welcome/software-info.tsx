@@ -1,12 +1,17 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
 import Image from "next/image"
-
-const APP_VERSION = "0.1.4"
+import { getCurrentAppVersion } from "@/lib/updater"
 
 export function SoftwareInfo() {
   const t = useTranslations("WelcomePage")
+  const [version, setVersion] = useState<string>("")
+
+  useEffect(() => {
+    getCurrentAppVersion().then(setVersion).catch(() => {})
+  }, [])
 
   return (
     <div className="w-full flex gap-4 px-6 py-8">
@@ -20,7 +25,7 @@ export function SoftwareInfo() {
       <div className="flex flex-col">
         <span className="text-base">Multi-agent-client</span>
         <span className="text-sm text-muted-foreground">
-          {t("softwareVersion", { version: APP_VERSION })}
+          {version ? t("softwareVersion", { version }) : null}
         </span>
       </div>
     </div>

@@ -1,23 +1,19 @@
 "use client"
 
-import { memo, useCallback, useEffect, useMemo, useRef } from "react"
-import { useConversationRuntime } from "@/contexts/conversation-runtime-context"
-import { ContentPartsRenderer } from "./content-parts-renderer"
+import { useCallback, useDeferredValue, useEffect, useMemo } from "react"
+import {
+  useConversationSession,
+  useConversationTimelineTurns,
+} from "@/contexts/conversation-runtime-context"
 import { MessageThreadScrollButton } from "@/components/ai-elements/message-thread"
 import {
-  adaptMessageTurns,
-  type AdaptedContentPart,
-  type UserImageDisplay,
-  type UserResourceDisplay,
+  adaptMessageTurn,
+  type AdaptedMessage,
 } from "@/lib/adapters/ai-elements-adapter"
-import { TurnStats } from "./turn-stats"
 import { LiveTurnStats } from "./live-turn-stats"
-import { UserResourceLinks } from "./user-resource-links"
-import { UserImageAttachments } from "./user-image-attachments"
 import { useSessionStats } from "@/contexts/session-stats-context"
 import { AgentPlanOverlay } from "@/components/chat/agent-plan-overlay"
 import { MessageThread } from "@/components/ai-elements/message-thread"
-import { Message, MessageContent } from "@/components/ai-elements/message"
 import { Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import {
@@ -25,15 +21,24 @@ import {
   extractLatestPlanEntriesFromMessages,
 } from "@/lib/agent-plan"
 import type { AgentType, ConnectionStatus, SessionStats } from "@/lib/types"
+import { CodeBlockVisibilityProvider } from "@/components/ai-elements/code-block"
 import { VirtualizedMessageThread } from "@/components/message/virtualized-message-thread"
-import { useStickToBottomContext } from "use-stick-to-bottom"
 import { useChatDisplaySettings } from "@/hooks/use-chat-display-settings"
+import {
+  AutoScrollOnSend,
+  getCachedThreadTurnItem,
+  HistoricalMessageGroup,
+  PendingTypingIndicator,
+  TYPING_THREAD_ITEM,
+  type ThreadRenderItem,
+} from "./message-thread-items"
 
 interface MessageListViewProps {
   conversationId: number
   agentType: AgentType
   connStatus?: ConnectionStatus | null
   isActive?: boolean
+  isVisible?: boolean
   sendSignal?: number
   sessionStats?: SessionStats | null
   detailLoading?: boolean
@@ -41,111 +46,12 @@ interface MessageListViewProps {
   hideEmptyState?: boolean
 }
 
-interface ResolvedMessageGroup {
-  id: string
-  role: "user" | "assistant" | "system"
-  parts: AdaptedContentPart[]
-  resources: UserResourceDisplay[]
-  images: UserImageDisplay[]
-  usage?: import("@/lib/types").TurnUsage | null
-  duration_ms?: number | null
-  model?: string | null
-  models?: string[]
-}
-
-type ThreadRenderItem =
-  | {
-      key: string
-      kind: "turn"
-      group: ResolvedMessageGroup
-      phase: "persisted" | "optimistic" | "streaming"
-    }
-  | {
-      key: string
-      kind: "typing"
-    }
-
-const HistoricalMessageGroup = memo(function HistoricalMessageGroup({
-  group,
-  dimmed = false,
-  autoCollapseLongUserMessages = true,
-}: {
-  group: ResolvedMessageGroup
-  dimmed?: boolean
-  autoCollapseLongUserMessages?: boolean
-}) {
-  return (
-    <div className={dimmed ? "opacity-70" : undefined}>
-      <Message from={group.role}>
-        {group.role === "user" && group.images.length > 0 ? (
-          <UserImageAttachments images={group.images} className="self-end" />
-        ) : null}
-        <MessageContent>
-          <ContentPartsRenderer
-            parts={group.parts}
-            role={group.role}
-            autoCollapseLongUserMessages={autoCollapseLongUserMessages}
-          />
-        </MessageContent>
-        {group.role === "user" && group.resources.length > 0 ? (
-          <UserResourceLinks resources={group.resources} className="self-end" />
-        ) : null}
-      </Message>
-      {group.role === "assistant" && (
-        <TurnStats
-          usage={group.usage}
-          duration_ms={group.duration_ms}
-          model={group.model}
-          models={group.models}
-        />
-      )}
-    </div>
-  )
-})
-
-const PendingTypingIndicator = memo(function PendingTypingIndicator() {
-  return (
-    <Message from="assistant">
-      <MessageContent>
-        <div className="flex items-center gap-1.5 py-1">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-[pulse_1.4s_ease-in-out_infinite]" />
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
-        </div>
-      </MessageContent>
-    </Message>
-  )
-})
-
-const AutoScrollOnSend = memo(function AutoScrollOnSend({
-  signal,
-}: {
-  signal: number
-}) {
-  const { scrollToBottom } = useStickToBottomContext()
-  const lastSignalRef = useRef(signal)
-
-  useEffect(() => {
-    if (signal === lastSignalRef.current) return
-    lastSignalRef.current = signal
-
-    scrollToBottom()
-    const rafId = requestAnimationFrame(() => {
-      scrollToBottom()
-    })
-    return () => {
-      cancelAnimationFrame(rafId)
-    }
-  }, [scrollToBottom, signal])
-
-  return null
-})
-
 export function MessageListView({
   conversationId,
   agentType,
   connStatus,
   isActive = true,
+  isVisible = true,
   sendSignal = 0,
   sessionStats = null,
   detailLoading = false,
@@ -156,10 +62,11 @@ export function MessageListView({
   const sharedT = useTranslations("Folder.chat.shared")
   const tThread = useTranslations("Folder.chat.messageThread")
   const { settings: chatDisplaySettings } = useChatDisplaySettings()
-  const { getSession, getTimelineTurns } = useConversationRuntime()
-  const session = getSession(conversationId)
+  const session = useConversationSession(conversationId)
+  const timelineTurns = useConversationTimelineTurns(conversationId)
+  const deferredTimelineTurns = useDeferredValue(timelineTurns)
+  const renderTimelineTurns = isVisible ? timelineTurns : deferredTimelineTurns
   const liveMessage = session?.liveMessage ?? null
-  const timelineTurns = getTimelineTurns(conversationId)
 
   const { setSessionStats } = useSessionStats()
 
@@ -170,10 +77,11 @@ export function MessageListView({
   }, [isActive, sessionStats, setSessionStats])
 
   const shouldUseSmoothResize = !(
-    isActive &&
+    isVisible &&
     !detailLoading &&
-    timelineTurns.length
+    renderTimelineTurns.length
   )
+  const virtualizedOverscan = isVisible ? 10 : 4
 
   const adapterText = useMemo(
     () => ({
@@ -186,56 +94,38 @@ export function MessageListView({
   const sessionSyncState = session?.syncState ?? "idle"
 
   const { threadItems, nonStreamingAdapted } = useMemo(() => {
-    const allTurns = timelineTurns.map((item) => item.turn)
-    const streamingIndices = new Set<number>()
-    timelineTurns.forEach((item, i) => {
-      if (item.phase === "streaming") streamingIndices.add(i)
-    })
-    const allAdapted = adaptMessageTurns(
-      allTurns,
-      adapterText,
-      streamingIndices.size > 0 ? streamingIndices : undefined
-    )
+    const items: ThreadRenderItem[] = []
+    const nonStreaming: AdaptedMessage[] = []
 
-    // Collect non-streaming adapted messages for plan extraction
-    const nonStreaming = allAdapted.filter(
-      (_, index) => timelineTurns[index].phase !== "streaming"
-    )
-
-    // Map each adapted message directly to a render item (1:1).
-    // Backend group_into_turns() already ensures each turn is a complete unit.
-    const items: ThreadRenderItem[] = allAdapted.map((msg, i) => {
-      const phase = timelineTurns[i].phase
-      const role = msg.role === "tool" ? "assistant" : msg.role
-      return {
-        // Stable key is required for virtualization correctness. Avoid index/phase
-        // so items don't "shuffle" when they move optimistic -> persisted.
-        key: `turn-${msg.id}`,
-        kind: "turn" as const,
-        group: {
-          id: msg.id,
-          role,
-          parts: msg.content,
-          resources: msg.userResources ?? [],
-          images: msg.userImages ?? [],
-          usage: msg.usage,
-          duration_ms: msg.duration_ms,
-          model: msg.model,
-        },
-        phase,
+    for (let index = 0; index < renderTimelineTurns.length; index += 1) {
+      const timelineTurn = renderTimelineTurns[index]
+      const adapted = adaptMessageTurn(
+        timelineTurn.turn,
+        adapterText,
+        timelineTurn.phase === "streaming"
+      )
+      items.push(
+        getCachedThreadTurnItem({
+          adapted,
+          phase: timelineTurn.phase,
+        })
+      )
+      if (timelineTurn.phase !== "streaming") {
+        nonStreaming.push(adapted)
       }
-    })
+    }
 
-    const lastPhase = timelineTurns[timelineTurns.length - 1]?.phase ?? null
+    const lastPhase =
+      renderTimelineTurns[renderTimelineTurns.length - 1]?.phase ?? null
     if (
       lastPhase === "optimistic" &&
       (connStatus === "prompting" || sessionSyncState === "awaiting_persist")
     ) {
-      items.push({ key: "typing-pending", kind: "typing" })
+      items.push(TYPING_THREAD_ITEM)
     }
 
     return { threadItems: items, nonStreamingAdapted: nonStreaming }
-  }, [adapterText, connStatus, sessionSyncState, timelineTurns])
+  }, [adapterText, connStatus, renderTimelineTurns, sessionSyncState])
 
   const historicalPlanEntries = useMemo(
     () => extractLatestPlanEntriesFromMessages(nonStreamingAdapted),
@@ -309,26 +199,28 @@ export function MessageListView({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      <MessageThread
-        className="flex-1 min-h-0"
-        resize={shouldUseSmoothResize ? "smooth" : undefined}
-      >
-        <AutoScrollOnSend signal={sendSignal} />
-        <VirtualizedMessageThread
-          items={threadItems}
-          getItemKey={(item) => item.key}
-          renderItem={renderThreadItem}
-          emptyState={emptyState}
-          estimateSize={180}
-          overscan={10}
-        />
-        <MessageThreadScrollButton
-          className="bottom-2 right-4 left-auto translate-x-0 shadow-md"
-          title={tThread("scrollToBottom")}
-          aria-label={tThread("scrollToBottom")}
-          size="icon-sm"
-        />
-      </MessageThread>
+      <CodeBlockVisibilityProvider isVisible={isVisible}>
+        <MessageThread
+          className="flex-1 min-h-0"
+          resize={shouldUseSmoothResize ? "smooth" : undefined}
+        >
+          <AutoScrollOnSend signal={sendSignal} />
+          <VirtualizedMessageThread
+            items={threadItems}
+            getItemKey={(item) => item.key}
+            renderItem={renderThreadItem}
+            emptyState={emptyState}
+            estimateSize={180}
+            overscan={virtualizedOverscan}
+          />
+          <MessageThreadScrollButton
+            className="bottom-2 right-4 left-auto translate-x-0 shadow-md"
+            title={tThread("scrollToBottom")}
+            aria-label={tThread("scrollToBottom")}
+            size="icon-sm"
+          />
+        </MessageThread>
+      </CodeBlockVisibilityProvider>
       {liveMessage && connStatus === "prompting" && (
         <LiveTurnStats
           message={liveMessage}

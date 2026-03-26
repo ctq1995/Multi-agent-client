@@ -675,7 +675,11 @@ fn extract_claude_user_image(item: &serde_json::Value) -> Option<ContentBlock> {
     let mime_type = source
         .and_then(|s| s.get("media_type"))
         .and_then(|m| m.as_str())
-        .or_else(|| source.and_then(|s| s.get("mime_type")).and_then(|m| m.as_str()))
+        .or_else(|| {
+            source
+                .and_then(|s| s.get("mime_type"))
+                .and_then(|m| m.as_str())
+        })
         .or_else(|| item.get("media_type").and_then(|m| m.as_str()))
         .or_else(|| item.get("mime_type").and_then(|m| m.as_str()))
         .map(str::trim)

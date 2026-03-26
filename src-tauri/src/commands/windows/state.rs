@@ -94,4 +94,3 @@ pub fn restore_window_after_commit(
         }
     }
 }
-

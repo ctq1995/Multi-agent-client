@@ -5,7 +5,6 @@ import {
   useCallback,
   useContext,
   useMemo,
-  useReducer,
   useRef,
   type ReactNode,
 } from "react"
@@ -16,20 +15,25 @@ import {
   shouldSkipInitialFetch,
 } from "./conversation-runtime/actions"
 import { buildStreamingTurnFromLiveMessage } from "./conversation-runtime/live-message"
+import type { ConversationRuntimeAction } from "./conversation-runtime/action-types"
 import { conversationRuntimeReducer } from "./conversation-runtime/reducer"
 import {
   selectConversationIdByExternalId,
   selectConversationSession,
   selectTimelineTurns,
 } from "./conversation-runtime/selectors"
+import {
+  ConversationRuntimeStoreContext,
+  type ConversationRuntimeStoreApi,
+  useConversationSession,
+  useConversationTimelineTurns,
+} from "./conversation-runtime/store-api"
 import { createInitialConversationRuntimeState } from "./conversation-runtime/state"
 import type { LiveMessage } from "@/contexts/acp-connections-context"
 import type { MessageTurn } from "@/lib/types"
 import type {
   ConversationRuntimeContextValue,
-  ConversationRuntimeSession,
   ConversationSyncState,
-  ConversationTimelineTurn,
 } from "./conversation-runtime/types"
 
 export type {
@@ -38,9 +42,15 @@ export type {
   ConversationTimelinePhase,
   ConversationTimelineTurn,
 } from "./conversation-runtime/types"
+export { useConversationSession, useConversationTimelineTurns }
 export { buildStreamingTurnFromLiveMessage }
 
-const ConversationRuntimeContext =
+interface InternalStore {
+  state: ReturnType<typeof createInitialConversationRuntimeState>
+  keyListeners: Map<number, Set<() => void>>
+}
+
+const ConversationRuntimeActionsContext =
   createContext<ConversationRuntimeContextValue | null>(null)
 
 export function ConversationRuntimeProvider({
@@ -48,41 +58,91 @@ export function ConversationRuntimeProvider({
 }: {
   children: ReactNode
 }) {
-  const [state, dispatch] = useReducer(
-    conversationRuntimeReducer,
-    undefined,
-    createInitialConversationRuntimeState
+  const storeRef = useRef<InternalStore>({
+    state: createInitialConversationRuntimeState(),
+    keyListeners: new Map(),
+  })
+
+  const notifyConversationListeners = useCallback((conversationId: number) => {
+    const listeners = storeRef.current.keyListeners.get(conversationId)
+    if (!listeners) {
+      return
+    }
+
+    for (const listener of listeners) {
+      listener()
+    }
+  }, [])
+
+  const notifyAllConversationListeners = useCallback(() => {
+    for (const listeners of storeRef.current.keyListeners.values()) {
+      for (const listener of listeners) {
+        listener()
+      }
+    }
+  }, [])
+
+  const dispatch = useCallback(
+    (action: ConversationRuntimeAction) => {
+      const prev = storeRef.current.state
+      const next = conversationRuntimeReducer(prev, action)
+      if (next === prev) {
+        return
+      }
+
+      storeRef.current.state = next
+      if (action.type === "RESET") {
+        notifyAllConversationListeners()
+        return
+      }
+
+      notifyConversationListeners(action.conversationId)
+    },
+    [notifyAllConversationListeners, notifyConversationListeners]
   )
 
-  const stateRef = useRef(state)
-  // eslint-disable-next-line react-hooks/refs -- stateRef is only read in callbacks, not during render
-  stateRef.current = state
+  const readState = useCallback(() => storeRef.current.state, [])
 
-  const readState = useCallback(() => stateRef.current, [])
+  const storeApi = useMemo<ConversationRuntimeStoreApi>(
+    () => ({
+      getSession(conversationId: number) {
+        return selectConversationSession(storeRef.current.state, conversationId)
+      },
+      getTimelineTurns(conversationId: number) {
+        return selectTimelineTurns(storeRef.current.state, conversationId)
+      },
+      getConversationIdByExternalId(externalId: string) {
+        return selectConversationIdByExternalId(
+          storeRef.current.state,
+          externalId
+        )
+      },
+      subscribeKey(conversationId: number, cb: () => void) {
+        const { keyListeners } = storeRef.current
+        let listeners = keyListeners.get(conversationId)
+        if (!listeners) {
+          listeners = new Set()
+          keyListeners.set(conversationId, listeners)
+        }
 
-  const getSession = useCallback(
-    (conversationId: number): ConversationRuntimeSession | null =>
-      selectConversationSession(state, conversationId),
-    [state]
-  )
-
-  const getConversationIdByExternalId = useCallback(
-    (externalId: string): number | null =>
-      selectConversationIdByExternalId(state, externalId),
-    [state]
-  )
-
-  const getTimelineTurns = useCallback(
-    (conversationId: number): ConversationTimelineTurn[] =>
-      selectTimelineTurns(state, conversationId),
-    [state]
+        listeners.add(cb)
+        return () => {
+          listeners!.delete(cb)
+          if (listeners!.size === 0) {
+            keyListeners.delete(conversationId)
+          }
+        }
+      },
+    }),
+    []
   )
 
   const fetchDetail = useCallback(
     (conversationId: number, runtimeConversationId?: number) => {
       const targetConversationId = runtimeConversationId ?? conversationId
       const session =
-        stateRef.current.byConversationId.get(targetConversationId) ?? null
+        storeRef.current.state.byConversationId.get(targetConversationId) ??
+        null
 
       if (shouldSkipInitialFetch(session)) {
         return
@@ -96,7 +156,7 @@ export function ConversationRuntimeProvider({
         request: { conversationId, runtimeConversationId },
       })
     },
-    []
+    [dispatch]
   )
 
   const refetchDetail = useCallback(
@@ -109,7 +169,7 @@ export function ConversationRuntimeProvider({
         request: { conversationId, runtimeConversationId },
       })
     },
-    []
+    [dispatch]
   )
 
   const syncTurnMetadata = useCallback(
@@ -121,12 +181,15 @@ export function ConversationRuntimeProvider({
         dbConversationId,
         runtimeConversationId: runtimeConversationId ?? dbConversationId,
       }),
-    [readState]
+    [dispatch, readState]
   )
 
-  const completeTurn = useCallback((conversationId: number) => {
-    dispatch({ type: "COMPLETE_TURN", conversationId })
-  }, [])
+  const completeTurn = useCallback(
+    (conversationId: number) => {
+      dispatch({ type: "COMPLETE_TURN", conversationId })
+    },
+    [dispatch]
+  )
 
   const appendOptimisticTurn = useCallback(
     (conversationId: number, turn: MessageTurn, turnToken: string) => {
@@ -137,50 +200,53 @@ export function ConversationRuntimeProvider({
         turnToken,
       })
     },
-    []
+    [dispatch]
   )
 
   const setLiveMessage = useCallback(
     (conversationId: number, liveMessage: LiveMessage | null) => {
       dispatch({ type: "SET_LIVE_MESSAGE", conversationId, liveMessage })
     },
-    []
+    [dispatch]
   )
 
   const setExternalId = useCallback(
     (conversationId: number, externalId: string | null) => {
       dispatch({ type: "SET_EXTERNAL_ID", conversationId, externalId })
     },
-    []
+    [dispatch]
   )
 
   const setSyncState = useCallback(
     (conversationId: number, syncState: ConversationSyncState) => {
       dispatch({ type: "SET_SYNC_STATE", conversationId, syncState })
     },
-    []
+    [dispatch]
   )
 
   const setPendingCleanup = useCallback(
     (conversationId: number, pendingCleanup: boolean) => {
       dispatch({ type: "SET_PENDING_CLEANUP", conversationId, pendingCleanup })
     },
-    []
+    [dispatch]
   )
 
-  const removeConversation = useCallback((conversationId: number) => {
-    dispatch({ type: "REMOVE_CONVERSATION", conversationId })
-  }, [])
+  const removeConversation = useCallback(
+    (conversationId: number) => {
+      dispatch({ type: "REMOVE_CONVERSATION", conversationId })
+    },
+    [dispatch]
+  )
 
   const reset = useCallback(() => {
     dispatch({ type: "RESET" })
-  }, [])
+  }, [dispatch])
 
-  const value = useMemo<ConversationRuntimeContextValue>(
+  const actions = useMemo<ConversationRuntimeContextValue>(
     () => ({
-      getSession,
-      getConversationIdByExternalId,
-      getTimelineTurns,
+      getSession: storeApi.getSession,
+      getConversationIdByExternalId: storeApi.getConversationIdByExternalId,
+      getTimelineTurns: storeApi.getTimelineTurns,
       fetchDetail,
       refetchDetail,
       syncTurnMetadata,
@@ -197,9 +263,6 @@ export function ConversationRuntimeProvider({
       appendOptimisticTurn,
       completeTurn,
       fetchDetail,
-      getConversationIdByExternalId,
-      getSession,
-      getTimelineTurns,
       refetchDetail,
       removeConversation,
       reset,
@@ -207,19 +270,22 @@ export function ConversationRuntimeProvider({
       setLiveMessage,
       setPendingCleanup,
       setSyncState,
+      storeApi,
       syncTurnMetadata,
     ]
   )
 
   return (
-    <ConversationRuntimeContext.Provider value={value}>
-      {children}
-    </ConversationRuntimeContext.Provider>
+    <ConversationRuntimeStoreContext.Provider value={storeApi}>
+      <ConversationRuntimeActionsContext.Provider value={actions}>
+        {children}
+      </ConversationRuntimeActionsContext.Provider>
+    </ConversationRuntimeStoreContext.Provider>
   )
 }
 
 export function useConversationRuntime() {
-  const ctx = useContext(ConversationRuntimeContext)
+  const ctx = useContext(ConversationRuntimeActionsContext)
   if (!ctx) {
     throw new Error(
       "useConversationRuntime must be used within ConversationRuntimeProvider"

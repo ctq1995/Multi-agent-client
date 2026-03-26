@@ -28,4 +28,9 @@
     ]
   },
   "plugins": {
+    "updater": {
+      "endpoints": [],
+      "pubkey": ""
+    }
+  }
 }

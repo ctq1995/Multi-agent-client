@@ -76,6 +76,14 @@ type InlineToolSegment =
   | { kind: "tool_call" | "tool_result"; value: string }
 
 const INLINE_TOOL_TAG_RE = /<(tool_call|tool_result)>\s*([\s\S]*?)\s*<\/\1>/gi
+const adaptedTurnCache = new WeakMap<MessageTurn, Map<string, AdaptedMessage>>()
+
+function buildAdaptedTurnCacheKey(
+  text: AdapterMessageText,
+  isStreaming: boolean
+): string {
+  return `${isStreaming ? "1" : "0"}|${text.attachedResources}|${text.toolCallFailed}`
+}
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -606,6 +614,13 @@ export function adaptMessageTurn(
   text: AdapterMessageText,
   isStreaming: boolean = false
 ): AdaptedMessage {
+  const cacheKey = buildAdaptedTurnCacheKey(text, isStreaming)
+  const cachedByText = adaptedTurnCache.get(turn)
+  const cached = cachedByText?.get(cacheKey)
+  if (cached) {
+    return cached
+  }
+
   const adaptedContent: AdaptedContentPart[] = []
   const resultMap = buildToolResultMap(turn.blocks)
   const matchedResultIds = new Set<string>()
@@ -724,7 +739,7 @@ export function adaptMessageTurn(
   const userImages =
     turn.role === "user" ? extractUserImagesFromBlocks(turn.blocks) : []
 
-  return {
+  const adaptedMessage: AdaptedMessage = {
     id: turn.id,
     role: turn.role,
     content: userSplit.parts,
@@ -736,6 +751,10 @@ export function adaptMessageTurn(
     duration_ms: turn.duration_ms,
     model: turn.model,
   }
+  const nextCachedByText = cachedByText ?? new Map<string, AdaptedMessage>()
+  nextCachedByText.set(cacheKey, adaptedMessage)
+  adaptedTurnCache.set(turn, nextCachedByText)
+  return adaptedMessage
 }
 
 /**

@@ -74,14 +74,37 @@ pub fn normalized_program<S>(program: S) -> OsString
 where
     S: AsRef<OsStr>,
 {
+    let requested = program.as_ref();
+
     #[cfg(windows)]
     {
-        if let Some(shimmed) = maybe_windows_cmd_shim(program.as_ref()) {
+        let shimmed = maybe_windows_cmd_shim(requested);
+        if let Ok(resolved) = which::which(requested) {
+            return resolved.into_os_string();
+        }
+        if let Some(ref shimmed_program) = shimmed {
+            if let Ok(resolved) = which::which(shimmed_program) {
+                return resolved.into_os_string();
+            }
+            return shimmed_program.clone();
+        }
+    }
+
+    #[cfg(not(windows))]
+    {
+        if let Ok(resolved) = which::which(requested) {
+            return resolved.into_os_string();
+        }
+    }
+
+    #[cfg(windows)]
+    {
+        if let Some(shimmed) = maybe_windows_cmd_shim(requested) {
             return shimmed;
         }
     }
 
-    program.as_ref().to_os_string()
+    requested.to_os_string()
 }
 
 pub fn tokio_command<S>(program: S) -> tokio::process::Command

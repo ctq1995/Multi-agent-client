@@ -4,6 +4,9 @@ import type {
 } from "@/lib/adapters/ai-elements-adapter"
 import type { PlanEntryInfo } from "@/lib/types"
 
+const EMPTY_PLAN_ENTRIES: PlanEntryInfo[] = []
+const messagePlanEntriesCache = new WeakMap<AdaptedMessage, PlanEntryInfo[]>()
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null
@@ -163,20 +166,37 @@ function extractPlanEntriesFromPart(part: AdaptedContentPart): PlanEntryInfo[] {
   return []
 }
 
+function extractPlanEntriesFromMessage(
+  message: AdaptedMessage
+): PlanEntryInfo[] {
+  const cached = messagePlanEntriesCache.get(message)
+  if (cached) {
+    return cached
+  }
+
+  for (let index = message.content.length - 1; index >= 0; index -= 1) {
+    const entries = extractPlanEntriesFromPart(message.content[index])
+    if (entries.length > 0) {
+      messagePlanEntriesCache.set(message, entries)
+      return entries
+    }
+  }
+
+  messagePlanEntriesCache.set(message, EMPTY_PLAN_ENTRIES)
+  return EMPTY_PLAN_ENTRIES
+}
+
 export function extractLatestPlanEntriesFromMessages(
   messages: AdaptedMessage[]
 ): PlanEntryInfo[] {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
-    const message = messages[i]
-    for (let j = message.content.length - 1; j >= 0; j -= 1) {
-      const entries = extractPlanEntriesFromPart(message.content[j])
-      if (entries.length > 0) {
-        return entries
-      }
+    const entries = extractPlanEntriesFromMessage(messages[i])
+    if (entries.length > 0) {
+      return entries
     }
   }
 
-  return []
+  return EMPTY_PLAN_ENTRIES
 }
 
 export function buildPlanKey(entries: PlanEntryInfo[]): string | null {

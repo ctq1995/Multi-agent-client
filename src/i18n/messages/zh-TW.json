@@ -536,6 +536,18 @@
       "upgradeAvailable": "{versionText}。發現可升級版本。",
       "remoteUnavailable": "{versionText}。遠端版本暫不可用。",
       "latest": "{versionText}。已是最新版本。"
+    },
+    "modelSelector": {
+      "fetchModels": "取得模型",
+      "fetchedCount": "已取得 {count} 個模型",
+      "fetchFirst": "填寫 API URL 與 API Key 後即可取得模型",
+      "fetchProviderFirst": "填寫目前 Provider 的 API URL 與 API Key 後即可取得模型",
+      "fetchCurrentProviderModelsFirst": "請先取得目前 Provider 的模型列表",
+      "configureProviderFirst": "請先設定一個 Provider",
+      "empty": "暫無可選模型",
+      "filterHint": "輸入內容即可自動過濾篩選模型",
+      "select": "選擇",
+      "contextWindow": "上下文 {count}"
     }
   },
   "SettingsPages": {
@@ -1115,7 +1127,8 @@
         "autoLinkPreflightFailed": "自動連結預檢查失敗：{message}",
         "connectFailedTitle": "{agent} 連線失敗",
         "toolFallbackTitle": "工具",
-        "eventErrorTitle": "Agent 錯誤"
+        "eventErrorTitle": "Agent 錯誤",
+        "notificationTurnComplete": "{agent} 已完成回應"
       },
       "connectionLifecycle": {
         "tasks": {

@@ -10,9 +10,9 @@ use crate::app_error::AppCommandError;
 use crate::db::AppDatabase;
 use crate::models::FolderHistoryEntry;
 
+pub(crate) use routes::to_tauri_app_path;
 pub use state::{restore_window_after_commit, restore_windows_after_settings};
 pub use state::{CommitWindowState, SettingsWindowState};
-pub(crate) use routes::to_tauri_app_path;
 pub(crate) use style::apply_platform_window_style;
 
 pub fn folder_window_label(folder_id: i32) -> String {

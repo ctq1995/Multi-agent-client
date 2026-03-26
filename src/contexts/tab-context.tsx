@@ -19,6 +19,7 @@ import type {
   ConversationStatus,
   OpenedConversation,
 } from "@/lib/types"
+import { AGENT_DISPLAY_ORDER } from "@/lib/types"
 
 interface TabItemInternal {
   id: string
@@ -397,7 +398,7 @@ export function TabProvider({ children }: TabProviderProps) {
       id: makeNewConversationTabId(),
       kind: "conversation",
       conversationId: null,
-      agentType: preferred?.agentType ?? "codex",
+      agentType: preferred?.agentType ?? AGENT_DISPLAY_ORDER[0],
       title: t("newConversation"),
       isPinned: true,
       workingDir: preferred?.workingDir ?? folder?.path,
@@ -537,8 +538,19 @@ export function TabProvider({ children }: TabProviderProps) {
       )
 
       if (existingTab) {
+        const nextTab =
+          existingTab.workingDir === workingDir
+            ? existingTab
+            : { ...existingTab, workingDir }
+        if (existingTab.workingDir !== workingDir) {
+          setTabs((prev) =>
+            prev.map((t) =>
+              t.id === existingTab.id ? { ...t, workingDir } : t
+            )
+          )
+        }
         setActiveTabId(existingTab.id)
-        syncFolderContext(existingTab)
+        syncFolderContext(nextTab)
         activateConversationPane()
         return
       }

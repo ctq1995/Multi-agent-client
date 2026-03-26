@@ -1,7 +1,10 @@
 "use client"
 
 import { useEffect } from "react"
-import { useConversationRuntime } from "@/contexts/conversation-runtime-context"
+import {
+  useConversationRuntime,
+  useConversationSession,
+} from "@/contexts/conversation-runtime-context"
 import type { DbConversationDetail } from "@/lib/types"
 
 function isVirtualConversationId(conversationId: number): boolean {
@@ -13,8 +16,8 @@ export function useConversationDetail(conversationId: number): {
   loading: boolean
   error: string | null
 } {
-  const { getSession, fetchDetail } = useConversationRuntime()
-  const session = getSession(conversationId)
+  const { fetchDetail } = useConversationRuntime()
+  const session = useConversationSession(conversationId)
   const isVirtual = isVirtualConversationId(conversationId)
 
   useEffect(() => {

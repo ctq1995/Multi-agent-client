@@ -894,7 +894,9 @@ pub async fn git_rollback_file(path: String, file: String) -> Result<(), AppComm
     if fs_target.exists() {
         let meta = std::fs::symlink_metadata(&fs_target).map_err(AppCommandError::io)?;
         if meta.is_dir() && !meta.file_type().is_symlink() {
-            return Err(AppCommandError::invalid_input("Rollback target must be a file"));
+            return Err(AppCommandError::invalid_input(
+                "Rollback target must be a file",
+            ));
         }
     }
 
@@ -961,7 +963,10 @@ async fn restore_tracked_path(repo_path: &str, literal_file: &str) -> Result<(),
         && !stderr_lower.contains("did you mean");
 
     if restore_supported {
-        return Err(AppCommandError::external_command("git restore failed", stderr));
+        return Err(AppCommandError::external_command(
+            "git restore failed",
+            stderr,
+        ));
     }
 
     reset_and_checkout(repo_path, literal_file).await
@@ -2447,9 +2452,7 @@ pub async fn git_log(
     let mut args = vec![
         "log".to_string(),
         limit_str,
-        format!(
-            "--format=__COMMIT__%x00%h%x00%H%x00%an%x00%aI%n%B%n{MESSAGE_END_MARKER}"
-        ),
+        format!("--format=__COMMIT__%x00%h%x00%H%x00%an%x00%aI%n%B%n{MESSAGE_END_MARKER}"),
         "--raw".to_string(),
         "--numstat".to_string(),
         "--no-renames".to_string(),

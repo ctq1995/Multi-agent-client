@@ -45,6 +45,12 @@ import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible"
 import { Input } from "@/components/ui/input"
 import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -53,6 +59,7 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import { ModelSelectorField } from "@/components/settings/remote-model-picker-dialog"
 import { cn } from "@/lib/utils"
 import {
   acpClearBinaryCache,
@@ -65,6 +72,7 @@ import {
   acpReorderAgents,
   acpUninstallAgent,
   acpUpdateAgentPreferences,
+  fetchRemoteModels,
 } from "@/lib/tauri"
 import type {
   AcpAgentInfo,
@@ -72,6 +80,7 @@ import type {
   CheckStatus,
   FixAction,
   PreflightResult,
+  RemoteModelInfo,
 } from "@/lib/types"
 
 interface AgentCheckState {
@@ -837,6 +846,19 @@ interface OpenCodeConfigView {
   disabledProviders: string[]
   providerIds: string[]
   providers: Record<string, OpenCodeProviderView>
+}
+
+interface RemoteModelState {
+  items: RemoteModelInfo[]
+  error: string | null
+}
+
+function buildAgentModelScope(agentType: AgentType): string {
+  return `agent:${agentType}`
+}
+
+function buildOpenCodeProviderModelScope(providerId: string): string {
+  return `open_code:${providerId}`
 }
 
 const OPENCODE_PROVIDER_NPM_OPTIONS = [
@@ -2274,6 +2296,7 @@ function AgentReorderItem({
 export function AcpAgentSettings() {
   const locale = useLocale()
   const t = useTranslations("AcpAgentSettings")
+  const tModelSelector = useTranslations("AcpAgentSettings.modelSelector")
   const rawTranslator = t as unknown as AcpTranslator
   acpTranslator = (key, values) => rawTranslator(key, values)
   const searchParams = useSearchParams()
@@ -2320,6 +2343,12 @@ export function AcpAgentSettings() {
   >({})
   const [openCodeModelConfigExpanded, setOpenCodeModelConfigExpanded] =
     useState<Record<string, boolean>>({})
+  const [remoteModelsByScope, setRemoteModelsByScope] = useState<
+    Record<string, RemoteModelState>
+  >({})
+  const [remoteModelLoadingByScope, setRemoteModelLoadingByScope] = useState<
+    Record<string, boolean>
+  >({})
   const [openCodeDeleteProviderId, setOpenCodeDeleteProviderId] = useState<
     string | null
   >(null)
@@ -3058,6 +3087,40 @@ export function AcpAgentSettings() {
     selectedConfigText,
     selectedOpenCodeAuthJsonText,
   ])
+  const selectedAgentModelScope = selectedAgent
+    ? buildAgentModelScope(selectedAgent.agent_type)
+    : null
+  const selectedAgentRemoteModelState = selectedAgentModelScope
+    ? (remoteModelsByScope[selectedAgentModelScope] ?? {
+        items: [],
+        error: null,
+      })
+    : null
+  const selectedAgentRemoteModels = selectedAgentRemoteModelState?.items ?? []
+  const selectedAgentRemoteModelError =
+    selectedAgentRemoteModelState?.error ?? null
+  const selectedAgentRemoteModelLoading = selectedAgentModelScope
+    ? Boolean(remoteModelLoadingByScope[selectedAgentModelScope])
+    : false
+  const selectedOpenCodeProviderId = selectedOpenCodeConfig
+    ? openCodeProviderId &&
+      selectedOpenCodeConfig.providerIds.includes(openCodeProviderId)
+      ? openCodeProviderId
+      : (selectedOpenCodeConfig.providerIds[0] ?? null)
+    : null
+  const selectedOpenCodeModelScope = selectedOpenCodeProviderId
+    ? buildOpenCodeProviderModelScope(selectedOpenCodeProviderId)
+    : null
+  const selectedOpenCodeRemoteModelState = selectedOpenCodeModelScope
+    ? (remoteModelsByScope[selectedOpenCodeModelScope] ?? {
+        items: [],
+        error: null,
+      })
+    : null
+  const selectedOpenCodeRemoteModels =
+    selectedOpenCodeRemoteModelState?.items ?? []
+  const selectedOpenCodeRemoteModelError =
+    selectedOpenCodeRemoteModelState?.error ?? null
   const selectedChecks = useMemo(() => {
     if (!selectedAgent || !locale) return []
     return getAgentChecks(selectedAgent, selectedCurrent)
@@ -3805,6 +3868,100 @@ export function AcpAgentSettings() {
     [handleOpenCodeConfigPatch, openCodeNewModelIds, selectedOpenCodeConfig, t]
   )
 
+  const fetchRemoteModelsForScope = useCallback(
+    async (params: {
+      scopeKey: string
+      label: string
+      baseUrl: string
+      apiKey: string
+    }) => {
+      const baseUrl = params.baseUrl.trim()
+      const apiKey = params.apiKey.trim()
+      if (!baseUrl) {
+        toast.error(`Fill ${params.label} API URL first`)
+        return
+      }
+      if (!apiKey) {
+        toast.error(`Fill ${params.label} API Key first`)
+        return
+      }
+
+      setRemoteModelLoadingByScope((prev) => ({
+        ...prev,
+        [params.scopeKey]: true,
+      }))
+      setRemoteModelsByScope((prev) => ({
+        ...prev,
+        [params.scopeKey]: {
+          items: prev[params.scopeKey]?.items ?? [],
+          error: null,
+        },
+      }))
+
+      try {
+        const models = await fetchRemoteModels({
+          baseUrl,
+          apiKey,
+        })
+        setRemoteModelsByScope((prev) => ({
+          ...prev,
+          [params.scopeKey]: {
+            items: models,
+            error: null,
+          },
+        }))
+        toast.success(`${params.label} model list updated`, {
+          description: `Fetched ${models.length} models`,
+        })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        setRemoteModelsByScope((prev) => ({
+          ...prev,
+          [params.scopeKey]: {
+            items: prev[params.scopeKey]?.items ?? [],
+            error: message,
+          },
+        }))
+        toast.error(`Fetch ${params.label} models failed`, {
+          description: message,
+        })
+      } finally {
+        setRemoteModelLoadingByScope((prev) => ({
+          ...prev,
+          [params.scopeKey]: false,
+        }))
+      }
+    },
+    []
+  )
+
+  const handleFetchSelectedAgentModels = useCallback(async () => {
+    if (!selectedAgent || !selectedDraft) return
+    await fetchRemoteModelsForScope({
+      scopeKey: buildAgentModelScope(selectedAgent.agent_type),
+      label: selectedAgent.name,
+      baseUrl: selectedDraft.apiBaseUrl,
+      apiKey: selectedDraft.apiKey,
+    })
+  }, [fetchRemoteModelsForScope, selectedAgent, selectedDraft])
+
+  const handleFetchOpenCodeProviderModels = useCallback(
+    async (providerId: string) => {
+      if (!selectedOpenCodeConfig) return
+      const targetProviderId = providerId.trim()
+      if (!targetProviderId) return
+      const provider = selectedOpenCodeConfig.providers[targetProviderId]
+      if (!provider) return
+      await fetchRemoteModelsForScope({
+        scopeKey: buildOpenCodeProviderModelScope(targetProviderId),
+        label: provider.name.trim() || targetProviderId,
+        baseUrl: provider.baseUrl,
+        apiKey: provider.apiKey,
+      })
+    },
+    [fetchRemoteModelsForScope, selectedOpenCodeConfig]
+  )
+
   const handleOpenCodeRemoveModel = useCallback(
     (providerId: string, modelId: string) => {
       const targetProviderId = providerId.trim()
@@ -4530,43 +4687,64 @@ export function AcpAgentSettings() {
                         API Key
                       </label>
                       <div className="flex items-center gap-2">
-                        <Input
-                          type={
-                            showApiKeys[selectedAgent.agent_type]
-                              ? "text"
-                              : "password"
-                          }
-                          value={selectedDraft.apiKey}
-                          onChange={(event) => {
-                            handleCodexImportantConfigChange(
-                              "apiKey",
-                              event.target.value
-                            )
-                          }}
-                          placeholder="sk-..."
-                        />
+                        <InputGroup className="flex-1">
+                          <InputGroupInput
+                            type={
+                              showApiKeys[selectedAgent.agent_type]
+                                ? "text"
+                                : "password"
+                            }
+                            value={selectedDraft.apiKey}
+                            onChange={(event) => {
+                              handleCodexImportantConfigChange(
+                                "apiKey",
+                                event.target.value
+                              )
+                            }}
+                            placeholder="sk-..."
+                          />
+                          <InputGroupAddon align="inline-end">
+                            <InputGroupButton
+                              type="button"
+                              variant="ghost"
+                              size="icon-xs"
+                              onClick={() => {
+                                setShowApiKeys((prev) => ({
+                                  ...prev,
+                                  [selectedAgent.agent_type]:
+                                    !prev[selectedAgent.agent_type],
+                                }))
+                              }}
+                              title={
+                                showApiKeys[selectedAgent.agent_type]
+                                  ? t("actions.hideApiKey")
+                                  : t("actions.showApiKey")
+                              }
+                            >
+                              {showApiKeys[selectedAgent.agent_type] ? (
+                                <EyeOff className="h-3.5 w-3.5" />
+                              ) : (
+                                <Eye className="h-3.5 w-3.5" />
+                              )}
+                            </InputGroupButton>
+                          </InputGroupAddon>
+                        </InputGroup>
                         <Button
                           type="button"
-                          variant="outline"
                           size="sm"
+                          variant="outline"
+                          className="h-9 rounded-md px-3 text-[11px]"
                           onClick={() => {
-                            setShowApiKeys((prev) => ({
-                              ...prev,
-                              [selectedAgent.agent_type]:
-                                !prev[selectedAgent.agent_type],
-                            }))
+                            void handleFetchSelectedAgentModels()
                           }}
-                          title={
-                            showApiKeys[selectedAgent.agent_type]
-                              ? t("actions.hideApiKey")
-                              : t("actions.showApiKey")
-                          }
+                          disabled={selectedAgentRemoteModelLoading}
                         >
-                          {showApiKeys[selectedAgent.agent_type] ? (
-                            <EyeOff className="h-3.5 w-3.5" />
+                          {selectedAgentRemoteModelLoading ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           ) : (
-                            <Eye className="h-3.5 w-3.5" />
+                            <RefreshCw className="h-3.5 w-3.5" />
                           )}
+                          {tModelSelector("fetchModels")}
                         </Button>
                       </div>
                     </div>
@@ -4575,16 +4753,22 @@ export function AcpAgentSettings() {
                       <label className="text-[11px] text-muted-foreground">
                         {t("codex.modelName")}
                       </label>
-                      <Input
+                      <ModelSelectorField
                         value={selectedDraft.model}
-                        onChange={(event) => {
-                          handleCodexImportantConfigChange(
-                            "model",
-                            event.target.value
-                          )
+                        onChange={(value) => {
+                          handleCodexImportantConfigChange("model", value)
                         }}
+                        models={selectedAgentRemoteModels}
                         placeholder="gpt-5 / gpt-5-mini"
                       />
+                      <p className="text-[11px] text-muted-foreground">
+                        {selectedAgentRemoteModels.length > 0
+                          ? tModelSelector("fetchedCount", {
+                              count: selectedAgentRemoteModels.length,
+                            })
+                          : (selectedAgentRemoteModelError ??
+                            tModelSelector("fetchFirst"))}
+                      </p>
                     </div>
 
                     <div className="space-y-1.5">
@@ -4771,13 +4955,22 @@ supports_websockets = true`}
                       <label className="text-[11px] text-muted-foreground">
                         Model
                       </label>
-                      <Input
+                      <ModelSelectorField
                         value={selectedDraft.model}
-                        onChange={(event) => {
-                          handleGeminiFieldChange("model", event.target.value)
+                        onChange={(value) => {
+                          handleGeminiFieldChange("model", value)
                         }}
+                        models={selectedAgentRemoteModels}
                         placeholder="gemini-3-pro-preview"
                       />
+                      <p className="text-[11px] text-muted-foreground">
+                        {selectedAgentRemoteModels.length > 0
+                          ? tModelSelector("fetchedCount", {
+                              count: selectedAgentRemoteModels.length,
+                            })
+                          : (selectedAgentRemoteModelError ??
+                            tModelSelector("fetchFirst"))}
+                      </p>
                       <p className="text-[11px] text-muted-foreground">
                         {t("modelHintDefault")}
                       </p>
@@ -4811,57 +5004,79 @@ supports_websockets = true`}
                             : "GEMINI_API_KEY"}
                         </label>
                         <div className="flex items-center gap-2">
-                          <Input
-                            type={
-                              showApiKeys[selectedAgent.agent_type]
-                                ? "text"
-                                : "password"
-                            }
-                            value={
-                              selectedDraft.geminiAuthMode === "vertex_api_key"
-                                ? selectedDraft.googleApiKey
-                                : selectedDraft.geminiApiKey
-                            }
-                            onChange={(event) => {
-                              if (
+                          <InputGroup className="flex-1">
+                            <InputGroupInput
+                              type={
+                                showApiKeys[selectedAgent.agent_type]
+                                  ? "text"
+                                  : "password"
+                              }
+                              value={
                                 selectedDraft.geminiAuthMode ===
                                 "vertex_api_key"
-                              ) {
+                                  ? selectedDraft.googleApiKey
+                                  : selectedDraft.geminiApiKey
+                              }
+                              onChange={(event) => {
+                                if (
+                                  selectedDraft.geminiAuthMode ===
+                                  "vertex_api_key"
+                                ) {
+                                  handleGeminiFieldChange(
+                                    "googleApiKey",
+                                    event.target.value
+                                  )
+                                  return
+                                }
                                 handleGeminiFieldChange(
-                                  "googleApiKey",
+                                  "geminiApiKey",
                                   event.target.value
                                 )
-                                return
-                              }
-                              handleGeminiFieldChange(
-                                "geminiApiKey",
-                                event.target.value
-                              )
-                            }}
-                            placeholder="AIza..."
-                          />
+                              }}
+                              placeholder="AIza..."
+                            />
+                            <InputGroupAddon align="inline-end">
+                              <InputGroupButton
+                                type="button"
+                                variant="ghost"
+                                size="icon-xs"
+                                onClick={() => {
+                                  setShowApiKeys((prev) => ({
+                                    ...prev,
+                                    [selectedAgent.agent_type]:
+                                      !prev[selectedAgent.agent_type],
+                                  }))
+                                }}
+                                title={
+                                  showApiKeys[selectedAgent.agent_type]
+                                    ? t("actions.hideKey")
+                                    : t("actions.showKey")
+                                }
+                              >
+                                {showApiKeys[selectedAgent.agent_type] ? (
+                                  <EyeOff className="h-3.5 w-3.5" />
+                                ) : (
+                                  <Eye className="h-3.5 w-3.5" />
+                                )}
+                              </InputGroupButton>
+                            </InputGroupAddon>
+                          </InputGroup>
                           <Button
                             type="button"
-                            variant="outline"
                             size="sm"
+                            variant="outline"
+                            className="h-9 rounded-md px-3 text-[11px]"
                             onClick={() => {
-                              setShowApiKeys((prev) => ({
-                                ...prev,
-                                [selectedAgent.agent_type]:
-                                  !prev[selectedAgent.agent_type],
-                              }))
+                              void handleFetchSelectedAgentModels()
                             }}
-                            title={
-                              showApiKeys[selectedAgent.agent_type]
-                                ? t("actions.hideKey")
-                                : t("actions.showKey")
-                            }
+                            disabled={selectedAgentRemoteModelLoading}
                           >
-                            {showApiKeys[selectedAgent.agent_type] ? (
-                              <EyeOff className="h-3.5 w-3.5" />
+                            {selectedAgentRemoteModelLoading ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             ) : (
-                              <Eye className="h-3.5 w-3.5" />
+                              <RefreshCw className="h-3.5 w-3.5" />
                             )}
+                            {tModelSelector("fetchModels")}
                           </Button>
                         </div>
                       </div>
@@ -4998,30 +5213,42 @@ supports_websockets = true`}
                         <label className="text-[11px] text-muted-foreground">
                           model
                         </label>
-                        <Input
+                        <ModelSelectorField
                           value={selectedOpenCodeConfig?.model ?? ""}
-                          onChange={(event) => {
-                            handleOpenCodeFieldChange(
-                              "model",
-                              event.target.value
-                            )
+                          onChange={(value) => {
+                            handleOpenCodeFieldChange("model", value)
                           }}
+                          models={selectedOpenCodeRemoteModels}
                           placeholder="google/gemini-3-pro-preview"
+                          emptyText={
+                            selectedOpenCodeProviderId
+                              ? (selectedOpenCodeRemoteModelError ??
+                                tModelSelector(
+                                  "fetchCurrentProviderModelsFirst"
+                                ))
+                              : tModelSelector("configureProviderFirst")
+                          }
                         />
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-[11px] text-muted-foreground">
                           small_model
                         </label>
-                        <Input
+                        <ModelSelectorField
                           value={selectedOpenCodeConfig?.smallModel ?? ""}
-                          onChange={(event) => {
-                            handleOpenCodeFieldChange(
-                              "small_model",
-                              event.target.value
-                            )
+                          onChange={(value) => {
+                            handleOpenCodeFieldChange("small_model", value)
                           }}
+                          models={selectedOpenCodeRemoteModels}
                           placeholder="google/gemini-3-flash-preview"
+                          emptyText={
+                            selectedOpenCodeProviderId
+                              ? (selectedOpenCodeRemoteModelError ??
+                                tModelSelector(
+                                  "fetchCurrentProviderModelsFirst"
+                                ))
+                              : tModelSelector("configureProviderFirst")
+                          }
                         />
                       </div>
                     </div>
@@ -5075,6 +5302,14 @@ supports_websockets = true`}
                                 selectedOpenCodeConfig.disabledProviders.includes(
                                   providerId
                                 )
+                              const providerModelScope =
+                                buildOpenCodeProviderModelScope(providerId)
+                              const providerRemoteModels =
+                                remoteModelsByScope[providerModelScope]
+                                  ?.items ?? []
+                              const providerRemoteModelLoading = Boolean(
+                                remoteModelLoadingByScope[providerModelScope]
+                              )
                               return (
                                 <Collapsible
                                   key={providerId}
@@ -5302,6 +5537,38 @@ supports_websockets = true`}
                                             </Button>
                                           </div>
                                         </div>
+                                        <div className="md:col-span-2 flex items-center justify-between gap-2">
+                                          <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => {
+                                              void handleFetchOpenCodeProviderModels(
+                                                providerId
+                                              )
+                                            }}
+                                            disabled={
+                                              providerRemoteModelLoading
+                                            }
+                                          >
+                                            {providerRemoteModelLoading ? (
+                                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            ) : (
+                                              <RefreshCw className="h-3.5 w-3.5" />
+                                            )}
+                                            {tModelSelector("fetchModels")}
+                                          </Button>
+                                          <span className="text-[11px] text-muted-foreground">
+                                            {providerRemoteModels.length > 0
+                                              ? tModelSelector("fetchedCount", {
+                                                  count:
+                                                    providerRemoteModels.length,
+                                                })
+                                              : tModelSelector(
+                                                  "fetchProviderFirst"
+                                                )}
+                                          </span>
+                                        </div>
                                       </div>
                                       <Collapsible
                                         open={Boolean(
@@ -5357,21 +5624,26 @@ supports_websockets = true`}
                                             </p>
 
                                             <div className="mt-2 flex flex-wrap items-center gap-2">
-                                              <Input
-                                                value={
-                                                  openCodeNewModelIds[
-                                                    providerId
-                                                  ] ?? ""
-                                                }
-                                                onChange={(event) => {
-                                                  handleOpenCodeModelDraftChange(
-                                                    providerId,
-                                                    event.target.value
-                                                  )
-                                                }}
-                                                className="w-[240px]"
-                                                placeholder="new-model-id"
-                                              />
+                                              <div className="w-[240px]">
+                                                <ModelSelectorField
+                                                  value={
+                                                    openCodeNewModelIds[
+                                                      providerId
+                                                    ] ?? ""
+                                                  }
+                                                  onChange={(value) => {
+                                                    handleOpenCodeModelDraftChange(
+                                                      providerId,
+                                                      value
+                                                    )
+                                                  }}
+                                                  models={providerRemoteModels}
+                                                  placeholder="new-model-id"
+                                                  emptyText={tModelSelector(
+                                                    "fetchCurrentProviderModelsFirst"
+                                                  )}
+                                                />
+                                              </div>
                                               <Button
                                                 type="button"
                                                 size="sm"
@@ -5839,62 +6111,92 @@ supports_websockets = true`}
                         API Key
                       </label>
                       <div className="flex items-center gap-2">
-                        <Input
-                          type={
-                            showApiKeys[selectedAgent.agent_type]
-                              ? "text"
-                              : "password"
-                          }
-                          value={selectedDraft.apiKey}
-                          onChange={(event) => {
-                            handleImportantConfigChange(
-                              "apiKey",
-                              event.target.value
-                            )
-                          }}
-                          placeholder="sk-..."
-                        />
+                        <InputGroup className="flex-1">
+                          <InputGroupInput
+                            type={
+                              showApiKeys[selectedAgent.agent_type]
+                                ? "text"
+                                : "password"
+                            }
+                            value={selectedDraft.apiKey}
+                            onChange={(event) => {
+                              handleImportantConfigChange(
+                                "apiKey",
+                                event.target.value
+                              )
+                            }}
+                            placeholder="sk-..."
+                          />
+                          <InputGroupAddon align="inline-end">
+                            <InputGroupButton
+                              type="button"
+                              variant="ghost"
+                              size="icon-xs"
+                              onClick={() => {
+                                setShowApiKeys((prev) => ({
+                                  ...prev,
+                                  [selectedAgent.agent_type]:
+                                    !prev[selectedAgent.agent_type],
+                                }))
+                              }}
+                              title={
+                                showApiKeys[selectedAgent.agent_type]
+                                  ? t("actions.hideApiKey")
+                                  : t("actions.showApiKey")
+                              }
+                            >
+                              {showApiKeys[selectedAgent.agent_type] ? (
+                                <EyeOff className="h-3.5 w-3.5" />
+                              ) : (
+                                <Eye className="h-3.5 w-3.5" />
+                              )}
+                            </InputGroupButton>
+                          </InputGroupAddon>
+                        </InputGroup>
                         <Button
                           type="button"
-                          variant="outline"
                           size="sm"
+                          variant="outline"
+                          className="h-9 rounded-md px-3 text-[11px]"
                           onClick={() => {
-                            setShowApiKeys((prev) => ({
-                              ...prev,
-                              [selectedAgent.agent_type]:
-                                !prev[selectedAgent.agent_type],
-                            }))
+                            void handleFetchSelectedAgentModels()
                           }}
-                          title={
-                            showApiKeys[selectedAgent.agent_type]
-                              ? t("actions.hideApiKey")
-                              : t("actions.showApiKey")
-                          }
+                          disabled={selectedAgentRemoteModelLoading}
                         >
-                          {showApiKeys[selectedAgent.agent_type] ? (
-                            <EyeOff className="h-3.5 w-3.5" />
+                          {selectedAgentRemoteModelLoading ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           ) : (
-                            <Eye className="h-3.5 w-3.5" />
+                            <RefreshCw className="h-3.5 w-3.5" />
                           )}
+                          {tModelSelector("fetchModels")}
                         </Button>
                       </div>
                     </div>
 
                     {selectedAgent.agent_type === "claude_code" ? (
                       <div className="space-y-2">
+                        <p className="text-[11px] text-muted-foreground">
+                          {selectedAgentRemoteModels.length > 0
+                            ? tModelSelector("fetchedCount", {
+                                count: selectedAgentRemoteModels.length,
+                              })
+                            : (selectedAgentRemoteModelError ??
+                              tModelSelector("fetchFirst"))}
+                        </p>
                         <div className="grid gap-3 md:grid-cols-2">
                           <div className="space-y-1.5">
                             <label className="text-[11px] text-muted-foreground">
                               {t("claude.mainModel")}
                             </label>
-                            <Input
+                            <ModelSelectorField
                               value={selectedDraft.claudeMainModel}
-                              onChange={(event) => {
+                              onChange={(value) => {
                                 handleImportantConfigChange(
                                   "claudeMainModel",
-                                  event.target.value
+                                  value
                                 )
                               }}
+                              models={selectedAgentRemoteModels}
                               placeholder="claude-sonnet-4-6"
                             />
                           </div>
@@ -5902,14 +6204,15 @@ supports_websockets = true`}
                             <label className="text-[11px] text-muted-foreground">
                               {t("claude.reasoningModel")}
                             </label>
-                            <Input
+                            <ModelSelectorField
                               value={selectedDraft.claudeReasoningModel}
-                              onChange={(event) => {
+                              onChange={(value) => {
                                 handleImportantConfigChange(
                                   "claudeReasoningModel",
-                                  event.target.value
+                                  value
                                 )
                               }}
+                              models={selectedAgentRemoteModels}
                               placeholder="claude-opus-4-6"
                             />
                           </div>
@@ -5917,14 +6220,15 @@ supports_websockets = true`}
                             <label className="text-[11px] text-muted-foreground">
                               {t("claude.haikuDefaultModel")}
                             </label>
-                            <Input
+                            <ModelSelectorField
                               value={selectedDraft.claudeDefaultHaikuModel}
-                              onChange={(event) => {
+                              onChange={(value) => {
                                 handleImportantConfigChange(
                                   "claudeDefaultHaikuModel",
-                                  event.target.value
+                                  value
                                 )
                               }}
+                              models={selectedAgentRemoteModels}
                               placeholder="claude-haiku-4-5-20251001"
                             />
                           </div>
@@ -5932,14 +6236,15 @@ supports_websockets = true`}
                             <label className="text-[11px] text-muted-foreground">
                               {t("claude.sonnetDefaultModel")}
                             </label>
-                            <Input
+                            <ModelSelectorField
                               value={selectedDraft.claudeDefaultSonnetModel}
-                              onChange={(event) => {
+                              onChange={(value) => {
                                 handleImportantConfigChange(
                                   "claudeDefaultSonnetModel",
-                                  event.target.value
+                                  value
                                 )
                               }}
+                              models={selectedAgentRemoteModels}
                               placeholder="claude-sonnet-4-6"
                             />
                           </div>
@@ -5947,14 +6252,15 @@ supports_websockets = true`}
                             <label className="text-[11px] text-muted-foreground">
                               {t("claude.opusDefaultModel")}
                             </label>
-                            <Input
+                            <ModelSelectorField
                               value={selectedDraft.claudeDefaultOpusModel}
-                              onChange={(event) => {
+                              onChange={(value) => {
                                 handleImportantConfigChange(
                                   "claudeDefaultOpusModel",
-                                  event.target.value
+                                  value
                                 )
                               }}
+                              models={selectedAgentRemoteModels}
                               placeholder="claude-opus-4-6"
                             />
                           </div>
@@ -5968,16 +6274,22 @@ supports_websockets = true`}
                         <label className="text-[11px] text-muted-foreground">
                           Model
                         </label>
-                        <Input
+                        <ModelSelectorField
                           value={selectedDraft.model}
-                          onChange={(event) => {
-                            handleImportantConfigChange(
-                              "model",
-                              event.target.value
-                            )
+                          onChange={(value) => {
+                            handleImportantConfigChange("model", value)
                           }}
+                          models={selectedAgentRemoteModels}
                           placeholder="gpt-5 / claude-sonnet / gemini-2.5-pro"
                         />
+                        <p className="text-[11px] text-muted-foreground">
+                          {selectedAgentRemoteModels.length > 0
+                            ? tModelSelector("fetchedCount", {
+                                count: selectedAgentRemoteModels.length,
+                              })
+                            : (selectedAgentRemoteModelError ??
+                              tModelSelector("fetchFirst"))}
+                        </p>
                       </div>
                     )}
 

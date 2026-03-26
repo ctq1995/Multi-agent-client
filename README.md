@@ -1,91 +1,117 @@
-# Codeg
+# Multi-agent-client
 
-[![Release](https://img.shields.io/github/v/release/xintaofei/codeg)](https://github.com/xintaofei/codeg/releases)
 [![License](https://img.shields.io/github/license/xintaofei/codeg)](./LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-2.x-24C8DB)](https://tauri.app/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
+[![基于](https://img.shields.io/badge/基于-codeg%20v0.4.1-orange)](https://github.com/xintaofei/codeg)
 
-<p>
-  <strong>English</strong> |
-  <a href="./docs/readme/README.zh-CN.md">简体中文</a> |
-  <a href="./docs/readme/README.zh-TW.md">繁體中文</a> |
-  <a href="./docs/readme/README.ja.md">日本語</a> |
-  <a href="./docs/readme/README.ko.md">한국어</a> |
-  <a href="./docs/readme/README.es.md">Español</a> |
-  <a href="./docs/readme/README.de.md">Deutsch</a> |
-  <a href="./docs/readme/README.fr.md">Français</a> |
-  <a href="./docs/readme/README.pt.md">Português</a> |
-  <a href="./docs/readme/README.ar.md">العربية</a>
-</p>
+> 本项目 fork 自 [xintaofei/codeg](https://github.com/xintaofei/codeg)，当前基于上游 `v0.1.4` 分支进行定制开发，上游最新版本为 `v0.4.1`。
 
-Codeg (Code Generation) is an enterprise-grade multi-agent coding workspace.
-It unifies local AI coding agents (Claude Code, Codex CLI, OpenCode, Gemini CLI,
-etc.) in one desktop app with session aggregation, parallel `git worktree`
-development, MCP/Skills management, and integrated Git/file/terminal workflows.
+**Multi-agent-client** 是一个桌面应用，用于聚合和浏览本地 AI 编码代理的会话记录。它从多个代理（Claude Code、Codex CLI、OpenCode、Gemini CLI 等）的本地文件系统中读取会话数据，统一格式后在 UI 中展示，并支持多种远程模型接口配置。
 
-## Main Interface
-![Codeg Light](./docs/images/main-light.png#gh-light-mode-only)
-![Codeg Dark](./docs/images/main-dark.png#gh-dark-mode-only)
+---
 
-## Session tile display
-![Codeg Light](./docs/images/main2-light.png#gh-light-mode-only)
-![Codeg Dark](./docs/images/main2-dark.png#gh-dark-mode-only)
+## 功能现状与上游对比
 
-> Current status: `v0.1.x` (fast iteration, suitable for early adopters)
+本分支基于上游 `v0.1.4` 标签 fork，并在此基础上进行了独立的功能增强。上游目前已迭代至 `v0.4.1`，以下是详细的功能对比说明。
 
-## Highlights
+### 本分支已有 / 独有的功能
 
-- Unified multi-agent workspace in the same project
-- Local session ingestion with structured rendering
-- Parallel development with built-in `git worktree` flows
-- MCP management (local scan + registry search/install)
-- Skills management (global and project scope)
-- Integrated engineering loop (file tree, diff, git changes, commit, terminal)
+| 功能 | 说明 |
+|------|------|
+| **多 AI 代理会话聚合** | 支持 Claude Code、Codex CLI、OpenCode 会话读取与展示 |
+| **多语言 UI** | 支持中文（简/繁）、英、日、韩、法、德、西、葡、阿拉伯语 |
+| **ACP（Agent Control Protocol）** | 实时连接本地代理进程，发送消息、查看响应 |
+| **MCP 管理** | 本地扫描 + 注册表搜索/安装 MCP 服务 |
+| **Skills 管理** | 全局和项目级别的 Skills 配置 |
+| **Git 工作流集成** | 文件树、diff 查看、git 变更、提交、终端 |
+| **GitHub 克隆进度条** | 克隆远程仓库时显示实时进度 |
+| **窗口置顶修复** | 修复设置窗口打开时遮挡其他应用的问题 |
+| **更多权限请求格式支持** | 兼容更多代理发出的权限请求格式 |
+| **远程模型选择器** | 支持配置自定义 API 接口并从远端拉取模型列表 |
+| **多接口自动适配** | 自动识别 Anthropic / Gemini / OpenAI 兼容接口，使用对应鉴权方式和路径格式 |
+| **模型列表精简显示** | 只显示模型名称 + 上下文长度能力标签，界面简洁清晰 |
+| **欢迎页版本号动态读取** | 版本号从 Tauri 运行时动态获取，随 `tauri.conf.json` 自动变化 |
+| **通知系统** | 支持系统通知推送 |
 
-## Supported Scope
+### 上游已有、本分支尚未合并的功能
 
-### 1) Session Ingestion (historical sessions)
+| 功能模块 | 上游版本引入 | 说明 |
+|----------|-------------|------|
+| **Web 服务模式** | v0.3.0+ | 内置 HTTP 服务器，可从任意浏览器远程访问 Codeg，实现远程开发。包含完整的 Web API、WebSocket 事件桥接、身份验证 |
+| **OpenClaw 代理支持** | v0.2.x+ | 新增 OpenClaw 代理的会话解析器 |
+| **Gemini CLI 解析器** | v0.2.x+ | 新增 Gemini CLI 会话历史读取 |
+| **版本控制增强** | v0.2.x+ | Push、Pull、Stash、Merge 冲突解决 UI，三栏 Merge 编辑器 |
+| **Git 账号管理** | v0.2.x+ | GitHub 及其他 Git 服务器的账号凭据管理（基于系统 Keyring） |
+| **图片预览** | v0.2.x+ | 在软件内预览会话中引用的图片文件 |
+| **虚拟化消息列表** | v0.2.x+ | 使用 Virtua 替换 @tanstack/react-virtual，提升长会话滚动性能 |
+| **Monaco 代码编辑器集成** | v0.2.x+ | 内置 Monaco Editor，支持本地文件编辑 |
+| **Agent Fork 支持** | v0.2.x+ | ACP 代理进程 fork 管理 |
+| **Transport 抽象层** | v0.3.0+ | 统一 Tauri IPC 和 Web HTTP 两种传输方式，同一套前端代码适配桌面和 Web |
+| **登录页面** | v0.3.0+ | Web 模式下的身份验证登录页 |
+| **会话块级虚拟化渲染** | v0.2.x+ | 重构消息渲染，支持块级虚拟化，减少卡顿 |
+| **并行命令执行结果修复** | v0.2.x+ | 修复并行命令的执行结果与命令块的对应关系 |
+| **Mermaid 版本统一** | v0.2.x+ | 统一 Mermaid 图表渲染版本 |
 
-| Agent | Environment Variable Path | macOS / Linux Default | Windows Default |
-| --- | --- | --- | --- |
-| Claude Code | `$CLAUDE_CONFIG_DIR/projects` | `~/.claude/projects` | `%USERPROFILE%\\.claude\\projects` |
-| Codex CLI | `$CODEX_HOME/sessions` | `~/.codex/sessions` | `%USERPROFILE%\\.codex\\sessions` |
-| OpenCode | `$XDG_DATA_HOME/opencode/opencode.db` | `~/.local/share/opencode/opencode.db` | `%USERPROFILE%\\.local\\share\\opencode\\opencode.db` |
-| Gemini CLI | `$GEMINI_CLI_HOME/.gemini` | `~/.gemini` | `%USERPROFILE%\\.gemini` |
+### 功能异同摘要
 
-> Note: environment variables take precedence over fallback paths.
+```
+上游 v0.4.1 核心新增:
+  ✦ Web 服务模式（最大差异，约 25+ 新文件）
+  ✦ 更多代理适配（Gemini CLI、OpenClaw）
+  ✦ 完整 Git 高级操作（Push/Merge/Stash/凭据管理）
+  ✦ 性能优化（块级虚拟化、Virtua 替换）
+  ✦ Monaco 代码编辑器
 
-### 2) ACP real-time sessions
+本分支独有:
+  ✦ 多接口 API 自动适配（Anthropic/Gemini/OpenAI）
+  ✦ 模型列表精简 UI
+  ✦ 窗口置顶问题修复
+  ✦ GitHub 克隆进度条
+  ✦ 通知系统
+```
 
-Built-in registry includes 20+ adapters, such as Claude Code, Codex CLI,
-Gemini CLI, OpenCode, OpenClaw, GitHub Copilot, Cline, Qwen Code, and others.
+---
 
-### 3) Skills settings support
+## 技术栈
 
-- Supported: `Claude Code / Codex / OpenCode / Gemini CLI / OpenClaw`
-- More adapters will be added incrementally
+- **桌面运行时**：Tauri 2（Rust 后端 + WebView 前端）
+- **前端**：Next.js 16（静态导出）+ React 19 + TypeScript（strict 模式）
+- **样式**：Tailwind CSS v4 + shadcn/ui
+- **包管理器**：pnpm
+- **数据库**：SeaORM + SQLite（会话索引）
 
-### 4) MCP target apps
+---
 
-Current writable targets:
+## 支持的代理
 
-- Claude Code
-- Codex
-- OpenCode
+### 会话历史读取
 
-## Quick Start
+| 代理 | 环境变量路径 | macOS/Linux 默认路径 | Windows 默认路径 |
+|------|-------------|---------------------|------------------|
+| Claude Code | `$CLAUDE_CONFIG_DIR/projects` | `~/.claude/projects` | `%USERPROFILE%\.claude\projects` |
+| Codex CLI | `$CODEX_HOME` | `~/.codex/sessions` | `%USERPROFILE%\.codex\sessions` |
+| OpenCode | — | `~/.local/share/opencode` | `%APPDATA%\opencode` |
 
-### Requirements
+### ACP 实时连接
 
-- Node.js `>=22` (recommended)
+支持通过 ACP 协议实时连接以下代理进程：
+- Claude Code、Codex CLI、OpenCode 等
+
+---
+
+## 快速开始
+
+### 环境要求
+
+- Node.js `>=22`
 - pnpm `>=10`
-- Rust stable (2021 edition)
-- Tauri 2 build dependencies
+- Rust stable（2021 edition）
+- Tauri 2 构建依赖
 
-Linux (Debian/Ubuntu) example:
+Linux（Debian/Ubuntu）额外依赖：
 
 ```bash
-sudo apt-get update
 sudo apt-get install -y \
   libwebkit2gtk-4.1-dev \
   libayatana-appindicator3-dev \
@@ -93,33 +119,34 @@ sudo apt-get install -y \
   patchelf
 ```
 
-### Development
+### 开发
 
 ```bash
 pnpm install
 
-# Full desktop app (Tauri + Next.js)
+# 启动完整应用（Tauri + Next.js Turbopack）
 pnpm tauri dev
 
-# Frontend only
+# 仅启动前端
 pnpm dev
 
-# Frontend static export to out/
+# 构建前端（静态导出到 out/）
 pnpm build
 
-# Desktop build
+# 构建桌面应用
 pnpm tauri build
 
-# Lint
+# Lint 检查
 pnpm eslint .
 
-# Rust checks (run in src-tauri/)
+# Rust 检查（在 src-tauri/ 目录下执行）
 cargo check
 cargo clippy
-cargo build
 ```
 
-## Architecture
+---
+
+## 架构
 
 ```text
 Next.js 16 (Static Export) + React 19
@@ -127,29 +154,33 @@ Next.js 16 (Static Export) + React 19
         | invoke()
         v
 Tauri 2 Commands (Rust)
-  |- ACP Manager
-  |- Parsers (local session ingestion)
-  |- Git / File Tree / Terminal runtime
-  |- MCP marketplace + local config writer
+  |- ACP Manager          ← 代理进程实时连接
+  |- Parsers              ← 本地会话文件解析
+  |- Git / File / Terminal
+  |- MCP marketplace
+  |- Model Catalog        ← 远程模型列表拉取（本分支增强）
   |- SeaORM + SQLite
         |
         v
-Local Filesystem / Local Agent Data / Git Repos
+本地文件系统 / 代理会话数据 / Git 仓库
 ```
 
-## Constraints
+---
 
-- Frontend uses static export (`output: "export"`)
-- No Next.js dynamic routes (`[param]`); use query params instead
-- Tauri command params: frontend `camelCase`, Rust `snake_case`
-- TypeScript strict mode
+## 隐私与安全
 
-## Privacy & Security
+- 默认本地优先：所有解析、存储和项目操作均在本地执行
+- 网络请求仅在用户主动触发时发生（如拉取远程模型列表）
+- 支持系统代理，适用于企业网络环境
 
-- Local-first by default for parsing, storage, and project operations
-- Network access happens only on user-triggered actions
-- System proxy support for enterprise environments
+---
 
 ## License
 
-Apache-2.0. See `LICENSE`.
+Apache-2.0，详见 `LICENSE`。
+
+---
+
+## 鸣谢
+
+本项目基于 **[xintaofei/codeg](https://github.com/xintaofei/codeg)** 开发，感谢原项目作者 [@xintaofei](https://github.com/xintaofei) 构建了这套完整的多代理桌面工作台框架，提供了会话聚合、ACP 协议、MCP 管理、Git 工作流等核心能力。原项目以 Apache-2.0 协议开源，持续快速迭代，强烈推荐关注原仓库以获取最新功能。

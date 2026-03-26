@@ -7,6 +7,12 @@ import type {
 } from "./types"
 import type { MessageTurn } from "@/lib/types"
 
+const EMPTY_TIMELINE_TURNS: ConversationTimelineTurn[] = []
+const timelineTurnsCache = new WeakMap<
+  ConversationRuntimeSession,
+  ConversationTimelineTurn[]
+>()
+
 export function selectConversationSession(
   state: ConversationRuntimeState,
   conversationId: number
@@ -42,7 +48,12 @@ export function selectTimelineTurns(
 ): ConversationTimelineTurn[] {
   const session = state.byConversationId.get(conversationId)
   if (!session) {
-    return []
+    return EMPTY_TIMELINE_TURNS
+  }
+
+  const cached = timelineTurnsCache.get(session)
+  if (cached) {
+    return cached
   }
 
   const persisted = mapTimelineTurns({
@@ -66,6 +77,7 @@ export function selectTimelineTurns(
   const timeline = [...persisted, ...local, ...optimistic]
 
   if (!session.liveMessage) {
+    timelineTurnsCache.set(session, timeline)
     return timeline
   }
 
@@ -74,10 +86,11 @@ export function selectTimelineTurns(
     session.liveMessage
   )
   if (!streamingTurn) {
+    timelineTurnsCache.set(session, timeline)
     return timeline
   }
 
-  return [
+  const nextTimeline: ConversationTimelineTurn[] = [
     ...timeline,
     {
       key: `streaming-${conversationId}-${session.liveMessage.id}`,
@@ -85,4 +98,6 @@ export function selectTimelineTurns(
       phase: "streaming",
     },
   ]
+  timelineTurnsCache.set(session, nextTimeline)
+  return nextTimeline
 }
