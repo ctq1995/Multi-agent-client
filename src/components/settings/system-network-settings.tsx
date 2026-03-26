@@ -80,21 +80,18 @@ export function SystemNetworkSettings() {
     )
   }, [languageSettings])
 
-  const languageLabels = useMemo(
-    () => ({
-      en: tLanguage("english"),
-      zh_cn: tLanguage("simplifiedChinese"),
-      zh_tw: tLanguage("traditionalChinese"),
-      ja: tLanguage("japanese"),
-      ko: tLanguage("korean"),
-      es: tLanguage("spanish"),
-      de: tLanguage("german"),
-      fr: tLanguage("french"),
-      pt: tLanguage("portuguese"),
-      ar: tLanguage("arabic"),
-    }),
-    [tLanguage]
-  )
+  const languageLabels = {
+    en: "English",
+    zh_cn: "简体中文",
+    zh_tw: "繁體中文",
+    ja: "日本語",
+    ko: "한국어",
+    es: "Español",
+    de: "Deutsch",
+    fr: "Français",
+    pt: "Português",
+    ar: "العربية",
+  }
 
   const formattedLastCheckedAt = useMemo(() => {
     if (!lastCheckedAt) return null

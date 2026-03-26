@@ -14,7 +14,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "codeg",
+  title: "Multi-agent-client",
   description: "AI Coding Agent Conversation Manager",
 }
 
