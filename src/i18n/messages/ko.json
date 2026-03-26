@@ -109,7 +109,9 @@
     },
     "chatSection": "채팅 표시",
     "showTurnNavigator": "턴 내비게이터 표시",
-    "showTurnNavigatorDescription": "채팅 하단에 내비게이터 바를 표시하여 사용자 턴 간에 빠르게 이동할 수 있습니다."
+    "showTurnNavigatorDescription": "채팅 하단에 내비게이터 바를 표시하여 사용자 턴 간에 빠르게 이동할 수 있습니다.",
+    "autoCollapseLongMessages": "긴 사용자 메시지 자동 접기",
+    "autoCollapseLongMessagesDescription": "약 10줄을 초과하는 사용자 메시지를 자동으로 접습니다. 클릭하여 펼칠 수 있습니다."
   },
   "SystemSettings": {
     "loading": "로딩 중...",

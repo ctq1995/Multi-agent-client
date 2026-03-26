@@ -109,7 +109,9 @@
     },
     "chatSection": "對話顯示",
     "showTurnNavigator": "顯示對話導覽列",
-    "showTurnNavigatorDescription": "在對話底部顯示懸浮導覽列，可快速跳轉至任意使用者輪次。"
+    "showTurnNavigatorDescription": "在對話底部顯示懸浮導覽列，可快速跳轉至任意使用者輪次。",
+    "autoCollapseLongMessages": "自動折疊超長使用者訊息",
+    "autoCollapseLongMessagesDescription": "超過約10行的使用者訊息自動折疊，點擊可展開。"
   },
   "SystemSettings": {
     "loading": "載入中...",

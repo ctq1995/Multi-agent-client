@@ -109,7 +109,9 @@
     },
     "chatSection": "对话显示",
     "showTurnNavigator": "显示对话导航栏",
-    "showTurnNavigatorDescription": "在对话底部显示悬浮导航栏，可快速跳转到任意用户轮次。"
+    "showTurnNavigatorDescription": "在对话底部显示悬浮导航栏，可快速跳转到任意用户轮次。",
+    "autoCollapseLongMessages": "自动折叠超长用户消息",
+    "autoCollapseLongMessagesDescription": "超过约10行的用户消息自动折叠，点击可展开。"
   },
   "SystemSettings": {
     "loading": "加载中...",

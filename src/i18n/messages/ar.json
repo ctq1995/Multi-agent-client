@@ -109,7 +109,9 @@
     },
     "chatSection": "عرض المحادثة",
     "showTurnNavigator": "إظهار شريط التنقل بين الأدوار",
-    "showTurnNavigatorDescription": "يعرض شريط تنقل عائمًا أسفل المحادثة للانتقال السريع بين أدوار المستخدم."
+    "showTurnNavigatorDescription": "يعرض شريط تنقل عائمًا أسفل المحادثة للانتقال السريع بين أدوار المستخدم.",
+    "autoCollapseLongMessages": "طي الرسائل الطويلة تلقائيًا",
+    "autoCollapseLongMessagesDescription": "يتم طي رسائل المستخدم التي تتجاوز ~10 أسطر تلقائيًا. انقر للتوسيع."
   },
   "SystemSettings": {
     "loading": "جارٍ التحميل...",

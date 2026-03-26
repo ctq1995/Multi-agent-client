@@ -24,11 +24,25 @@ import { isValidElement } from "react"
 import { CodeBlock } from "./code-block"
 import { MessageResponse } from "./message"
 
-export type ToolProps = ComponentProps<typeof Collapsible>
+export type ToolProps = ComponentProps<typeof Collapsible> & {
+  state?: ToolPart["state"]
+}
 
-export const Tool = ({ className, ...props }: ToolProps) => (
+const stateBorderClass: Partial<Record<ToolPart["state"], string>> = {
+  "approval-requested": "border-yellow-500/60",
+  "approval-responded": "border-blue-500/40",
+  "output-available": "border-green-500/40",
+  "output-denied": "border-orange-500/50",
+  "output-error": "border-red-500/50",
+}
+
+export const Tool = ({ className, state, ...props }: ToolProps) => (
   <Collapsible
-    className={cn("group w-full rounded-md border", className)}
+    className={cn(
+      "group w-full rounded-md border",
+      state ? (stateBorderClass[state] ?? "border-border") : undefined,
+      className
+    )}
     {...props}
   />
 )

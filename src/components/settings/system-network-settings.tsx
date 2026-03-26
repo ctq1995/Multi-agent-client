@@ -151,9 +151,10 @@ export function SystemNetworkSettings() {
     loadSettings().catch((err) => {
       console.error("[Settings] load system settings failed:", err)
     })
-    checkForUpdates().catch((err) => {
-      console.error("[Settings] auto check update failed:", err)
-    })
+    // Update checking disabled
+    // checkForUpdates().catch((err) => {
+    //   console.error("[Settings] auto check update failed:", err)
+    // })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

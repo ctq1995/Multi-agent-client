@@ -18,7 +18,7 @@ type ThemeMode = "system" | "light" | "dark"
 export function AppearanceSettings() {
   const t = useTranslations("AppearanceSettings")
   const { theme, resolvedTheme, setTheme } = useTheme()
-  const { settings, setShowTurnNavigator } = useChatDisplaySettings()
+  const { settings, setShowTurnNavigator, setAutoCollapseLongUserMessages } = useChatDisplaySettings()
   const resolvedThemeLabel =
     resolvedTheme === "dark"
       ? t("resolvedTheme.dark")
@@ -92,6 +92,18 @@ export function AppearanceSettings() {
             <Switch
               checked={settings.showTurnNavigator}
               onCheckedChange={setShowTurnNavigator}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <p className="text-xs font-medium">{t("autoCollapseLongMessages")}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {t("autoCollapseLongMessagesDescription")}
+              </p>
+            </div>
+            <Switch
+              checked={settings.autoCollapseLongUserMessages}
+              onCheckedChange={setAutoCollapseLongUserMessages}
             />
           </div>
         </section>

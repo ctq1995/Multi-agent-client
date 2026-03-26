@@ -109,7 +109,9 @@
     },
     "chatSection": "Chat-Anzeige",
     "showTurnNavigator": "Gesprächsnavigator anzeigen",
-    "showTurnNavigatorDescription": "Zeigt eine schwebende Navigationsleiste am unteren Rand des Chats an, um zwischen Benutzer-Turns zu springen."
+    "showTurnNavigatorDescription": "Zeigt eine schwebende Navigationsleiste am unteren Rand des Chats an, um zwischen Benutzer-Turns zu springen.",
+    "autoCollapseLongMessages": "Lange Nachrichten automatisch einklappen",
+    "autoCollapseLongMessagesDescription": "Benutzernachrichten mit mehr als ~10 Zeilen werden automatisch eingeklappt. Zum Ausklappen klicken."
   },
   "SystemSettings": {
     "loading": "Wird geladen...",

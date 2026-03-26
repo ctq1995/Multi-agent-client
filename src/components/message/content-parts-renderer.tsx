@@ -2283,7 +2283,7 @@ const ToolCallPart = memo(function ToolCallPart({
   const open = (isRunning && (isCommandTool || hasLiveOutput)) || manualOpen
 
   return (
-    <Tool open={open} onOpenChange={setManualOpen}>
+    <Tool open={open} onOpenChange={setManualOpen} state={part.state}>
       <ToolHeader
         type="dynamic-tool"
         state={part.state}
@@ -2339,7 +2339,7 @@ const ToolResultPart = memo(function ToolResultPart({
 }) {
   const t = useTranslations("Folder.chat.contentParts")
   return (
-    <Tool>
+    <Tool state={part.state}>
       <ToolHeader
         type="dynamic-tool"
         state={part.state}

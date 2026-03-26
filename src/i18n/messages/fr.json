@@ -109,7 +109,9 @@
     },
     "chatSection": "Affichage du chat",
     "showTurnNavigator": "Afficher le navigateur de tours",
-    "showTurnNavigatorDescription": "Affiche une barre de navigation flottante en bas du chat pour passer rapidement d'un tour à l'autre."
+    "showTurnNavigatorDescription": "Affiche une barre de navigation flottante en bas du chat pour passer rapidement d'un tour à l'autre.",
+    "autoCollapseLongMessages": "Replier automatiquement les longs messages",
+    "autoCollapseLongMessagesDescription": "Les messages utilisateur de plus de ~10 lignes sont automatiquement repliés. Cliquez pour développer."
   },
   "SystemSettings": {
     "loading": "Chargement...",

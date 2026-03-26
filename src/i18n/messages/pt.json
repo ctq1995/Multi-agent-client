@@ -109,7 +109,9 @@
     },
     "chatSection": "Exibição do chat",
     "showTurnNavigator": "Mostrar navegador de turnos",
-    "showTurnNavigatorDescription": "Exibe uma barra de navegação flutuante na parte inferior do chat para pular entre turnos do usuário."
+    "showTurnNavigatorDescription": "Exibe uma barra de navegação flutuante na parte inferior do chat para pular entre turnos do usuário.",
+    "autoCollapseLongMessages": "Recolher mensagens longas automaticamente",
+    "autoCollapseLongMessagesDescription": "Mensagens do usuário com mais de ~10 linhas são recolhidas automaticamente. Clique para expandir."
   },
   "SystemSettings": {
     "loading": "Carregando...",

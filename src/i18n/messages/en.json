@@ -109,7 +109,9 @@
     },
     "chatSection": "Chat Display",
     "showTurnNavigator": "Show turn navigator",
-    "showTurnNavigatorDescription": "Show a floating navigation bar at the bottom of the chat to jump between user turns."
+    "showTurnNavigatorDescription": "Show a floating navigation bar at the bottom of the chat to jump between user turns.",
+    "autoCollapseLongMessages": "Auto-collapse long user messages",
+    "autoCollapseLongMessagesDescription": "Automatically collapse user messages longer than ~10 lines. Click to expand."
   },
   "SystemSettings": {
     "loading": "Loading...",
