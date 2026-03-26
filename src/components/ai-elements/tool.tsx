@@ -28,10 +28,7 @@ export type ToolProps = ComponentProps<typeof Collapsible>
 
 export const Tool = ({ className, ...props }: ToolProps) => (
   <Collapsible
-    className={cn(
-      "ai-tool-surface group mb-4 w-full rounded-md border",
-      className
-    )}
+    className={cn("group w-full rounded-md border", className)}
     {...props}
   />
 )
@@ -100,7 +97,7 @@ export const ToolHeader = ({
   return (
     <CollapsibleTrigger
       className={cn(
-        "ai-tool-header flex w-full min-w-0 items-center justify-between gap-4 border-b border-border/60 p-3",
+        "flex w-full min-w-0 items-center justify-between gap-4 p-3",
         className
       )}
       {...props}
@@ -122,14 +119,20 @@ export const ToolHeader = ({
 
 export type ToolContentProps = ComponentProps<typeof CollapsibleContent>
 
-export const ToolContent = ({ className, ...props }: ToolContentProps) => (
+export const ToolContent = ({
+  className,
+  children,
+  ...props
+}: ToolContentProps) => (
   <CollapsibleContent
     className={cn(
-      "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 space-y-4 p-4 text-popover-foreground outline-none data-[state=closed]:animate-out data-[state=open]:animate-in",
+      "tool-collapsible-content overflow-hidden text-popover-foreground outline-none",
       className
     )}
     {...props}
-  />
+  >
+    <div className="space-y-4 p-4">{children}</div>
+  </CollapsibleContent>
 )
 
 export type ToolInputProps = ComponentProps<"div"> & {
@@ -155,7 +158,7 @@ export const ToolInput = ({ className, input, ...props }: ToolInputProps) => {
       <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
         {t("parameters")}
       </h4>
-      <div className="ai-tool-input rounded-md border">
+      <div className="rounded-md bg-muted/50">
         <CodeBlock code={formattedCode} language="json" />
       </div>
     </div>
@@ -390,8 +393,10 @@ export const ToolOutput = ({
       </h4>
       <div
         className={cn(
-          "overflow-x-auto rounded-md border text-xs [&_table]:w-full",
-          errorText ? "ai-tool-error" : "ai-tool-output text-foreground"
+          "overflow-x-auto rounded-md text-xs [&_table]:w-full",
+          errorText
+            ? "bg-destructive/10 text-destructive"
+            : "bg-muted/50 text-foreground"
         )}
       >
         {typeof errorText === "string" && renderErrorText(errorText)}

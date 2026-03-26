@@ -1,6 +1,6 @@
 "use client"
 
-import { MessageSquareText, Monitor, Moon, Sun } from "lucide-react"
+import { Monitor, Moon, Sun } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useTheme } from "next-themes"
 import {
@@ -10,15 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { useChatDisplaySettings } from "@/hooks/use-chat-display-settings"
 
 type ThemeMode = "system" | "light" | "dark"
 
 export function AppearanceSettings() {
   const t = useTranslations("AppearanceSettings")
   const { theme, resolvedTheme, setTheme } = useTheme()
-  const { settings, setAutoCollapseLongUserMessages } = useChatDisplaySettings()
   const resolvedThemeLabel =
     resolvedTheme === "dark"
       ? t("resolvedTheme.dark")
@@ -77,35 +74,6 @@ export function AppearanceSettings() {
             >
               {t("currentTheme", { theme: resolvedThemeLabel })}
             </p>
-          </div>
-        </section>
-
-        <section className="rounded-xl border bg-card p-4 space-y-4">
-          <div className="flex items-center gap-2">
-            <MessageSquareText className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold">
-              {t("messageSectionTitle")}
-            </h2>
-          </div>
-
-          <p className="text-xs text-muted-foreground leading-5">
-            {t("messageSectionDescription")}
-          </p>
-
-          <div className="flex items-center justify-between gap-4 rounded-md border px-3 py-2">
-            <div className="min-w-0 space-y-1">
-              <p className="text-sm font-medium">
-                {t("autoCollapseLongUserMessages")}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("autoCollapseLongUserMessagesDescription")}
-              </p>
-            </div>
-            <Switch
-              checked={settings.autoCollapseLongUserMessages}
-              onCheckedChange={setAutoCollapseLongUserMessages}
-              aria-label={t("autoCollapseLongUserMessagesAria")}
-            />
           </div>
         </section>
       </div>

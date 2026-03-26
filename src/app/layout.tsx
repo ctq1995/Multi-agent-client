@@ -14,7 +14,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Multi-agent-client",
+  title: "codeg",
   description: "AI Coding Agent Conversation Manager",
 }
 
@@ -34,6 +34,8 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body>
+        {/* Suppress benign ResizeObserver loop warnings (W3C spec §3.3) */}
+        <script>{`window.addEventListener("error",function(e){if(e.message&&e.message.indexOf("ResizeObserver")!==-1){e.stopImmediatePropagation();e.preventDefault()}});window.onerror=function(m){if(typeof m==="string"&&m.indexOf("ResizeObserver")!==-1)return true}`}</script>
         <NextIntlClientProvider
           locale={initialLocale}
           messages={initialMessages}

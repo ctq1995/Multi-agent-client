@@ -105,6 +105,11 @@ pub enum AcpEvent {
         connection_id: String,
         prompt_capabilities: PromptCapabilitiesInfo,
     },
+    /// Whether the agent supports session/fork
+    ForkSupported {
+        connection_id: String,
+        supported: bool,
+    },
     /// Current session mode changed
     ModeChanged {
         connection_id: String,
@@ -239,6 +244,15 @@ pub struct AcpAgentInfo {
     pub codex_config_toml: Option<String>,
 }
 
+/// Lightweight status info for a single agent, used by connect() pre-check.
+#[derive(Debug, Clone, Serialize)]
+pub struct AcpAgentStatus {
+    pub agent_type: crate::models::agent::AgentType,
+    pub available: bool,
+    pub enabled: bool,
+    pub installed_version: Option<String>,
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum AgentSkillScope {
@@ -288,4 +302,11 @@ pub struct AvailableCommandInfo {
     pub name: String,
     pub description: String,
     pub input_hint: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ForkResultInfo {
+    pub forked_session_id: String,
+    pub original_session_id: String,
 }

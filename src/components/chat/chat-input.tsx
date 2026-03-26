@@ -17,6 +17,7 @@ interface ChatInputProps {
   status: ConnectionStatus | null
   promptCapabilities: PromptCapabilitiesInfo
   defaultPath?: string
+  agentName?: string
   onFocus?: () => void
   onSend: (draft: PromptDraft, modeId?: string | null) => void
   onCancel: () => void
@@ -41,12 +42,14 @@ interface ChatInputProps {
   isEditingQueueItem?: boolean
   onSaveQueueEdit?: (draft: PromptDraft) => void
   onCancelQueueEdit?: () => void
+  onForkSend?: (draft: PromptDraft, modeId?: string | null) => void
 }
 
 export function ChatInput({
   status,
   promptCapabilities,
   defaultPath,
+  agentName,
   onFocus,
   onSend,
   onCancel,
@@ -71,6 +74,7 @@ export function ChatInput({
   isEditingQueueItem,
   onSaveQueueEdit,
   onCancelQueueEdit,
+  onForkSend,
 }: ChatInputProps) {
   const t = useTranslations("Folder.chat.chatInput")
   const isConnected = status === "connected"
@@ -116,11 +120,12 @@ export function ChatInput({
         isEditingQueueItem={isEditingQueueItem}
         onSaveQueueEdit={onSaveQueueEdit}
         onCancelQueueEdit={onCancelQueueEdit}
+        onForkSend={onForkSend}
         placeholder={
           isConnecting
             ? t("connecting")
             : isPrompting
-              ? t("agentResponding")
+              ? t("agentResponding", { agent: agentName ?? "Agent" })
               : t("sendMessage")
         }
         className="min-h-28 max-h-60"

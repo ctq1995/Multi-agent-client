@@ -28,7 +28,7 @@
       "removeFromHistoryFailed": "기록에서 제거하지 못했습니다",
       "openSettingsFailed": "설정을 열지 못했습니다",
       "cloneFailed": "저장소 클론에 실패했습니다",
-      "cloneProgressUnavailable": "?? ???? ??? ? ????(??? ?????)."
+      "cloneProgressUnavailable": "클론 진행 상황 추적 불가"
     },
     "errors": {
       "unknown": "예기치 않은 오류가 발생했습니다",
@@ -58,6 +58,27 @@
       "clone": "클론"
     }
   },
+  "GitCredentialDialog": {
+    "title": "인증 필요",
+    "description": "원격 서버에서 자격 증명을 요구합니다. 사용자 이름과 비밀번호(또는 개인 액세스 토큰)를 입력하세요.",
+    "username": "사용자 이름",
+    "usernamePlaceholder": "사용자 이름 또는 이메일",
+    "password": "비밀번호 / 토큰",
+    "passwordPlaceholder": "비밀번호 또는 개인 액세스 토큰",
+    "passwordHint": "서버의 사용자 이름과 비밀번호를 입력하세요.",
+    "cancel": "취소",
+    "authenticate": "인증",
+    "authenticating": "인증 중...",
+    "invalidCredentials": "자격 증명이 유효하지 않습니다. 다시 시도하세요.",
+    "saveCredentials": "향후 작업을 위해 자격 증명 저장",
+    "githubTitle": "GitHub 인증",
+    "githubDescription": "개인 액세스 토큰을 입력하여 GitHub에 연결합니다. 토큰 확인 후 계정에 자동으로 저장됩니다.",
+    "githubToken": "개인 액세스 토큰",
+    "githubTokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "githubTokenHint": "GitHub → Settings → Developer settings → Personal access tokens에서 토큰을 생성하세요.",
+    "githubAuthenticate": "확인 및 연결",
+    "generateToken": "토큰 생성"
+  },
   "SettingsShell": {
     "title": "설정",
     "preferences": "환경설정",
@@ -67,7 +88,9 @@
       "mcp": "MCP",
       "skills": "Skills",
       "shortcuts": "단축키",
-      "system": "시스템"
+      "version_control": "버전 관리",
+      "system": "시스템",
+      "web_service": "웹 서비스"
     }
   },
   "AppearanceSettings": {
@@ -79,11 +102,6 @@
     "light": "라이트",
     "dark": "다크",
     "currentTheme": "현재 적용된 테마: {theme}",
-    "messageSectionTitle": "메시지 표시",
-    "messageSectionDescription": "채팅에서 긴 사용자 메시지를 표시하는 방식을 설정합니다.",
-    "autoCollapseLongUserMessages": "긴 사용자 메시지 자동 접기",
-    "autoCollapseLongUserMessagesDescription": "긴 사용자 입력을 기본으로 접어 스레드를 읽기 쉽게 유지합니다.",
-    "autoCollapseLongUserMessagesAria": "긴 사용자 메시지 자동 접기",
     "resolvedTheme": {
       "light": "라이트",
       "dark": "다크",
@@ -111,6 +129,7 @@
     "languageSaveSuccess": "언어 설정이 저장되었습니다",
     "languageSaveFailed": "언어 설정 저장 실패: {message}",
     "updateTitle": "앱 업데이트",
+    "versionTitle": "소프트웨어 업데이트",
     "updateDescription": "설정된 릴리스 소스에서 새 버전을 확인하고 가능하면 바로 설치합니다.",
     "currentVersion": "현재 버전",
     "upgradableVersion": "최신 버전",
@@ -132,6 +151,75 @@
       "downloadFailed": "업데이트 패키지 다운로드에 실패했습니다. 잠시 후 다시 시도하세요.",
       "installFailed": "업데이트 설치에 실패했습니다. 앱을 종료한 뒤 다시 시도하세요.",
       "unknown": "업데이트에 실패했습니다. 잠시 후 다시 시도하세요."
+    }
+  },
+  "VersionControlSettings": {
+    "loading": "로딩 중...",
+    "sectionTitle": "버전 관리",
+    "sectionDescription": "Git 실행 파일을 설정하고 GitHub 계정을 관리합니다.",
+    "gitTitle": "Git 설정",
+    "gitDescription": "애플리케이션에서 사용할 Git 실행 파일을 설정합니다.",
+    "gitDetected": "Git이 감지되었습니다",
+    "gitNotFound": "시스템에서 Git을 찾을 수 없습니다",
+    "gitVersion": "버전",
+    "gitPath": "경로",
+    "customGitPath": "사용자 지정 Git 경로",
+    "customGitPathPlaceholder": "/usr/bin/git",
+    "customGitPathHint": "비워두면 자동 감지된 경로를 사용합니다.",
+    "test": "테스트",
+    "testing": "테스트 중...",
+    "testSuccess": "Git 실행 파일이 유효합니다.",
+    "testFailed": "Git 테스트 실패: {message}",
+    "save": "저장",
+    "saving": "저장 중...",
+    "saveSuccess": "Git 설정이 저장되었습니다.",
+    "saveFailed": "저장 실패: {message}",
+    "githubTitle": "GitHub 계정",
+    "githubDescription": "인증용 GitHub 계정을 관리합니다. 토큰은 로컬에 저장됩니다.",
+    "noAccounts": "설정된 GitHub 계정이 없습니다.",
+    "addAccount": "계정 추가",
+    "serverUrl": "서버 URL",
+    "serverUrlPlaceholder": "https://github.com",
+    "token": "개인 액세스 토큰",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "generateToken": "토큰 생성",
+    "tokenHint": "GitHub → Settings → Developer settings → Personal access tokens에서 토큰을 생성하세요.",
+    "validateAndAdd": "검증 및 추가",
+    "validating": "검증 중...",
+    "addSuccess": "계정 {username}이(가) 추가되었습니다.",
+    "addFailed": "계정 추가 실패: {message}",
+    "testConnection": "테스트",
+    "connectionSuccess": "연결 성공.",
+    "connectionFailed": "연결 실패: {message}",
+    "setDefault": "기본값으로 설정",
+    "defaultLabel": "기본",
+    "defaultSet": "기본 계정이 업데이트되었습니다.",
+    "removeAccount": "삭제",
+    "removeConfirmTitle": "계정 삭제",
+    "removeConfirmMessage": "계정 \"{username}\"을(를) 삭제하시겠습니까?",
+    "removeConfirm": "삭제",
+    "removeCancel": "취소",
+    "removeSuccess": "계정이 삭제되었습니다.",
+    "scopes": "범위",
+    "loadFailed": "설정 로드 실패: {message}",
+    "gitAccount": {
+      "sectionTitle": "Git 서버 계정",
+      "sectionDescription": "GitHub 이외의 Git 서버 자격 증명을 관리합니다 (GitLab, Bitbucket, 자체 호스팅 등).",
+      "noAccounts": "설정된 Git 서버 계정이 없습니다.",
+      "addAccount": "계정 추가",
+      "addTitle": "Git 계정 추가",
+      "addDescription": "서버 주소, 사용자 이름, 비밀번호 또는 액세스 토큰을 입력하세요.",
+      "serverUrl": "서버 URL",
+      "serverUrlPlaceholder": "https://gitlab.example.com",
+      "username": "사용자 이름",
+      "usernamePlaceholder": "사용자 이름 또는 이메일",
+      "password": "비밀번호 / 토큰",
+      "passwordPlaceholder": "비밀번호 또는 액세스 토큰",
+      "passwordHint": "서버의 비밀번호 또는 액세스 토큰을 입력하세요.",
+      "add": "추가",
+      "serverRequired": "서버 URL을 입력하세요.",
+      "usernameRequired": "사용자 이름을 입력하세요.",
+      "passwordRequired": "비밀번호를 입력하세요."
     }
   },
   "ShortcutSettings": {
@@ -412,6 +500,10 @@
     },
     "codex": {
       "configDescription": "API URL, API Key, 모델 이름, reasoning effort를 빠르게 설정하고 `auth.json` / `config.toml`과 동기화합니다.",
+      "authMode": "인증 방식",
+      "chatgptSubscription": "공식 구독",
+      "chatgptSubscriptionHint": "ChatGPT 공식 구독으로 로그인, API Key 불필요",
+      "apiKeyHint": "API Key로 OpenAI 또는 호환 API 서비스에 연결",
       "selectProvider": "Provider 선택",
       "modelName": "모델 이름",
       "selectReasoningEffort": "Reasoning Effort 선택",
@@ -524,6 +616,7 @@
       "openClawSaved": "OpenClaw 설정 저장됨",
       "saveOpenClawFailed": "OpenClaw 설정 저장 실패",
       "configSaved": "구성이 저장되었습니다",
+      "configSavedHint": "기존 세션은 다시 열어야 적용됩니다",
       "saveConfigManagementFailed": "구성 관리 저장 실패"
     },
     "version": {
@@ -538,16 +631,15 @@
       "latest": "{versionText}. 이미 최신입니다."
     },
     "modelSelector": {
-      "fetchModels": "Fetch models",
-      "fetchedCount": "{count} models loaded",
-      "fetchFirst": "Fill API URL and API key first",
-      "fetchProviderFirst": "Fill current provider API URL and API key first",
-      "fetchCurrentProviderModelsFirst": "Fetch current provider models first",
-      "configureProviderFirst": "Configure a provider first",
-      "empty": "No models available",
-      "filterHint": "Type to automatically filter models",
-      "select": "Select",
-      "contextWindow": "Context {count}"
+      "filterHint": "입력하여 모델 필터링",
+      "empty": "모델을 찾을 수 없습니다",
+      "select": "선택",
+      "fetchModels": "모델 가져오기",
+      "fetchedCount": "{count}개 모델 가져옴",
+      "fetchFirst": "모델 가져오기를 클릭하여 로드",
+      "configureProviderFirst": "먼저 공급자를 구성하세요",
+      "fetchProviderFirst": "가져오기를 클릭하여 공급자 모델 로드",
+      "fetchCurrentProviderModelsFirst": "가져오기를 클릭하여 이 공급자의 모델 로드"
     }
   },
   "SettingsPages": {
@@ -557,6 +649,32 @@
     "title": "커밋",
     "invalidFolderId": "유효하지 않은 폴더 ID",
     "loadingRepo": "저장소를 불러오는 중..."
+  },
+  "MergePage": {
+    "title": "충돌 해결",
+    "invalidFolderId": "잘못된 폴더 ID",
+    "loadingRepo": "저장소 로딩 중...",
+    "localVersion": "로컬 (우리 쪽)",
+    "result": "결과",
+    "remoteVersion": "원격 (상대 쪽)",
+    "acceptLocal": "로컬 적용",
+    "acceptRemote": "원격 적용",
+    "markResolved": "해결됨으로 표시",
+    "abortMerge": "중단",
+    "completeMerge": "병합 완료",
+    "unresolvedConflicts": "파일에 아직 해결되지 않은 충돌 마커가 있습니다",
+    "fileResolved": "파일이 해결되었습니다",
+    "allResolved": "모든 충돌이 해결되었습니다",
+    "conflictFiles": "충돌 파일",
+    "loadingFile": "파일 로딩 중...",
+    "preparingMerge": "병합 준비 중...",
+    "selectFile": "해결할 파일을 선택하세요",
+    "noConflicts": "충돌 파일 없음",
+    "skipFile": "건너뛰기",
+    "abortSuccess": "작업이 중단되었습니다",
+    "applyAllNonConflicting": "충돌하지 않는 모든 변경 적용",
+    "applyLeftNonConflicting": "로컬 적용",
+    "applyRightNonConflicting": "원격 적용"
   },
   "Folder": {
     "common": {
@@ -575,7 +693,8 @@
       "create": "생성",
       "createAndSwitch": "생성 후 전환",
       "openFile": "파일 열기",
-      "viewDiff": "Diff 보기"
+      "viewDiff": "Diff 보기",
+      "push": "푸시..."
     },
     "modes": {
       "conversation": "대화 모드",
@@ -616,7 +735,10 @@
       "reloaded": "대화를 다시 불러왔습니다",
       "reload": "다시 불러오기",
       "newConversation": "새 대화",
-      "closeConversation": "대화 닫기"
+      "closeConversation": "대화 닫기",
+      "forkSession": "세션 포크",
+      "forkSessionSuccess": "세션 포크 성공",
+      "forkSessionFailed": "세션 포크 실패: {error}"
     },
     "conversationCard": {
       "untitledConversation": "제목 없는 대화",
@@ -633,11 +755,15 @@
       "save": "저장"
     },
     "search": {
-      "dialogTitle": "대화 검색",
+      "dialogTitle": "검색",
+      "tabConversations": "대화",
+      "tabFiles": "파일",
       "placeholder": "대화 검색...",
+      "filePlaceholder": "파일 또는 디렉토리 검색...",
       "allAgents": "전체",
       "searching": "검색 중...",
       "typeToSearch": "입력하여 대화를 검색하세요",
+      "typeToSearchFiles": "입력하여 파일 또는 디렉토리를 검색하세요",
       "noResults": "검색 결과가 없습니다.",
       "untitledConversation": "제목 없는 대화"
     },
@@ -715,7 +841,9 @@
       "closeFileTab": "파일 탭 닫기",
       "close": "닫기",
       "closeOthers": "다른 항목 닫기",
-      "closeAll": "모두 닫기"
+      "closeAll": "모두 닫기",
+      "preview": "미리보기",
+      "editSource": "소스 편집"
     },
     "terminal": {
       "rename": "이름 변경",
@@ -757,11 +885,15 @@
       "next": "다음",
       "jumpToLine": "{line}행으로 이동",
       "noParsedDiffSections": "파싱된 diff 섹션이 없습니다",
-      "loadingEditor": "에디터 로딩 중..."
+      "loadingEditor": "에디터 로딩 중...",
+      "imageZoomIn": "확대",
+      "imageZoomOut": "축소",
+      "imageZoomReset": "확대/축소 초기화"
     },
     "branchDropdown": {
       "toasts": {
         "commitCodeCompleted": "코드 커밋이 완료되었습니다",
+        "pushCodeCompleted": "코드 푸시가 완료되었습니다",
         "committedFiles": "{count, plural, one {#개 파일 커밋됨} other {#개 파일 커밋됨}}",
         "taskCompleted": "{label} 완료",
         "taskFailed": "{label} 실패",
@@ -770,6 +902,7 @@
         "allFilesUpToDate": "모든 파일이 최신 상태입니다",
         "updatedFiles": "{count, plural, one {#개 파일 업데이트됨} other {#개 파일 업데이트됨}}",
         "openCommitWindowFailed": "커밋 창을 열지 못했습니다",
+        "openPushWindowFailed": "푸시 창 열기 실패",
         "upstreamSet": "업스트림 브랜치가 설정되었습니다",
         "upstreamSetAndPushed": "업스트림 브랜치를 설정하고 {count, plural, one {#개 커밋} other {#개 커밋}}을 푸시했습니다",
         "noCommitsToPush": "푸시할 커밋이 없습니다",
@@ -795,7 +928,9 @@
         "deleteTitle": "브랜치 삭제",
         "mergeDescription": "{branchName}을(를) 현재 브랜치 {currentBranch}에 병합할까요?",
         "rebaseDescription": "현재 브랜치 {currentBranch}를 {branchName} 위로 리베이스할까요?",
-        "deleteDescription": "브랜치 {branchName}을(를) 삭제할까요? 이 작업은 되돌릴 수 없습니다."
+        "deleteDescription": "브랜치 {branchName}을(를) 삭제할까요? 이 작업은 되돌릴 수 없습니다.",
+        "forceDeleteTitle": "브랜치 강제 삭제",
+        "forceDeleteDescription": "브랜치 {branchName}가 완전히 병합되지 않았습니다. 강제 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
       },
       "current": "현재",
       "switchToBranch": "이 브랜치로 전환",
@@ -810,8 +945,9 @@
       "pushCode": "푸시...",
       "newBranch": "새 브랜치...",
       "newWorktree": "새 워크트리...",
-      "stashChanges": "변경 사항 stash",
+      "stashChanges": "스태시...",
       "stashPop": "stash pop...",
+      "manageRemotes": "원격 관리...",
       "localBranches": "로컬 브랜치 ({count, plural, one {#} other {#}})",
       "noLocalBranches": "로컬 브랜치가 없습니다",
       "remoteBranches": "원격 브랜치 ({count, plural, one {#} other {#}})",
@@ -825,7 +961,47 @@
         "newWorktreeDescription": "현재 브랜치 {branch}에서 새 워크트리를 만듭니다",
         "branchNameLabel": "브랜치 이름",
         "worktreePathLabel": "워크트리 경로",
-        "worktreePathPlaceholder": "워크트리 경로"
+        "worktreePathPlaceholder": "워크트리 경로",
+        "manageRemotesTitle": "원격 관리",
+        "manageRemotesEmpty": "구성된 원격이 없습니다",
+        "remoteNamePlaceholder": "원격 이름",
+        "remoteUrlPlaceholder": "원격 URL",
+        "addRemote": "추가",
+        "savingRemotes": "저장 중..."
+      },
+      "conflict": {
+        "title": "병합 충돌",
+        "description": "다음 파일에 충돌이 있어 해결이 필요합니다:",
+        "abort": "병합 중단",
+        "openMergeTool": "병합 도구 열기",
+        "completeMerge": "병합 완료",
+        "abortSuccess": "병합이 중단되었습니다",
+        "completeSuccess": "병합이 완료되었습니다"
+      },
+      "stashDialog": {
+        "title": "변경 사항 스태시",
+        "description": "현재 변경 사항을 스태시에 저장",
+        "messageLabel": "메시지",
+        "messagePlaceholder": "스태시 메시지 (선택사항)",
+        "keepIndex": "인덱스 유지 (스테이지된 변경 사항 유지)",
+        "cancel": "취소",
+        "stash": "스태시",
+        "success": "변경 사항이 스태시되었습니다",
+        "error": "스태시 실패"
+      },
+      "unstashDialog": {
+        "title": "스태시 적용",
+        "noStashes": "스태시가 없습니다",
+        "selectFile": "파일을 선택하여 차이 보기",
+        "viewDiff": "차이 보기",
+        "original": "원본",
+        "modified": "수정됨",
+        "apply": "적용",
+        "drop": "삭제",
+        "applySuccess": "스태시가 적용되었습니다",
+        "dropSuccess": "스태시가 삭제되었습니다",
+        "confirmApply": "스태시 {ref}을(를) 작업 디렉토리에 적용하시겠습니까?",
+        "cancel": "취소"
       }
     },
     "commitDialog": {
@@ -837,13 +1013,17 @@
         "fileDeleted": "파일이 삭제되었습니다",
         "deleteFailed": "삭제에 실패했습니다",
         "fileRolledBack": "파일이 롤백되었습니다",
-        "rollbackFailed": "롤백에 실패했습니다"
+        "rollbackFailed": "롤백에 실패했습니다",
+        "dirRolledBack": "디렉토리가 롤백되었습니다",
+        "dirDeleted": "디렉토리가 삭제되었습니다"
       },
       "confirm": {
         "deleteTitle": "삭제 확인",
         "deleteDescription": "파일 \"{file}\"을(를) 삭제할까요? 이 작업은 되돌릴 수 없습니다.",
         "rollbackTitle": "롤백 확인",
-        "rollbackDescription": "파일 \"{file}\"을(를) HEAD로 롤백할까요? 저장되지 않은 변경 사항은 사라집니다."
+        "rollbackDescription": "파일 \"{file}\"을(를) HEAD로 롤백할까요? 저장되지 않은 변경 사항은 사라집니다.",
+        "rollbackDirDescription": "디렉토리 \"{dir}\"를 HEAD로 롤백하시겠습니까? 저장되지 않은 변경 사항이 손실됩니다.",
+        "deleteDirDescription": "디렉토리 \"{dir}\"를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
       },
       "actions": {
         "select": "선택",
@@ -873,6 +1053,24 @@
       "clickFileToDiff": "파일 이름을 클릭해 diff를 확인하세요",
       "loadingDiff": "diff 로딩 중..."
     },
+    "pushWindow": {
+      "title": "코드 푸시",
+      "noUnpushedCommits": "푸시되지 않은 커밋이 없습니다",
+      "newBranchNoPushedCommits": "새 브랜치 — 푸시하여 원격 추적 브랜치 생성",
+      "unpushed": "미푸시",
+      "selectFileToViewDiff": "파일을 선택하여 차이 보기",
+      "before": "변경 전",
+      "after": "변경 후",
+      "push": "푸시",
+      "toasts": {
+        "pushSuccess": "푸시 성공",
+        "pushFailed": "푸시 실패",
+        "upstreamSet": "원격 추적 브랜치가 설정되었습니다",
+        "upstreamSetAndPushed": "원격 추적 브랜치 설정 및 {count}개 커밋 푸시 완료",
+        "noCommitsToPush": "푸시할 커밋이 없습니다",
+        "pushedCommits": "{count}개 커밋 푸시 완료"
+      }
+    },
     "gitLogTab": {
       "filesTitle": "파일",
       "expandAllFiles": "모든 파일 펼치기",
@@ -882,6 +1080,7 @@
       "noCommitsFound": "커밋을 찾을 수 없습니다",
       "hash": "해시",
       "copyHash": "해시 복사",
+      "copyMessage": "메시지 복사",
       "author": "작성자",
       "noFileChangeDetails": "파일 변경 상세 정보가 없습니다.",
       "branchesTitle": "브랜치",
@@ -905,7 +1104,8 @@
       "toasts": {
         "createdAndSwitchedNewBranch": "새 브랜치를 생성하고 전환했습니다",
         "newBranchFromCommit": "{name} ({shortHash}에서 생성)",
-        "createBranchFailed": "브랜치 생성에 실패했습니다"
+        "createBranchFailed": "브랜치 생성에 실패했습니다",
+        "openPushWindowFailed": "푸시 창을 열지 못했습니다"
       },
       "branchSelector": {
         "selectBranchPlaceholder": "브랜치 선택...",
@@ -932,7 +1132,8 @@
       "actions": {
         "commitCode": "코드 커밋",
         "rollback": "롤백",
-        "addToVcs": "VCS에 추가"
+        "addToVcs": "VCS에 추가",
+        "delete": "삭제"
       },
       "toasts": {
         "noAddableFilesInDir": "이 디렉터리에는 VCS에 추가할 수 있는 변경 파일이 없습니다",
@@ -943,11 +1144,16 @@
         "rolledBack": "{name}을(를) 롤백했습니다",
         "rollbackFailed": "롤백에 실패했습니다",
         "addedFilesToVcs": "{count, plural, one {#개 파일을 VCS에 추가} other {#개 파일을 VCS에 추가}}",
-        "rolledBackFiles": "{count, plural, one {#개 파일 롤백} other {#개 파일 롤백}}"
+        "rolledBackFiles": "{count, plural, one {#개 파일 롤백} other {#개 파일 롤백}}",
+        "deleted": "{name}이(가) 삭제되었습니다",
+        "deleteFailed": "삭제에 실패했습니다",
+        "deletedFiles": "{count}개 파일을 삭제했습니다",
+        "noDeletableFilesInDir": "이 디렉터리에서 삭제할 수 있는 변경된 파일이 없습니다"
       },
       "directoryDialog": {
         "descriptionAdd": "디렉터리 {path} 아래에서 VCS에 추가할 파일을 선택하세요.",
         "descriptionRollback": "디렉터리 {path} 아래에서 롤백할 파일을 선택하세요.",
+        "descriptionDelete": "디렉터리 {path} 아래에서 삭제할 파일을 선택하세요. 이 작업은 되돌릴 수 없습니다.",
         "descriptionFallback": "계속 진행할 파일을 선택하세요.",
         "selectionCount": "{selected} / {total} 선택됨",
         "selectAll": "모두 선택",
@@ -959,6 +1165,13 @@
         "title": "롤백 확인",
         "descriptionWithTarget": "{kind} \"{name}\"의 로컬 변경 사항을 롤백할까요?",
         "descriptionFallback": "로컬 변경 사항을 롤백할까요?",
+        "kindDirectory": "디렉터리",
+        "kindFile": "파일"
+      },
+      "deleteConfirm": {
+        "title": "삭제 확인",
+        "descriptionWithTarget": "{kind} \"{name}\"을(를) 삭제할까요? 이 작업은 되돌릴 수 없습니다.",
+        "descriptionFallback": "이 작업은 되돌릴 수 없습니다.",
         "kindDirectory": "디렉터리",
         "kindFile": "파일"
       }
@@ -978,6 +1191,9 @@
       "attachToCurrentSession": "현재 세션에 연결",
       "compareWithBranch": "브랜치와 비교...",
       "reloadFromDisk": "디스크에서 다시 불러오기",
+      "new": "새로 만들기",
+      "newFile": "파일",
+      "newDirectory": "디렉터리",
       "openIn": "열기",
       "openInTerminal": "터미널에서 열기",
       "actions": {
@@ -1007,7 +1223,15 @@
         "rolledBackFiles": "{count, plural, one {#개 파일을 롤백했습니다} other {#개 파일을 롤백했습니다}}",
         "savedAsCopy": "사본으로 저장했습니다",
         "saveCopyFailed": "사본으로 저장하지 못했습니다",
-        "watchStartFailed": "파일 감시 시작에 실패했습니다"
+        "watchStartFailed": "파일 감시 시작에 실패했습니다",
+        "createFailed": "생성 실패"
+      },
+      "createDialog": {
+        "newFile": "새 파일",
+        "newDirectory": "새 디렉터리",
+        "description": "새 {kind}의 이름을 입력하세요.",
+        "placeholderFile": "file-name.ext",
+        "placeholderDirectory": "folder-name"
       },
       "renameDialog": {
         "renameDirectory": "디렉터리 이름 변경",
@@ -1147,12 +1371,11 @@
       },
       "messageThread": {
         "emptyTitle": "아직 메시지가 없습니다",
-        "emptyDescription": "대화를 시작하면 여기에서 메시지를 볼 수 있습니다",
-        "scrollToBottom": "맨 아래로 이동"
+        "emptyDescription": "대화를 시작하면 여기에서 메시지를 볼 수 있습니다"
       },
       "chatInput": {
         "connecting": "연결 중...",
-        "agentResponding": "에이전트가 응답 중...",
+        "agentResponding": "{agent} 응답 중...",
         "sendMessage": "메시지 보내기..."
       },
       "messageInput": {
@@ -1163,7 +1386,8 @@
         "loadingSettings": "설정 불러오는 중...",
         "loadingMode": "모드 불러오는 중...",
         "cancel": "취소",
-        "send": "보내기"
+        "send": "보내기",
+        "forkAndSend": "포크 & 전송"
       },
       "messageQueue": {
         "addToQueue": "대기열에 추가",
@@ -1234,11 +1458,13 @@
         "attachedResources": "첨부된 리소스",
         "loading": "불러오는 중...",
         "error": "오류: {message}",
-        "emptyConversation": "이 대화에는 메시지가 없습니다."
+        "emptyConversation": "이 대화에는 메시지가 없습니다.",
+        "systemMessage": "시스템 메시지"
       },
       "liveTurnStats": {
         "thinking": "생각 중...",
         "streaming": "스트리밍 중",
+        "elapsedHours": "{value}시간",
         "elapsedMinutes": "{value}분",
         "elapsedSeconds": "{value}초",
         "toolUseCount": "{count}개 도구 {count, plural, one {use} other {uses}}"
@@ -1266,10 +1492,6 @@
         "showingTailOutput": "성능을 위해 스트리밍 중에는 출력의 끝부분만 표시합니다.",
         "result": "결과",
         "unknown": "알 수 없음",
-        "userText": {
-          "expand": "전체 펼치기",
-          "collapse": "접기"
-        },
         "replaceAll": "모두 바꾸기",
         "filesCount": "파일: {count}",
         "update": "업데이트",
@@ -1345,6 +1567,10 @@
           "todosProgress": "할 일 ({done}/{total})",
           "skillWithName": "Skill: {name}",
           "genericWithContext": "{tool} ({context})"
+        },
+        "userText": {
+          "expand": "더 보기",
+          "collapse": "접기"
         }
       }
     },

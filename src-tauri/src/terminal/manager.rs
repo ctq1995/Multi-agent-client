@@ -6,7 +6,6 @@ use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 
 use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
-use tauri::Emitter;
 
 use super::error::TerminalError;
 use super::types::{TerminalEvent, TerminalInfo};
@@ -17,6 +16,8 @@ struct TerminalInstance {
     _child: Box<dyn portable_pty::Child + Send>,
     title: String,
     owner_window_label: String,
+    /// Temp files (credential store + helper script) to clean up on exit.
+    temp_files: Vec<std::path::PathBuf>,
 }
 
 pub struct TerminalManager {
@@ -130,6 +131,16 @@ fn configure_shell_command(cmd: &mut CommandBuilder, shell: &str, initial_comman
     }
 }
 
+/// Options for spawning a new terminal session.
+pub struct SpawnOptions {
+    pub terminal_id: String,
+    pub working_dir: String,
+    pub owner_window_label: String,
+    pub initial_command: Option<String>,
+    pub extra_env: Option<HashMap<String, String>>,
+    pub temp_files: Vec<std::path::PathBuf>,
+}
+
 impl TerminalManager {
     pub fn new() -> Self {
         Self {
@@ -137,12 +148,11 @@ impl TerminalManager {
         }
     }
 
-    pub fn spawn(
+    #[allow(clippy::too_many_arguments)]
+    pub fn spawn_with_id(
         &self,
-        working_dir: String,
-        owner_window_label: String,
+        opts: SpawnOptions,
         app_handle: tauri::AppHandle,
-        initial_command: Option<String>,
     ) -> Result<String, TerminalError> {
         let pty_system = native_pty_system();
 
@@ -157,8 +167,15 @@ impl TerminalManager {
 
         let shell = resolve_shell();
         let mut cmd = CommandBuilder::new(&shell);
-        configure_shell_command(&mut cmd, &shell, initial_command.as_deref());
-        cmd.cwd(&working_dir);
+        configure_shell_command(&mut cmd, &shell, opts.initial_command.as_deref());
+        cmd.cwd(&opts.working_dir);
+
+        // Inject extra environment variables (e.g. git credential helper config)
+        if let Some(env) = &opts.extra_env {
+            for (key, value) in env {
+                cmd.env(key, value);
+            }
+        }
 
         let child = pair
             .slave
@@ -177,7 +194,7 @@ impl TerminalManager {
             .try_clone_reader()
             .map_err(|e| TerminalError::SpawnFailed(e.to_string()))?;
 
-        let terminal_id = uuid::Uuid::new_v4().to_string();
+        let terminal_id = opts.terminal_id;
 
         let (write_tx, write_rx) = mpsc::channel::<Vec<u8>>();
 
@@ -186,7 +203,8 @@ impl TerminalManager {
             master: pair.master,
             _child: child,
             title: "Terminal".to_string(),
-            owner_window_label,
+            owner_window_label: opts.owner_window_label,
+            temp_files: opts.temp_files,
         };
 
         self.terminals
@@ -346,6 +364,13 @@ impl TerminalManager {
 fn terminate_terminal(instance: &mut TerminalInstance) {
     let _ = instance._child.kill();
     let _ = instance._child.wait();
+    cleanup_temp_files(&mut instance.temp_files);
+}
+
+fn cleanup_temp_files(files: &mut Vec<std::path::PathBuf>) {
+    for path in files.drain(..) {
+        let _ = std::fs::remove_file(&path);
+    }
 }
 
 fn write_loop(mut writer: Box<dyn Write + Send>, rx: mpsc::Receiver<Vec<u8>>) {
@@ -382,14 +407,16 @@ fn read_loop(
                     terminal_id: terminal_id.clone(),
                     data,
                 };
-                let _ = app_handle.emit(&output_event, &event);
+                crate::web::event_bridge::emit_event(app_handle, &output_event, event.clone());
             }
             Err(_) => break,
         }
     }
 
-    // Terminal exited — remove from map
-    terminals.lock().unwrap().remove(&terminal_id);
+    // Terminal exited — remove from map and clean up temp files
+    if let Some(mut instance) = terminals.lock().unwrap().remove(&terminal_id) {
+        cleanup_temp_files(&mut instance.temp_files);
+    }
 
     emit_terminal_exit_event(app_handle, &terminal_id);
 }
@@ -400,5 +427,5 @@ fn emit_terminal_exit_event(app_handle: &tauri::AppHandle, terminal_id: &str) {
         terminal_id: terminal_id.to_string(),
         data: String::new(),
     };
-    let _ = app_handle.emit(&exit_event, &event);
+    crate::web::event_bridge::emit_event(app_handle, &exit_event, event.clone());
 }

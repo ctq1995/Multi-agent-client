@@ -1,12 +1,10 @@
 "use client"
 
-import { useCallback, useMemo, useSyncExternalStore } from "react"
+import { useCallback, useSyncExternalStore } from "react"
 import { Coins } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useSessionStats } from "@/contexts/session-stats-context"
 import { useConnectionStore } from "@/contexts/acp-connections-context"
-import { useConversationSession } from "@/contexts/conversation-runtime-context"
-import { useTabContext } from "@/contexts/tab-context"
 import {
   Popover,
   PopoverContent,
@@ -36,19 +34,8 @@ function formatPercent(percent: number | null): string {
 export function StatusBarTokens() {
   const t = useTranslations("Folder.statusBar.tokens")
   const store = useConnectionStore()
-  const { tabs, activeTabId } = useTabContext()
   const { sessionStats } = useSessionStats()
-  const activeTab = useMemo(
-    () => tabs.find((tab) => tab.id === activeTabId) ?? null,
-    [tabs, activeTabId]
-  )
-  const activeRuntimeConversationId =
-    activeTab?.kind === "conversation"
-      ? (activeTab.runtimeConversationId ?? activeTab.conversationId ?? 0)
-      : 0
-  const activeSession = useConversationSession(activeRuntimeConversationId)
-  const resolvedSessionStats = activeSession?.sessionStats ?? sessionStats
-  const usage = resolvedSessionStats?.total_usage
+  const usage = sessionStats?.total_usage
 
   const subscribeActiveKey = useCallback(
     (cb: () => void) => store.subscribeActiveKey(cb),
@@ -78,17 +65,23 @@ export function StatusBarTokens() {
     getConnSnapshot
   )
 
-  const liveContextUsed = activeConn?.usage?.used ?? null
-  const liveContextMax = activeConn?.usage?.size ?? null
+  const rawLiveUsed = activeConn?.usage?.used ?? null
+  const rawLiveSize = activeConn?.usage?.size ?? null
+  // Treat live used=0 as "no data" so we fall back to sessionStats —
+  // Claude Code sends used=0 for synthetic local commands (/context etc.)
+  const liveContextUsed =
+    rawLiveUsed != null && rawLiveUsed > 0 ? rawLiveUsed : null
+  const liveContextMax =
+    rawLiveSize != null && rawLiveSize > 0 ? rawLiveSize : null
 
   const contextUsed =
-    liveContextUsed ?? resolvedSessionStats?.context_window_used_tokens ?? null
+    liveContextUsed ?? sessionStats?.context_window_used_tokens ?? null
   const contextMax =
-    liveContextMax ?? resolvedSessionStats?.context_window_max_tokens ?? null
+    liveContextMax ?? sessionStats?.context_window_max_tokens ?? null
   const contextPercentRaw =
     (liveContextUsed != null && liveContextMax != null && liveContextMax > 0
       ? (liveContextUsed / liveContextMax) * 100
-      : resolvedSessionStats?.context_window_usage_percent) ??
+      : sessionStats?.context_window_usage_percent) ??
     (contextUsed != null && contextMax != null && contextMax > 0
       ? (contextUsed / contextMax) * 100
       : null)
@@ -104,7 +97,7 @@ export function StatusBarTokens() {
       usage.cache_creation_input_tokens +
       usage.cache_read_input_tokens
     : null
-  const total = resolvedSessionStats?.total_tokens ?? fallbackTotal
+  const total = sessionStats?.total_tokens ?? fallbackTotal
 
   const dashOffset = ICON_CIRCUMFERENCE * (1 - (contextPercent ?? 0) / 100)
 

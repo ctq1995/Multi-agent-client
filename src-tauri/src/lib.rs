@@ -2,19 +2,22 @@ mod acp;
 mod app_error;
 mod commands;
 mod db;
-mod git_clone;
+pub mod git_credential;
+pub mod keyring_store;
 mod models;
 mod network;
 mod parsers;
 mod process;
 mod terminal;
+mod web;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use acp::manager::ConnectionManager;
 use commands::{
     acp as acp_commands, conversations, folder_commands, folders, mcp as mcp_commands,
-    model_catalog, notification, system_settings, terminal as terminal_commands, windows,
+    model_catalog, notification, system_settings, terminal as terminal_commands, version_control,
+    windows,
 };
 use tauri::Manager;
 use terminal::manager::TerminalManager;
@@ -44,6 +47,9 @@ pub fn run() {
         .manage(TerminalManager::new())
         .manage(windows::SettingsWindowState::new())
         .manage(windows::CommitWindowState::new())
+        .manage(windows::MergeWindowState::new())
+        .manage(web::WebServerState::new())
+        .manage(web::event_bridge::WebEventBroadcaster::new())
         .setup(|app| {
             let app_data_dir = app.path().app_data_dir()?;
             let app_version = env!("CARGO_PKG_VERSION");
@@ -77,8 +83,7 @@ pub fn run() {
             } else {
                 for entry in &open_folders {
                     let label = windows::folder_window_label(entry.id);
-                    let route = format!("folder?id={}", entry.id);
-                    let url = tauri::WebviewUrl::App(windows::to_tauri_app_path(&route).into());
+                    let url = tauri::WebviewUrl::App(format!("folder?id={}", entry.id).into());
                     let builder = tauri::WebviewWindowBuilder::new(app, &label, url)
                         .title(&entry.name)
                         .inner_size(1260.0, 860.0)
@@ -114,6 +119,25 @@ pub fn run() {
                 if let Some(state) = app.try_state::<windows::CommitWindowState>() {
                     windows::restore_window_after_commit(app, &state, &label);
                 }
+            }
+
+            if label.starts_with("merge-")
+                && matches!(
+                    event,
+                    tauri::WindowEvent::CloseRequested { .. } | tauri::WindowEvent::Destroyed
+                )
+            {
+                let app = window.app_handle();
+                if let Some(state) = app.try_state::<windows::MergeWindowState>() {
+                    windows::restore_window_after_merge(app, &state, &label);
+                }
+                // Clean up dangling merge state (MERGE_HEAD) if window closed
+                // without completing or aborting the merge
+                let app_clone = window.app_handle().clone();
+                let label_clone = label.clone();
+                tauri::async_runtime::spawn(async move {
+                    windows::cleanup_dangling_merge(&app_clone, &label_clone).await;
+                });
             }
 
             if let tauri::WindowEvent::CloseRequested { .. } = event {
@@ -184,14 +208,22 @@ pub fn run() {
             folders::get_git_branch,
             folders::git_init,
             folders::git_pull,
+            folders::git_start_pull_merge,
+            folders::git_has_merge_head,
             folders::git_fetch,
+            folders::git_push_info,
             folders::git_push,
             folders::git_new_branch,
             folders::git_worktree_add,
             folders::git_checkout,
             folders::git_list_branches,
-            folders::git_stash,
+            folders::git_stash_push,
             folders::git_stash_pop,
+            folders::git_stash_list,
+            folders::git_stash_apply,
+            folders::git_stash_drop,
+            folders::git_stash_clear,
+            folders::git_stash_show,
             folders::git_status,
             folders::git_is_tracked,
             folders::git_diff,
@@ -202,9 +234,19 @@ pub fn run() {
             folders::git_rollback_file,
             folders::git_add_files,
             folders::git_list_all_branches,
+            folders::git_list_remotes,
+            folders::git_fetch_remote,
+            folders::git_add_remote,
+            folders::git_remove_remote,
+            folders::git_set_remote_url,
             folders::git_merge,
             folders::git_rebase,
             folders::git_delete_branch,
+            folders::git_list_conflicts,
+            folders::git_conflict_file_versions,
+            folders::git_resolve_conflict,
+            folders::git_abort_operation,
+            folders::git_continue_operation,
             folders::save_folder_opened_conversations,
             folders::start_file_tree_watch,
             folders::stop_file_tree_watch,
@@ -216,6 +258,7 @@ pub fn run() {
             folders::save_file_copy,
             folders::rename_file_tree_entry,
             folders::delete_file_tree_entry,
+            folders::create_file_tree_entry,
             folders::git_log,
             folders::git_commit_branches,
             windows::open_folder_window,
@@ -223,27 +266,39 @@ pub fn run() {
             windows::open_settings_window,
             windows::list_open_folders,
             windows::focus_folder_window,
-            model_catalog::fetch_remote_models,
-            notification::send_notification,
+            windows::open_merge_window,
+            windows::open_stash_window,
+            windows::open_push_window,
             system_settings::get_system_proxy_settings,
             system_settings::update_system_proxy_settings,
             system_settings::get_system_language_settings,
             system_settings::update_system_language_settings,
+            version_control::detect_git,
+            version_control::test_git_path,
+            version_control::get_git_settings,
+            version_control::update_git_settings,
+            version_control::get_github_accounts,
+            version_control::validate_github_token,
+            version_control::update_github_accounts,
+            version_control::save_account_token,
+            version_control::get_account_token,
+            version_control::delete_account_token,
             acp_commands::acp_preflight,
             acp_commands::acp_connect,
             acp_commands::acp_prompt,
             acp_commands::acp_set_mode,
             acp_commands::acp_set_config_option,
             acp_commands::acp_cancel,
+            acp_commands::acp_fork,
             acp_commands::acp_respond_permission,
             acp_commands::acp_disconnect,
             acp_commands::acp_list_connections,
             acp_commands::acp_list_agents,
+            acp_commands::acp_get_agent_status,
             acp_commands::acp_clear_binary_cache,
             acp_commands::acp_download_agent_binary,
             acp_commands::acp_detect_agent_local_version,
             acp_commands::acp_prepare_npx_agent,
-            acp_commands::acp_prepare_uvx_agent,
             acp_commands::acp_uninstall_agent,
             acp_commands::acp_update_agent_preferences,
             acp_commands::acp_reorder_agents,
@@ -270,12 +325,21 @@ pub fn run() {
             mcp_commands::mcp_upsert_local_server,
             mcp_commands::mcp_set_server_apps,
             mcp_commands::mcp_remove_server,
+            notification::send_notification,
+            model_catalog::fetch_remote_models,
+            web::start_web_server,
+            web::stop_web_server,
+            web::get_web_server_status,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app, event| {
             if let tauri::RunEvent::ExitRequested { .. } = event {
                 APP_QUITTING.store(true, Ordering::Relaxed);
+                // Stop the embedded web server if running.
+                if let Some(ws) = app.try_state::<web::WebServerState>() {
+                    let _ = tauri::async_runtime::block_on(web::stop_web_server(ws));
+                }
                 // Kill all terminal sessions to prevent orphaned processes.
                 if let Some(tm) = app.try_state::<TerminalManager>() {
                     tm.kill_all();

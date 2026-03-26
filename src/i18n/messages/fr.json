@@ -28,7 +28,7 @@
       "removeFromHistoryFailed": "Échec de la suppression du dossier",
       "openSettingsFailed": "Échec de l’ouverture des paramètres",
       "cloneFailed": "Échec du clonage du dépôt",
-      "cloneProgressUnavailable": "La progression du clonage est indisponible (le clonage continue)."
+      "cloneProgressUnavailable": "Suivi de progression du clonage indisponible"
     },
     "errors": {
       "unknown": "Erreur inattendue",
@@ -58,6 +58,27 @@
       "clone": "Cloner"
     }
   },
+  "GitCredentialDialog": {
+    "title": "Authentification requise",
+    "description": "Le serveur distant nécessite des identifiants. Entrez votre nom d'utilisateur et votre mot de passe (ou jeton d'accès personnel).",
+    "username": "Nom d'utilisateur",
+    "usernamePlaceholder": "Nom d'utilisateur ou e-mail",
+    "password": "Mot de passe / Jeton",
+    "passwordPlaceholder": "Mot de passe ou jeton d'accès personnel",
+    "passwordHint": "Entrez le nom d'utilisateur et le mot de passe du serveur.",
+    "cancel": "Annuler",
+    "authenticate": "Authentifier",
+    "authenticating": "Authentification...",
+    "invalidCredentials": "Identifiants invalides. Veuillez réessayer.",
+    "saveCredentials": "Enregistrer les identifiants pour les opérations futures",
+    "githubTitle": "Authentification GitHub",
+    "githubDescription": "Entrez un jeton d'accès personnel pour vous connecter à GitHub. Le jeton sera validé et enregistré automatiquement.",
+    "githubToken": "Jeton d'accès personnel",
+    "githubTokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "githubTokenHint": "Générez un jeton dans GitHub → Settings → Developer settings → Personal access tokens.",
+    "githubAuthenticate": "Valider et connecter",
+    "generateToken": "Générer un jeton"
+  },
   "SettingsShell": {
     "title": "Paramètres",
     "preferences": "Préférences",
@@ -67,7 +88,9 @@
       "mcp": "MCP",
       "skills": "Skills",
       "shortcuts": "Raccourcis",
-      "system": "Système"
+      "version_control": "Contrôle de version",
+      "system": "Système",
+      "web_service": "Service Web"
     }
   },
   "AppearanceSettings": {
@@ -106,6 +129,7 @@
     "languageSaveSuccess": "Les paramètres de langue ont été enregistrés",
     "languageSaveFailed": "Échec de l’enregistrement des paramètres de langue : {message}",
     "updateTitle": "Mise à jour de l’app",
+    "versionTitle": "Mise à jour logicielle",
     "updateDescription": "Vérifiez les nouvelles versions depuis la source de publication configurée et installez-les directement si disponibles.",
     "currentVersion": "Version actuelle",
     "upgradableVersion": "Dernière version",
@@ -127,6 +151,75 @@
       "downloadFailed": "Impossible de télécharger le paquet de mise à jour. Veuillez réessayer plus tard.",
       "installFailed": "Impossible d’installer la mise à jour. Fermez l’app puis réessayez.",
       "unknown": "La mise à jour a échoué. Veuillez réessayer plus tard."
+    }
+  },
+  "VersionControlSettings": {
+    "loading": "Chargement...",
+    "sectionTitle": "Contrôle de version",
+    "sectionDescription": "Configurez l'exécutable Git et gérez les comptes GitHub.",
+    "gitTitle": "Configuration Git",
+    "gitDescription": "Configurez l'exécutable Git utilisé par l'application.",
+    "gitDetected": "Git détecté",
+    "gitNotFound": "Git introuvable sur le système",
+    "gitVersion": "Version",
+    "gitPath": "Chemin",
+    "customGitPath": "Chemin Git personnalisé",
+    "customGitPathPlaceholder": "/usr/bin/git",
+    "customGitPathHint": "Laissez vide pour utiliser le chemin détecté automatiquement.",
+    "test": "Tester",
+    "testing": "Test en cours...",
+    "testSuccess": "L'exécutable Git est valide.",
+    "testFailed": "Test Git échoué : {message}",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "saveSuccess": "Paramètres Git enregistrés.",
+    "saveFailed": "Échec de l'enregistrement : {message}",
+    "githubTitle": "Comptes GitHub",
+    "githubDescription": "Gérez les comptes GitHub pour l'authentification. Les jetons sont stockés localement.",
+    "noAccounts": "Aucun compte GitHub configuré.",
+    "addAccount": "Ajouter un compte",
+    "serverUrl": "URL du serveur",
+    "serverUrlPlaceholder": "https://github.com",
+    "token": "Jeton d'accès personnel",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "generateToken": "Générer un jeton",
+    "tokenHint": "Générez un jeton dans GitHub → Settings → Developer settings → Personal access tokens.",
+    "validateAndAdd": "Valider et ajouter",
+    "validating": "Validation...",
+    "addSuccess": "Compte {username} ajouté avec succès.",
+    "addFailed": "Échec de l'ajout du compte : {message}",
+    "testConnection": "Tester",
+    "connectionSuccess": "Connexion réussie.",
+    "connectionFailed": "Échec de la connexion : {message}",
+    "setDefault": "Définir par défaut",
+    "defaultLabel": "Par défaut",
+    "defaultSet": "Compte par défaut mis à jour.",
+    "removeAccount": "Supprimer",
+    "removeConfirmTitle": "Supprimer le compte",
+    "removeConfirmMessage": "Êtes-vous sûr de vouloir supprimer le compte « {username} » ?",
+    "removeConfirm": "Supprimer",
+    "removeCancel": "Annuler",
+    "removeSuccess": "Compte supprimé.",
+    "scopes": "Portées",
+    "loadFailed": "Échec du chargement des paramètres : {message}",
+    "gitAccount": {
+      "sectionTitle": "Comptes serveur Git",
+      "sectionDescription": "Gérez les identifiants pour les serveurs Git non GitHub (GitLab, Bitbucket, auto-hébergé, etc.).",
+      "noAccounts": "Aucun compte de serveur Git configuré.",
+      "addAccount": "Ajouter un compte",
+      "addTitle": "Ajouter un compte Git",
+      "addDescription": "Entrez l'adresse du serveur, le nom d'utilisateur et le mot de passe ou jeton d'accès.",
+      "serverUrl": "URL du serveur",
+      "serverUrlPlaceholder": "https://gitlab.example.com",
+      "username": "Nom d'utilisateur",
+      "usernamePlaceholder": "Nom d'utilisateur ou e-mail",
+      "password": "Mot de passe / Jeton",
+      "passwordPlaceholder": "Mot de passe ou jeton d'accès",
+      "passwordHint": "Entrez le mot de passe ou le jeton d'accès du serveur.",
+      "add": "Ajouter",
+      "serverRequired": "L'URL du serveur est requise.",
+      "usernameRequired": "Le nom d'utilisateur est requis.",
+      "passwordRequired": "Le mot de passe est requis."
     }
   },
   "ShortcutSettings": {
@@ -407,6 +500,10 @@
     },
     "codex": {
       "configDescription": "Prend en charge la configuration rapide de l’URL API, de la clé API, du nom du modèle et du reasoning effort, avec synchronisation vers `auth.json` / `config.toml`.",
+      "authMode": "Mode d’authentification",
+      "chatgptSubscription": "Abonnement officiel",
+      "chatgptSubscriptionHint": "Connectez-vous avec l’abonnement officiel ChatGPT, pas besoin d’API Key",
+      "apiKeyHint": "Connectez-vous avec une API Key à OpenAI ou aux services API compatibles",
       "selectProvider": "Sélectionner un provider",
       "modelName": "Nom du modèle",
       "selectReasoningEffort": "Sélectionner Reasoning Effort",
@@ -519,6 +616,7 @@
       "openClawSaved": "Configuration OpenClaw enregistrée",
       "saveOpenClawFailed": "Échec de l’enregistrement de la configuration OpenClaw",
       "configSaved": "Configuration enregistrée",
+      "configSavedHint": "Les sessions existantes doivent être rouvertes pour prendre effet",
       "saveConfigManagementFailed": "Échec de l’enregistrement de la gestion de configuration"
     },
     "version": {
@@ -533,16 +631,15 @@
       "latest": "{versionText}. Déjà à jour."
     },
     "modelSelector": {
-      "fetchModels": "Fetch models",
-      "fetchedCount": "{count} models loaded",
-      "fetchFirst": "Fill API URL and API key first",
-      "fetchProviderFirst": "Fill current provider API URL and API key first",
-      "fetchCurrentProviderModelsFirst": "Fetch current provider models first",
-      "configureProviderFirst": "Configure a provider first",
-      "empty": "No models available",
-      "filterHint": "Type to automatically filter models",
-      "select": "Select",
-      "contextWindow": "Context {count}"
+      "filterHint": "Tapez pour filtrer les modèles",
+      "empty": "Aucun modèle trouvé",
+      "select": "Sélectionner",
+      "fetchModels": "Récupérer les modèles",
+      "fetchedCount": "{count} modèles récupérés",
+      "fetchFirst": "Cliquez sur Récupérer les modèles pour charger",
+      "configureProviderFirst": "Configurez d'abord un fournisseur",
+      "fetchProviderFirst": "Cliquez sur récupérer pour charger les modèles du fournisseur",
+      "fetchCurrentProviderModelsFirst": "Cliquez sur récupérer pour charger les modèles de ce fournisseur"
     }
   },
   "SettingsPages": {
@@ -552,6 +649,32 @@
     "title": "Valider",
     "invalidFolderId": "ID de dossier invalide",
     "loadingRepo": "Chargement du dépôt..."
+  },
+  "MergePage": {
+    "title": "Résoudre les conflits",
+    "invalidFolderId": "ID de dossier invalide",
+    "loadingRepo": "Chargement du dépôt...",
+    "localVersion": "Local (Le nôtre)",
+    "result": "Résultat",
+    "remoteVersion": "Distant (Le leur)",
+    "acceptLocal": "Accepter le local",
+    "acceptRemote": "Accepter le distant",
+    "markResolved": "Marquer comme résolu",
+    "abortMerge": "Abandonner",
+    "completeMerge": "Terminer la fusion",
+    "unresolvedConflicts": "Il reste des marqueurs de conflit non résolus dans ce fichier",
+    "fileResolved": "Fichier résolu avec succès",
+    "allResolved": "Tous les conflits sont résolus",
+    "conflictFiles": "Fichiers en conflit",
+    "loadingFile": "Chargement du fichier...",
+    "preparingMerge": "Préparation de la fusion...",
+    "selectFile": "Sélectionner un fichier à résoudre",
+    "noConflicts": "Aucun fichier en conflit",
+    "skipFile": "Passer",
+    "abortSuccess": "Opération abandonnée",
+    "applyAllNonConflicting": "Appliquer tous les changements non conflictuels",
+    "applyLeftNonConflicting": "Appliquer local",
+    "applyRightNonConflicting": "Appliquer distant"
   },
   "Folder": {
     "common": {
@@ -570,7 +693,8 @@
       "create": "Créer",
       "createAndSwitch": "Créer et basculer",
       "openFile": "Ouvrir le fichier",
-      "viewDiff": "Voir le Diff"
+      "viewDiff": "Voir le Diff",
+      "push": "Pousser..."
     },
     "modes": {
       "conversation": "Mode conversation",
@@ -611,7 +735,10 @@
       "reloaded": "Conversation rechargée",
       "reload": "Recharger",
       "newConversation": "Nouvelle conversation",
-      "closeConversation": "Fermer la conversation"
+      "closeConversation": "Fermer la conversation",
+      "forkSession": "Dupliquer la session",
+      "forkSessionSuccess": "Session dupliquée avec succès",
+      "forkSessionFailed": "Échec de la duplication de la session : {error}"
     },
     "conversationCard": {
       "untitledConversation": "Conversation sans titre",
@@ -628,11 +755,15 @@
       "save": "Enregistrer"
     },
     "search": {
-      "dialogTitle": "Rechercher des conversations",
+      "dialogTitle": "Rechercher",
+      "tabConversations": "Conversations",
+      "tabFiles": "Fichiers",
       "placeholder": "Rechercher des conversations...",
+      "filePlaceholder": "Rechercher des fichiers ou répertoires...",
       "allAgents": "Tout",
       "searching": "Recherche...",
       "typeToSearch": "Tapez pour rechercher des conversations",
+      "typeToSearchFiles": "Tapez pour rechercher des fichiers ou répertoires",
       "noResults": "Aucun résultat trouvé.",
       "untitledConversation": "Conversation sans titre"
     },
@@ -710,7 +841,9 @@
       "closeFileTab": "Fermer l’onglet fichier",
       "close": "Fermer",
       "closeOthers": "Fermer les autres",
-      "closeAll": "Tout fermer"
+      "closeAll": "Tout fermer",
+      "preview": "Aperçu",
+      "editSource": "Modifier la source"
     },
     "terminal": {
       "rename": "Renommer",
@@ -752,11 +885,15 @@
       "next": "Suivant",
       "jumpToLine": "Aller à la ligne {line}",
       "noParsedDiffSections": "Aucune section de diff analysée",
-      "loadingEditor": "Chargement de l’éditeur..."
+      "loadingEditor": "Chargement de l’éditeur...",
+      "imageZoomIn": "Agrandir",
+      "imageZoomOut": "Réduire",
+      "imageZoomReset": "Réinitialiser le zoom"
     },
     "branchDropdown": {
       "toasts": {
         "commitCodeCompleted": "Commit de code terminé",
+        "pushCodeCompleted": "Push de code terminé",
         "committedFiles": "{count, plural, one {# fichier commit} other {# fichiers commit}}",
         "taskCompleted": "{label} terminé",
         "taskFailed": "{label} échoué",
@@ -765,6 +902,7 @@
         "allFilesUpToDate": "Tous les fichiers sont à jour",
         "updatedFiles": "{count, plural, one {# fichier mis à jour} other {# fichiers mis à jour}}",
         "openCommitWindowFailed": "Impossible d’ouvrir la fenêtre de commit",
+        "openPushWindowFailed": "Impossible d’ouvrir la fenêtre de push",
         "upstreamSet": "La branche upstream a été définie",
         "upstreamSetAndPushed": "Branche upstream définie et {count, plural, one {# commit} other {# commits}} poussé(s)",
         "noCommitsToPush": "Aucun commit à pousser",
@@ -790,7 +928,9 @@
         "deleteTitle": "Supprimer la branche",
         "mergeDescription": "Fusionner {branchName} dans la branche actuelle {currentBranch} ?",
         "rebaseDescription": "Rebaser la branche actuelle {currentBranch} sur {branchName} ?",
-        "deleteDescription": "Supprimer la branche {branchName} ? Cette action est irréversible."
+        "deleteDescription": "Supprimer la branche {branchName} ? Cette action est irréversible.",
+        "forceDeleteTitle": "Forcer la suppression de la branche",
+        "forceDeleteDescription": "La branche {branchName} n'est pas entièrement fusionnée. Êtes-vous sûr de vouloir la supprimer de force ? Cette action est irréversible."
       },
       "current": "Actuelle",
       "switchToBranch": "Basculer vers cette branche",
@@ -805,8 +945,9 @@
       "pushCode": "Pousser...",
       "newBranch": "Nouvelle branche...",
       "newWorktree": "Nouveau worktree...",
-      "stashChanges": "Stash des changements",
+      "stashChanges": "Remiser les changements...",
       "stashPop": "Appliquer le stash...",
+      "manageRemotes": "Gérer les dépôts distants...",
       "localBranches": "Branches locales ({count, plural, one {#} other {#}})",
       "noLocalBranches": "Aucune branche locale",
       "remoteBranches": "Branches distantes ({count, plural, one {#} other {#}})",
@@ -820,7 +961,47 @@
         "newWorktreeDescription": "Créer un nouveau worktree depuis la branche actuelle {branch}",
         "branchNameLabel": "Nom de la branche",
         "worktreePathLabel": "Chemin du worktree",
-        "worktreePathPlaceholder": "Chemin du worktree"
+        "worktreePathPlaceholder": "Chemin du worktree",
+        "manageRemotesTitle": "Gérer les dépôts distants",
+        "manageRemotesEmpty": "Aucun dépôt distant configuré",
+        "remoteNamePlaceholder": "Nom du dépôt distant",
+        "remoteUrlPlaceholder": "URL du dépôt distant",
+        "addRemote": "Ajouter",
+        "savingRemotes": "Enregistrement..."
+      },
+      "conflict": {
+        "title": "Conflits de fusion",
+        "description": "Les fichiers suivants ont des conflits qui doivent être résolus :",
+        "abort": "Abandonner la fusion",
+        "openMergeTool": "Ouvrir l'outil de fusion",
+        "completeMerge": "Terminer la fusion",
+        "abortSuccess": "Fusion abandonnée avec succès",
+        "completeSuccess": "Fusion terminée avec succès"
+      },
+      "stashDialog": {
+        "title": "Remiser les changements",
+        "description": "Sauvegarder les changements actuels dans la remise",
+        "messageLabel": "Message",
+        "messagePlaceholder": "Message de remise (optionnel)",
+        "keepIndex": "Conserver l'index (les changements indexés restent indexés)",
+        "cancel": "Annuler",
+        "stash": "Remiser",
+        "success": "Changements remisés",
+        "error": "Échec de la remise"
+      },
+      "unstashDialog": {
+        "title": "Appliquer la remise",
+        "noStashes": "Aucune remise trouvée",
+        "selectFile": "Sélectionner un fichier pour voir le diff",
+        "viewDiff": "Voir le diff",
+        "original": "Original",
+        "modified": "Modifié",
+        "apply": "Appliquer",
+        "drop": "Supprimer",
+        "applySuccess": "Remise appliquée",
+        "dropSuccess": "Remise supprimée",
+        "confirmApply": "Appliquer la remise {ref} au répertoire de travail ?",
+        "cancel": "Annuler"
       }
     },
     "commitDialog": {
@@ -832,13 +1013,17 @@
         "fileDeleted": "Fichier supprimé",
         "deleteFailed": "Échec de la suppression",
         "fileRolledBack": "Fichier restauré",
-        "rollbackFailed": "Échec du rollback"
+        "rollbackFailed": "Échec du rollback",
+        "dirRolledBack": "Répertoire restauré",
+        "dirDeleted": "Répertoire supprimé"
       },
       "confirm": {
         "deleteTitle": "Confirmer la suppression",
         "deleteDescription": "Supprimer le fichier \"{file}\" ? Cette action est irréversible.",
         "rollbackTitle": "Confirmer le rollback",
-        "rollbackDescription": "Restaurer le fichier \"{file}\" vers HEAD ? Les modifications non enregistrées seront perdues."
+        "rollbackDescription": "Restaurer le fichier \"{file}\" vers HEAD ? Les modifications non enregistrées seront perdues.",
+        "rollbackDirDescription": "Restaurer le répertoire \"{dir}\" vers HEAD ? Les modifications non enregistrées seront perdues.",
+        "deleteDirDescription": "Supprimer le répertoire \"{dir}\" ? Cette action est irréversible."
       },
       "actions": {
         "select": "Sélectionner",
@@ -868,6 +1053,24 @@
       "clickFileToDiff": "Cliquez sur un nom de fichier pour voir le diff",
       "loadingDiff": "Chargement du diff..."
     },
+    "pushWindow": {
+      "title": "Pousser le code",
+      "noUnpushedCommits": "Aucun commit non poussé",
+      "newBranchNoPushedCommits": "Nouvelle branche — pousser pour créer la branche de suivi distante",
+      "unpushed": "Non poussé",
+      "selectFileToViewDiff": "Sélectionnez un fichier pour voir les différences",
+      "before": "Avant",
+      "after": "Après",
+      "push": "Pousser",
+      "toasts": {
+        "pushSuccess": "Push réussi",
+        "pushFailed": "Échec du push",
+        "upstreamSet": "La branche distante a été configurée",
+        "upstreamSetAndPushed": "Branche distante configurée et {count} commits poussés",
+        "noCommitsToPush": "Aucun commit à pousser",
+        "pushedCommits": "{count} commits poussés"
+      }
+    },
     "gitLogTab": {
       "filesTitle": "Fichiers",
       "expandAllFiles": "Développer tous les fichiers",
@@ -877,6 +1080,7 @@
       "noCommitsFound": "Aucun commit trouvé",
       "hash": "Empreinte",
       "copyHash": "Copier le hash",
+      "copyMessage": "Copier le message",
       "author": "Auteur",
       "noFileChangeDetails": "Aucun détail de changement de fichier disponible.",
       "branchesTitle": "Branches Git",
@@ -900,7 +1104,8 @@
       "toasts": {
         "createdAndSwitchedNewBranch": "Nouvelle branche créée et activée",
         "newBranchFromCommit": "{name} (depuis {shortHash})",
-        "createBranchFailed": "Échec de la création de la branche"
+        "createBranchFailed": "Échec de la création de la branche",
+        "openPushWindowFailed": "Échec de l'ouverture de la fenêtre de push"
       },
       "branchSelector": {
         "selectBranchPlaceholder": "Sélectionner une branche...",
@@ -927,7 +1132,8 @@
       "actions": {
         "commitCode": "Commit du code",
         "rollback": "Annuler",
-        "addToVcs": "Ajouter à VCS"
+        "addToVcs": "Ajouter à VCS",
+        "delete": "Supprimer"
       },
       "toasts": {
         "noAddableFilesInDir": "Aucun fichier modifié de ce répertoire ne peut être ajouté à VCS",
@@ -938,11 +1144,16 @@
         "rolledBack": "{name} restauré",
         "rollbackFailed": "Échec du rollback",
         "addedFilesToVcs": "{count, plural, one {# fichier} other {# fichiers}} ajouté(s) à VCS",
-        "rolledBackFiles": "{count, plural, one {# fichier restauré} other {# fichiers restaurés}}"
+        "rolledBackFiles": "{count, plural, one {# fichier restauré} other {# fichiers restaurés}}",
+        "deleted": "{name} supprimé",
+        "deleteFailed": "Échec de la suppression",
+        "deletedFiles": "{count} fichiers supprimés",
+        "noDeletableFilesInDir": "Aucun fichier modifié dans ce répertoire ne peut être supprimé"
       },
       "directoryDialog": {
         "descriptionAdd": "Sélectionnez les fichiers du répertoire {path} à ajouter à VCS.",
         "descriptionRollback": "Sélectionnez les fichiers du répertoire {path} à rollback.",
+        "descriptionDelete": "Sélectionnez les fichiers du répertoire {path} à supprimer. Cette action est irréversible.",
         "descriptionFallback": "Sélectionnez les fichiers pour continuer.",
         "selectionCount": "{selected} / {total} fichiers sélectionnés",
         "selectAll": "Tout sélectionner",
@@ -954,6 +1165,13 @@
         "title": "Confirmer le rollback",
         "descriptionWithTarget": "Rollback des changements locaux pour {kind} \"{name}\" ?",
         "descriptionFallback": "Rollback des changements locaux ?",
+        "kindDirectory": "répertoire",
+        "kindFile": "fichier"
+      },
+      "deleteConfirm": {
+        "title": "Confirmer la suppression",
+        "descriptionWithTarget": "Supprimer {kind} \"{name}\" ? Cette action est irréversible.",
+        "descriptionFallback": "Cette action est irréversible.",
         "kindDirectory": "répertoire",
         "kindFile": "fichier"
       }
@@ -973,6 +1191,9 @@
       "attachToCurrentSession": "Attacher à la session actuelle",
       "compareWithBranch": "Comparer avec la branche...",
       "reloadFromDisk": "Recharger depuis le disque",
+      "new": "Nouveau",
+      "newFile": "Fichier",
+      "newDirectory": "Répertoire",
       "openIn": "Ouvrir dans",
       "openInTerminal": "Ouvrir dans le terminal",
       "actions": {
@@ -1002,7 +1223,15 @@
         "rolledBackFiles": "{count, plural, one {# fichier annulé} other {# fichiers annulés}}",
         "savedAsCopy": "Enregistré en copie",
         "saveCopyFailed": "Échec de l'enregistrement en copie",
-        "watchStartFailed": "Échec du démarrage de la surveillance de fichiers"
+        "watchStartFailed": "Échec du démarrage de la surveillance de fichiers",
+        "createFailed": "Échec de la création"
+      },
+      "createDialog": {
+        "newFile": "Nouveau fichier",
+        "newDirectory": "Nouveau répertoire",
+        "description": "Entrez un nom pour le nouveau {kind}.",
+        "placeholderFile": "file-name.ext",
+        "placeholderDirectory": "folder-name"
       },
       "renameDialog": {
         "renameDirectory": "Renommer le dossier",
@@ -1123,7 +1352,7 @@
         "connectFailedTitle": "Échec de la connexion de {agent}",
         "toolFallbackTitle": "Outil",
         "eventErrorTitle": "Erreur de l'agent",
-        "notificationTurnComplete": "{agent} a terminé sa réponse"
+        "notificationTurnComplete": "{agent} a terminé de répondre"
       },
       "connectionLifecycle": {
         "tasks": {
@@ -1146,7 +1375,7 @@
       },
       "chatInput": {
         "connecting": "Connexion...",
-        "agentResponding": "L'agent répond...",
+        "agentResponding": "{agent} répond...",
         "sendMessage": "Envoyer un message..."
       },
       "messageInput": {
@@ -1157,7 +1386,8 @@
         "loadingSettings": "Chargement des paramètres...",
         "loadingMode": "Chargement du mode...",
         "cancel": "Annuler",
-        "send": "Envoyer"
+        "send": "Envoyer",
+        "forkAndSend": "Fork & Envoyer"
       },
       "messageQueue": {
         "addToQueue": "Mettre en file",
@@ -1228,11 +1458,13 @@
         "attachedResources": "Ressources jointes",
         "loading": "Chargement...",
         "error": "Erreur : {message}",
-        "emptyConversation": "Aucun message dans cette conversation."
+        "emptyConversation": "Aucun message dans cette conversation.",
+        "systemMessage": "Message système"
       },
       "liveTurnStats": {
         "thinking": "Réflexion...",
         "streaming": "Diffusion",
+        "elapsedHours": "{value} h",
         "elapsedMinutes": "{value} min",
         "elapsedSeconds": "{value} s",
         "toolUseCount": "{count} outil {count, plural, one {use} other {uses}}"
@@ -1335,6 +1567,10 @@
           "todosProgress": "Tâches ({done}/{total})",
           "skillWithName": "Skill : {name}",
           "genericWithContext": "{tool} ({context})"
+        },
+        "userText": {
+          "expand": "Afficher plus",
+          "collapse": "Afficher moins"
         }
       }
     },

@@ -18,10 +18,11 @@ import {
   gitIsTracked,
   gitShowDiff,
   gitShowFile,
+  readFileBase64,
   readFileForEdit,
   readFilePreview,
   saveFileContent,
-} from "@/lib/tauri"
+} from "@/lib/api"
 import { languageFromPath } from "@/lib/language-detect"
 import {
   loadPersistedWorkspaceMode,
@@ -54,7 +55,6 @@ export interface FileWorkspaceTab {
   etag?: string | null
   mtimeMs?: number | null
   readonly?: boolean
-  truncated?: boolean
   lineEnding?: LineEnding
   saveState?: FileSaveState
   saveError?: string | null
@@ -110,6 +110,8 @@ interface WorkspaceContextValue {
   updateActiveFileContent: (content: string) => void
   saveActiveFile: (options?: { force?: boolean }) => Promise<boolean>
   reloadActiveFile: () => Promise<void>
+  previewFileTabIds: Set<string>
+  toggleFileTabPreview: (tabId: string) => void
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null)
@@ -124,6 +126,33 @@ function fileName(path: string): string {
 
 function isDirtyFileTab(tab: FileWorkspaceTab): boolean {
   return tab.kind === "file" && Boolean(tab.isDirty)
+}
+
+const IMAGE_EXTENSIONS = new Set([
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "svg",
+  "webp",
+  "bmp",
+  "ico",
+])
+
+const IMAGE_MIME: Record<string, string> = {
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  gif: "image/gif",
+  svg: "image/svg+xml",
+  webp: "image/webp",
+  bmp: "image/bmp",
+  ico: "image/x-icon",
+}
+
+function isImageFile(path: string): boolean {
+  const ext = path.split(".").pop()?.toLowerCase() ?? ""
+  return IMAGE_EXTENSIONS.has(ext)
 }
 
 function loadingTab(
@@ -148,7 +177,6 @@ function loadingTab(
     etag: null,
     mtimeMs: null,
     readonly: kind !== "file",
-    truncated: false,
     lineEnding: "none",
     saveState: "idle",
     saveError: null,
@@ -197,6 +225,9 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     path: string
     line: number
   } | null>(null)
+  const [previewFileTabIds, setPreviewFileTabIds] = useState<Set<string>>(
+    new Set()
+  )
   const fileTabsRef = useRef<FileWorkspaceTab[]>([])
   const fileRevealRequestIdRef = useRef(0)
 
@@ -347,6 +378,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
         setPendingFileReveal(null)
       }
       const tabId = `file:${path}`
+      const image = isImageFile(path)
       upsertLoadingTab(
         loadingTab(
           tabId,
@@ -354,9 +386,42 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
           fileName(path),
           path,
           path,
-          languageFromPath(path)
+          image ? "image" : languageFromPath(path)
         )
       )
+
+      if (image) {
+        try {
+          const absPath = `${folderPath}/${path}`
+          const ext = path.split(".").pop()?.toLowerCase() ?? ""
+          const mime = IMAGE_MIME[ext] ?? "image/png"
+          const b64 = await withTimeout(
+            readFileBase64(absPath),
+            15_000,
+            t("previewRequestTimedOut")
+          )
+          setFileTabs((prev) =>
+            prev.map((tab) =>
+              tab.id === tabId
+                ? {
+                    ...tab,
+                    content: `data:${mime};base64,${b64}`,
+                    readonly: true,
+                    loading: false,
+                    saveState: "idle",
+                    saveError: null,
+                  }
+                : tab
+            )
+          )
+        } catch (error) {
+          rejectTab(
+            tabId,
+            error instanceof Error ? error.message : String(error)
+          )
+        }
+        return
+      }
 
       try {
         const [result, gitBaseContent] = await withTimeout(
@@ -385,7 +450,6 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
                   etag: result.etag,
                   mtimeMs: result.mtime_ms,
                   readonly: result.readonly,
-                  truncated: result.truncated,
                   lineEnding: result.line_ending,
                   saveState: "idle",
                   saveError: null,
@@ -440,10 +504,14 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       const mode = options?.mode ?? "auto"
 
       if (mode === "overview") {
+        const isRoot = path === "."
+        const displayPath = isRoot ? folderPath : path
         const encodedPath = encodeURIComponent(path)
         const tabId = `diff:working-overview:${encodedPath}`
-        const title = t("diffTitleFile", { name: fileName(path) })
-        const description = path
+        const title = t("diffTitleFile", {
+          name: fileName(displayPath ?? path),
+        })
+        const description = displayPath ?? path
         upsertLoadingTab(
           loadingTab(tabId, "diff", title, description, path, "diff")
         )
@@ -503,7 +571,6 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
             gitShowFile(folderPath, path).catch(() => ""),
             readFilePreview(folderPath, path).catch(() => ({
               content: "",
-              truncated: false,
               path: "",
             })),
           ]),
@@ -555,7 +622,6 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
               gitShowFile(folderPath, path, targetBranch).catch(() => ""),
               readFilePreview(folderPath, path).catch(() => ({
                 content: "",
-                truncated: false,
                 path: "",
               })),
             ]),
@@ -706,7 +772,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       setFileTabs((prev) =>
         prev.map((tab) => {
           if (tab.id !== activeFileTabId || tab.kind !== "file") return tab
-          if (tab.loading || tab.readonly || tab.truncated) return tab
+          if (tab.loading || tab.readonly) return tab
           if (tab.content === content) return tab
 
           const savedContent = tab.savedContent ?? ""
@@ -730,7 +796,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
         (candidate) => candidate.id === tabId
       )
       if (!tab || tab.kind !== "file") return false
-      if (tab.loading || tab.readonly || tab.truncated) return false
+      if (tab.loading || tab.readonly) return false
       if (!tab.path) return false
       if (!tab.isDirty) return true
 
@@ -859,7 +925,6 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
                   etag: result.etag,
                   mtimeMs: result.mtime_ms,
                   readonly: result.readonly,
-                  truncated: result.truncated,
                   lineEnding: result.line_ending,
                   saveState: "idle",
                   saveError: null,
@@ -929,6 +994,13 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
           return next[nextIdx].id
         })
 
+        setPreviewFileTabIds((prev) => {
+          if (!prev.has(tabId)) return prev
+          const updated = new Set(prev)
+          updated.delete(tabId)
+          return updated
+        })
+
         return next
       })
     },
@@ -963,6 +1035,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       }
 
       setActiveFileTabId(null)
+      setPreviewFileTabIds(new Set())
       activateConversationPane()
       return []
     })
@@ -978,6 +1051,18 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   )
 
   const activeFilePath = activeFileTab?.path ?? null
+
+  const toggleFileTabPreview = useCallback((tabId: string) => {
+    setPreviewFileTabIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(tabId)) {
+        next.delete(tabId)
+      } else {
+        next.add(tabId)
+      }
+      return next
+    })
+  }, [])
 
   const value = useMemo<WorkspaceContextValue>(
     () => ({
@@ -1007,6 +1092,8 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       updateActiveFileContent,
       saveActiveFile,
       reloadActiveFile,
+      previewFileTabIds,
+      toggleFileTabPreview,
     }),
     [
       mode,
@@ -1035,6 +1122,8 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       updateActiveFileContent,
       saveActiveFile,
       reloadActiveFile,
+      previewFileTabIds,
+      toggleFileTabPreview,
     ]
   )
 

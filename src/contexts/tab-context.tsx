@@ -13,7 +13,7 @@ import {
 import { useTranslations } from "next-intl"
 import { useFolderContext } from "@/contexts/folder-context"
 import { useWorkspaceContext } from "@/contexts/workspace-context"
-import { saveFolderOpenedConversations } from "@/lib/tauri"
+import { saveFolderOpenedConversations } from "@/lib/api"
 import type {
   AgentType,
   ConversationStatus,
@@ -55,7 +55,7 @@ interface TabContextValue {
   switchTab: (tabId: string) => void
   pinTab: (tabId: string) => void
   toggleTileMode: () => void
-  openNewConversationTab: (agentType: AgentType, workingDir: string) => void
+  openNewConversationTab: (workingDir: string) => void
   bindConversationTab: (
     tabId: string,
     conversationId: number,
@@ -68,6 +68,7 @@ interface TabContextValue {
     runtimeConversationId: number
   ) => void
   reorderTabs: (reorderedTabs: TabItem[]) => void
+  onPreviewTabReplaced: (callback: (tabId: string) => void) => () => void
 }
 
 const TabContext = createContext<TabContextValue | null>(null)
@@ -166,6 +167,18 @@ export function TabProvider({ children }: TabProviderProps) {
   useEffect(() => {
     conversationsRef.current = conversations
   }, [conversations])
+
+  // Callback set for preview tab replacement notifications
+  const previewReplacedCallbacksRef = useRef(new Set<(tabId: string) => void>())
+  const onPreviewTabReplaced = useCallback(
+    (callback: (tabId: string) => void) => {
+      previewReplacedCallbacksRef.current.add(callback)
+      return () => {
+        previewReplacedCallbacksRef.current.delete(callback)
+      }
+    },
+    []
+  )
 
   // Restore tabs from folder.opened_conversations when folder first loads
   const [restoredFolderId, setRestoredFolderId] = useState<number | null>(() =>
@@ -309,7 +322,7 @@ export function TabProvider({ children }: TabProviderProps) {
           cancelNewConversation()
           return
         }
-        startNewConversation(tab.agentType, workingDir)
+        startNewConversation(workingDir)
       }
     },
     [
@@ -329,6 +342,7 @@ export function TabProvider({ children }: TabProviderProps) {
       title?: string
     ) => {
       let activateTabId: string | undefined
+      let replacedPreviewTabId: string | undefined
 
       setTabs((prev) => {
         const existingIndex = findTabIndexForConversation(
@@ -376,6 +390,7 @@ export function TabProvider({ children }: TabProviderProps) {
         // Preview (not pinned): replace existing preview tab
         const previewIndex = prev.findIndex((t) => !t.isPinned)
         if (previewIndex >= 0) {
+          replacedPreviewTabId = prev[previewIndex].id
           const updated = [...prev]
           updated[previewIndex] = newTab
           return updated
@@ -383,6 +398,13 @@ export function TabProvider({ children }: TabProviderProps) {
 
         return [...prev, newTab]
       })
+
+      // Notify listeners about the replaced preview tab
+      if (replacedPreviewTabId) {
+        for (const cb of previewReplacedCallbacksRef.current) {
+          cb(replacedPreviewTabId)
+        }
+      }
 
       if (activateTabId) {
         setActiveTabId(activateTabId)
@@ -398,7 +420,7 @@ export function TabProvider({ children }: TabProviderProps) {
       id: makeNewConversationTabId(),
       kind: "conversation",
       conversationId: null,
-      agentType: preferred?.agentType ?? AGENT_DISPLAY_ORDER[0],
+      agentType: AGENT_DISPLAY_ORDER[0],
       title: t("newConversation"),
       isPinned: true,
       workingDir: preferred?.workingDir ?? folder?.path,
@@ -532,16 +554,13 @@ export function TabProvider({ children }: TabProviderProps) {
   )
 
   const openNewConversationTab = useCallback(
-    (agentType: AgentType, workingDir: string) => {
+    (workingDir: string) => {
       const existingTab = rawTabsRef.current.find(
-        (t) => t.conversationId == null && t.agentType === agentType
+        (t) => t.conversationId == null
       )
 
       if (existingTab) {
-        const nextTab =
-          existingTab.workingDir === workingDir
-            ? existingTab
-            : { ...existingTab, workingDir }
+        // Update workingDir if it differs from the request
         if (existingTab.workingDir !== workingDir) {
           setTabs((prev) =>
             prev.map((t) =>
@@ -550,11 +569,12 @@ export function TabProvider({ children }: TabProviderProps) {
           )
         }
         setActiveTabId(existingTab.id)
-        syncFolderContext(nextTab)
+        syncFolderContext(existingTab)
         activateConversationPane()
         return
       }
 
+      const agentType = AGENT_DISPLAY_ORDER[0]
       const tabId = makeNewConversationTabId()
       const newTab: TabItemInternal = {
         id: tabId,
@@ -568,7 +588,7 @@ export function TabProvider({ children }: TabProviderProps) {
 
       setTabs((prev) => [...prev, newTab])
       setActiveTabId(tabId)
-      startNewConversation(agentType, workingDir)
+      startNewConversation(workingDir)
       activateConversationPane()
     },
     [activateConversationPane, startNewConversation, syncFolderContext, t]
@@ -654,6 +674,7 @@ export function TabProvider({ children }: TabProviderProps) {
       bindConversationTab,
       setTabRuntimeConversationId,
       reorderTabs,
+      onPreviewTabReplaced,
     }),
     [
       tabs,
@@ -671,6 +692,7 @@ export function TabProvider({ children }: TabProviderProps) {
       bindConversationTab,
       setTabRuntimeConversationId,
       reorderTabs,
+      onPreviewTabReplaced,
     ]
   )
 

@@ -24,7 +24,6 @@ use sacp::{
     on_receive_request, Agent, Client, ConnectionTo, Responder, SessionMessage, UntypedMessage,
 };
 use sacp_tokio::AcpAgent;
-use tauri::Emitter;
 use tokio::sync::mpsc;
 
 use crate::acp::error::AcpError;
@@ -41,7 +40,6 @@ use crate::models::agent::AgentType;
 use crate::network::proxy;
 
 const DEFAULT_COMMAND_COLOR_ENV: [(&str, &str); 1] = [("CLICOLOR_FORCE", "1")];
-const TURN_COMPLETE_DRAIN_TIMEOUT_MS: u64 = 30;
 
 fn merge_agent_env(
     env: &[(&'static str, &'static str)],
@@ -87,6 +85,9 @@ pub enum ConnectionCommand {
         request_id: String,
         option_id: String,
     },
+    Fork {
+        reply: tokio::sync::oneshot::Sender<Result<crate::acp::types::ForkResultInfo, AcpError>>,
+    },
     Disconnect,
 }
 
@@ -123,18 +124,21 @@ async fn build_agent(
         AgentDistribution::Npx {
             package, args, env, ..
         } => {
+            let cmd = package;
             let merged_env = merge_agent_env(env, runtime_env);
             let mut parts: Vec<String> = Vec::new();
             for (k, v) in &merged_env {
                 parts.push(format!("{k}={v}"));
             }
             parts.push(
-                crate::process::normalized_program("npx")
-                    .to_string_lossy()
-                    .to_string(),
+                which::which(cmd)
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|_| {
+                        crate::process::normalized_program(cmd)
+                            .to_string_lossy()
+                            .to_string()
+                    }),
             );
-            parts.push("-y".into());
-            parts.push(package.into());
             for a in args {
                 parts.push((*a).into());
             }
@@ -154,6 +158,15 @@ async fn build_agent(
                     parts.push("--session".into());
                     parts.push(key.clone());
                 }
+                // When creating a new conversation (no session_id to resume),
+                // pass --reset-session so OpenClaw mints a fresh transcript
+                // instead of appending to the previous one.
+                if runtime_env
+                    .get("OPENCLAW_RESET_SESSION")
+                    .is_some_and(|v| v == "1")
+                {
+                    parts.push("--reset-session".into());
+                }
             }
             let refs: Vec<&str> = parts.iter().map(|s| s.as_str()).collect();
             AcpAgent::from_args(&refs).map_err(|e| AcpError::SpawnFailed(e.to_string()))
@@ -166,8 +179,8 @@ async fn build_agent(
             for (k, v) in &merged_env {
                 parts.push(format!("{k}={v}"));
             }
-            parts.push("uvx".into());
-            parts.push(package.into());
+            parts.push("uvx".to_string());
+            parts.push(package.to_string());
             for a in args {
                 parts.push((*a).into());
             }
@@ -198,7 +211,8 @@ async fn build_agent(
                     .flatten()
                     .is_some();
             if !has_cached_binary {
-                let _ = app_handle.emit(
+                crate::web::event_bridge::emit_event(
+                    app_handle,
                     "acp://event",
                     AcpEvent::StatusChanged {
                         connection_id: connection_id.into(),
@@ -240,7 +254,8 @@ pub async fn spawn_agent_connection(
     owner_window_label: String,
     app_handle: tauri::AppHandle,
 ) -> Result<AgentConnection, AcpError> {
-    let _ = app_handle.emit(
+    crate::web::event_bridge::emit_event(
+        &app_handle,
         "acp://event",
         AcpEvent::StatusChanged {
             connection_id: connection_id.clone(),
@@ -266,7 +281,8 @@ pub async fn spawn_agent_connection(
         .await;
 
         if let Err(e) = result {
-            let _ = handle.emit(
+            crate::web::event_bridge::emit_event(
+                &handle,
                 "acp://event",
                 AcpEvent::Error {
                     connection_id: conn_id.clone(),
@@ -275,7 +291,8 @@ pub async fn spawn_agent_connection(
             );
         }
 
-        let _ = handle.emit(
+        crate::web::event_bridge::emit_event(
+            &handle,
             "acp://event",
             AcpEvent::StatusChanged {
                 connection_id: conn_id,
@@ -318,7 +335,8 @@ fn emit_session_modes(
     modes: &Option<SessionModeState>,
 ) {
     if let Some(mode_state) = modes {
-        let _ = app_handle.emit(
+        crate::web::event_bridge::emit_event(
+            app_handle,
             "acp://event",
             AcpEvent::SessionModes {
                 connection_id: connection_id.into(),
@@ -419,7 +437,8 @@ fn emit_session_config_options_values(
     config_options: Vec<SessionConfigOption>,
 ) {
     let mapped = map_session_config_options(&config_options);
-    let _ = app_handle.emit(
+    crate::web::event_bridge::emit_event(
+        app_handle,
         "acp://event",
         AcpEvent::SessionConfigOptions {
             connection_id: connection_id.into(),
@@ -442,7 +461,8 @@ fn emit_session_config_options(
 }
 
 fn emit_selectors_ready(connection_id: &str, app_handle: &tauri::AppHandle) {
-    let _ = app_handle.emit(
+    crate::web::event_bridge::emit_event(
+        app_handle,
         "acp://event",
         AcpEvent::SelectorsReady {
             connection_id: connection_id.into(),
@@ -455,7 +475,8 @@ fn emit_prompt_capabilities(
     app_handle: &tauri::AppHandle,
     capabilities: &sacp::schema::PromptCapabilities,
 ) {
-    let _ = app_handle.emit(
+    crate::web::event_bridge::emit_event(
+        app_handle,
         "acp://event",
         AcpEvent::PromptCapabilities {
             connection_id: connection_id.into(),
@@ -495,6 +516,7 @@ async fn run_connection(
     let pending_perms: PendingPermissions = Arc::new(tokio::sync::Mutex::new(HashMap::new()));
     let terminal_runtime = Arc::new(TerminalRuntime::new());
     let cwd = resolve_working_dir(working_dir.as_deref());
+    let cwd_string = cwd.to_string_lossy().to_string();
     let file_system_runtime = Arc::new(FileSystemRuntime::new(cwd.clone()));
 
     let conn_id = connection_id.clone();
@@ -618,8 +640,29 @@ async fn run_connection(
                 &init_resp.agent_capabilities.prompt_capabilities,
             );
 
+            let supports_fork = init_resp
+                .agent_capabilities
+                .session_capabilities
+                .fork
+                .is_some();
+            eprintln!(
+                "[ACP] Agent capabilities: load_session={}, fork={}",
+                init_resp.agent_capabilities.load_session, supports_fork
+            );
+
+            // Emit fork support capability
+            crate::web::event_bridge::emit_event(
+                &handle,
+                "acp://event",
+                AcpEvent::ForkSupported {
+                    connection_id: conn_id.clone(),
+                    supported: supports_fork,
+                },
+            );
+
             // Emit connected status
-            let _ = handle.emit(
+            crate::web::event_bridge::emit_event(
+                &handle,
                 "acp://event",
                 AcpEvent::StatusChanged {
                     connection_id: conn_id.clone(),
@@ -672,7 +715,8 @@ async fn run_connection(
                             eprintln!("[ACP] Drained {drained} historical replay notifications");
                         }
 
-                        let _ = handle.emit(
+                        crate::web::event_bridge::emit_event(
+                            &handle,
                             "acp://event",
                             AcpEvent::SessionStarted {
                                 connection_id: conn_id.clone(),
@@ -690,32 +734,102 @@ async fn run_connection(
                             &perms,
                             &mut cmd_rx,
                             terminal_runtime.clone(),
+                            &cwd_string,
+                            supports_fork,
                         )
                         .await;
                         terminal_runtime.release_all_for_session(&sid).await;
-                        loop_result
+                        drop(session);
+                        handle_fork_or_exit(
+                            loop_result,
+                            &conn_id,
+                            &handle,
+                            &perms,
+                            &mut cmd_rx,
+                            terminal_runtime.clone(),
+                            &cwd,
+                            &cwd_string,
+                        )
+                        .await
                     }
                     Err(e) => {
-                        let _ = handle.emit(
+                        // session/load failed (e.g. ephemeral forked session).
+                        // Fall back to session/new so the tab still works.
+                        eprintln!(
+                            "[ACP] session/load failed ({}), falling back to session/new",
+                            e
+                        );
+                        crate::web::event_bridge::emit_event(
+                            &handle,
                             "acp://event",
                             AcpEvent::Error {
                                 connection_id: conn_id.clone(),
-                                message: format!("Failed to load session: {e}"),
+                                message: format!("Failed to load session, starting new: {e}"),
                             },
                         );
-                        Err(e)
+                        let new_resp = cx
+                            .send_request_to(Agent, NewSessionRequest::new(cwd.clone()))
+                            .block_task()
+                            .await?;
+                        let fallback_sid = new_resp.session_id.0.to_string();
+                        let initial_config_options = new_resp.config_options.clone();
+                        let mut session =
+                            cx.attach_session(new_resp, Default::default())?;
+                        crate::web::event_bridge::emit_event(
+                            &handle,
+                            "acp://event",
+                            AcpEvent::SessionStarted {
+                                connection_id: conn_id.clone(),
+                                session_id: fallback_sid.clone(),
+                            },
+                        );
+                        emit_session_modes(&conn_id, &handle, session.modes());
+                        emit_session_config_options(
+                            &conn_id,
+                            &handle,
+                            &initial_config_options,
+                        );
+                        emit_selectors_ready(&conn_id, &handle);
+
+                        let loop_result = run_conversation_loop(
+                            &mut session,
+                            &conn_id,
+                            &handle,
+                            &perms,
+                            &mut cmd_rx,
+                            terminal_runtime.clone(),
+                            &cwd_string,
+                            supports_fork,
+                        )
+                        .await;
+                        terminal_runtime
+                            .release_all_for_session(&fallback_sid)
+                            .await;
+                        drop(session);
+                        handle_fork_or_exit(
+                            loop_result,
+                            &conn_id,
+                            &handle,
+                            &perms,
+                            &mut cmd_rx,
+                            terminal_runtime.clone(),
+                            &cwd,
+                            &cwd_string,
+                        )
+                        .await
                     }
                 }
             } else {
                 // Create new session
                 let new_resp = cx
-                    .send_request_to(Agent, NewSessionRequest::new(cwd))
+                    .send_request_to(Agent, NewSessionRequest::new(cwd.clone()))
                     .block_task()
                     .await?;
                 let sid = new_resp.session_id.0.to_string();
                 let initial_config_options = new_resp.config_options.clone();
                 let mut session = cx.attach_session(new_resp, Default::default())?;
-                let _ = handle.emit(
+                crate::web::event_bridge::emit_event(
+                    &handle,
                     "acp://event",
                     AcpEvent::SessionStarted {
                         connection_id: conn_id.clone(),
@@ -733,10 +847,23 @@ async fn run_connection(
                     &perms,
                     &mut cmd_rx,
                     terminal_runtime.clone(),
+                    &cwd_string,
+                    supports_fork,
                 )
                 .await;
                 terminal_runtime.release_all_for_session(&sid).await;
-                loop_result
+                drop(session);
+                handle_fork_or_exit(
+                    loop_result,
+                    &conn_id,
+                    &handle,
+                    &perms,
+                    &mut cmd_rx,
+                    terminal_runtime.clone(),
+                    &cwd,
+                    &cwd_string,
+                )
+                .await
             }
         })
         .await
@@ -773,7 +900,8 @@ async fn handle_permission_request(
 
     perms.lock().await.insert(request_id.clone(), responder);
 
-    let _ = handle.emit(
+    crate::web::event_bridge::emit_event(
+        handle,
         "acp://event",
         AcpEvent::PermissionRequest {
             connection_id: conn_id.into(),
@@ -817,7 +945,8 @@ async fn set_session_mode(
         .block_task()
         .await?;
 
-    let _ = handle.emit(
+    crate::web::event_bridge::emit_event(
+        handle,
         "acp://event",
         AcpEvent::ModeChanged {
             connection_id: conn_id.into(),
@@ -1069,7 +1198,8 @@ fn emit_terminal_output_update(
     output: String,
     append: bool,
 ) {
-    let _ = app_handle.emit(
+    crate::web::event_bridge::emit_event(
+        app_handle,
         "acp://event",
         AcpEvent::ToolCallUpdate {
             connection_id: connection_id.into(),
@@ -1148,116 +1278,6 @@ async fn poll_tracked_terminal_tool_calls(
     }
 }
 
-fn stop_reason_to_str(reason: &StopReason) -> &'static str {
-    match reason {
-        StopReason::EndTurn => "end_turn",
-        StopReason::Cancelled => "cancelled",
-        _ => "unknown",
-    }
-}
-
-async fn handle_prompt_notification_update(
-    update: SessionUpdate,
-    tracked: &mut HashMap<String, TrackedTerminalToolCall>,
-    terminal_runtime: &TerminalRuntime,
-    session_id: &SessionId,
-    connection_id: &str,
-    app_handle: &tauri::AppHandle,
-) {
-    let should_poll_now = track_terminal_tool_calls(&update, tracked);
-    emit_conversation_update(connection_id, app_handle, update);
-    if should_poll_now {
-        poll_tracked_terminal_tool_calls(
-            terminal_runtime,
-            session_id,
-            connection_id,
-            app_handle,
-            tracked,
-        )
-        .await;
-    }
-}
-
-async fn emit_turn_complete_after_drain<'a>(
-    session: &mut sacp::ActiveSession<'a, Agent>,
-    initial_reason: StopReason,
-    connection_id: &str,
-    session_id: &SessionId,
-    app_handle: &tauri::AppHandle,
-    terminal_runtime: &TerminalRuntime,
-    tracked: &mut HashMap<String, TrackedTerminalToolCall>,
-) {
-    let mut final_reason = initial_reason;
-
-    loop {
-        let next_update = tokio::time::timeout(
-            std::time::Duration::from_millis(TURN_COMPLETE_DRAIN_TIMEOUT_MS),
-            session.read_update(),
-        )
-        .await;
-
-        let Ok(next_update) = next_update else {
-            break;
-        };
-
-        let next_update = match next_update {
-            Ok(update) => update,
-            Err(err) => {
-                eprintln!("[ACP] Ignoring unrecognized drained session update: {err}");
-                continue;
-            }
-        };
-
-        match next_update {
-            SessionMessage::SessionMessage(dispatch) => {
-                let runtime = terminal_runtime;
-                if let Err(err) = MatchDispatch::new(dispatch)
-                    .if_notification(async |notif: SessionNotification| {
-                        handle_prompt_notification_update(
-                            notif.update,
-                            tracked,
-                            runtime,
-                            session_id,
-                            connection_id,
-                            app_handle,
-                        )
-                        .await;
-                        Ok(())
-                    })
-                    .await
-                    .otherwise_ignore()
-                {
-                    eprintln!("[ACP] Ignoring drained dispatch parse error: {err}");
-                }
-            }
-            SessionMessage::StopReason(reason) => {
-                final_reason = reason;
-            }
-            _ => {}
-        }
-    }
-
-    if !tracked.is_empty() {
-        poll_tracked_terminal_tool_calls(
-            terminal_runtime,
-            session_id,
-            connection_id,
-            app_handle,
-            tracked,
-        )
-        .await;
-    }
-
-    let _ = app_handle.emit(
-        "acp://event",
-        AcpEvent::TurnComplete {
-            connection_id: connection_id.into(),
-            session_id: session_id.0.to_string(),
-            stop_reason: stop_reason_to_str(&final_reason).into(),
-        },
-    );
-}
-
 fn map_prompt_blocks(blocks: Vec<PromptInputBlock>) -> Vec<ContentBlock> {
     blocks
         .into_iter()
@@ -1308,7 +1328,99 @@ fn map_prompt_blocks(blocks: Vec<PromptInputBlock>) -> Vec<ContentBlock> {
         .collect()
 }
 
+/// Result when the conversation loop exits due to a fork request.
+struct ForkExitInfo {
+    fork_response: sacp::schema::ForkSessionResponse,
+    original_session_id: String,
+    reply: tokio::sync::oneshot::Sender<Result<crate::acp::types::ForkResultInfo, AcpError>>,
+    connection: ConnectionTo<Agent>,
+}
+
+/// After `run_conversation_loop` returns, handle normal exit or fork transition.
+///
+/// When fork is requested, the original session has already been dropped by the
+/// caller.  We attach to the forked session (S2) directly using the
+/// `ForkSessionResponse` — no separate `session/load` is needed because S2 was
+/// just created in-memory by the agent on this connection.
+#[allow(clippy::too_many_arguments)]
+async fn handle_fork_or_exit(
+    loop_result: Result<Option<ForkExitInfo>, sacp::Error>,
+    conn_id: &str,
+    handle: &tauri::AppHandle,
+    perms: &PendingPermissions,
+    cmd_rx: &mut mpsc::Receiver<ConnectionCommand>,
+    terminal_runtime: Arc<TerminalRuntime>,
+    _cwd: &std::path::Path,
+    cwd_string: &str,
+) -> Result<(), sacp::Error> {
+    let fork_info = match loop_result {
+        Ok(Some(info)) => info,
+        Ok(None) => return Ok(()),
+        Err(e) => return Err(e),
+    };
+
+    let cx = fork_info.connection;
+    let fork_resp = fork_info.fork_response;
+    let new_sid = fork_resp.session_id.0.to_string();
+
+    eprintln!(
+        "[ACP] Fork transition: attaching to forked session {} (original: {})",
+        new_sid, fork_info.original_session_id
+    );
+
+    // Reply success to the frontend
+    let _ = fork_info.reply.send(Ok(crate::acp::types::ForkResultInfo {
+        forked_session_id: new_sid.clone(),
+        original_session_id: fork_info.original_session_id,
+    }));
+
+    // Build a NewSessionResponse from the ForkSessionResponse so we can
+    // attach directly — the forked session is already live on this process.
+    let initial_config_options = fork_resp.config_options.clone();
+    let new_resp = NewSessionResponse::new(fork_resp.session_id)
+        .modes(fork_resp.modes)
+        .config_options(fork_resp.config_options)
+        .meta(fork_resp.meta);
+    let mut session = cx.attach_session(new_resp, Default::default())?;
+
+    crate::web::event_bridge::emit_event(
+        handle,
+        "acp://event",
+        AcpEvent::SessionStarted {
+            connection_id: conn_id.to_string(),
+            session_id: new_sid.clone(),
+        },
+    );
+    emit_session_modes(conn_id, handle, session.modes());
+    emit_session_config_options(conn_id, handle, &initial_config_options);
+    emit_selectors_ready(conn_id, handle);
+
+    let loop_result = run_conversation_loop(
+        &mut session,
+        conn_id,
+        handle,
+        perms,
+        cmd_rx,
+        terminal_runtime.clone(),
+        cwd_string,
+        true, // fork already succeeded on this process
+    )
+    .await;
+    terminal_runtime.release_all_for_session(&new_sid).await;
+    drop(session);
+
+    // Recursively handle nested forks
+    Box::pin(handle_fork_or_exit(
+        loop_result, conn_id, handle, perms, cmd_rx, terminal_runtime, _cwd, cwd_string,
+    ))
+    .await
+}
+
 /// Main conversation command loop: wait for frontend commands and process them.
+///
+/// Returns `Ok(None)` on normal exit (disconnect / channel closed) or
+/// `Ok(Some(ForkExitInfo))` when the loop should be restarted on a forked session.
+#[allow(clippy::too_many_arguments)]
 async fn run_conversation_loop<'a>(
     session: &mut sacp::ActiveSession<'a, Agent>,
     conn_id: &str,
@@ -1316,7 +1428,9 @@ async fn run_conversation_loop<'a>(
     perms: &PendingPermissions,
     cmd_rx: &mut mpsc::Receiver<ConnectionCommand>,
     terminal_runtime: Arc<TerminalRuntime>,
-) -> Result<(), sacp::Error> {
+    cwd: &str,
+    supports_fork: bool,
+) -> Result<Option<ForkExitInfo>, sacp::Error> {
     loop {
         // Wait for either a user command or a session update (e.g. available_commands_update)
         let cmd = loop {
@@ -1350,7 +1464,8 @@ async fn run_conversation_loop<'a>(
             Some(ConnectionCommand::Prompt { blocks }) => {
                 let prompt_blocks = map_prompt_blocks(blocks);
                 if prompt_blocks.is_empty() {
-                    let _ = handle.emit(
+                    crate::web::event_bridge::emit_event(
+                        handle,
                         "acp://event",
                         AcpEvent::Error {
                             connection_id: conn_id.into(),
@@ -1360,7 +1475,8 @@ async fn run_conversation_loop<'a>(
                     continue;
                 }
 
-                let _ = handle.emit(
+                crate::web::event_bridge::emit_event(
+                    handle,
                     "acp://event",
                     AcpEvent::StatusChanged {
                         connection_id: conn_id.into(),
@@ -1374,11 +1490,13 @@ async fn run_conversation_loop<'a>(
                 let cx = session.connection();
                 let sid = session.session_id().clone();
                 let prompt_request = PromptRequest::new(sid.clone(), prompt_blocks);
-                let prompt_response = cx
-                    .clone()
-                    .send_request_to(Agent, prompt_request)
-                    .block_task();
-                tokio::pin!(prompt_response);
+                // Use Box::pin (heap) instead of tokio::pin! (stack) so the
+                // future can be moved into a background task on cancel.
+                let mut prompt_response = Box::pin(
+                    cx.clone()
+                        .send_request_to(Agent, prompt_request)
+                        .block_task(),
+                );
                 let mut tracked_terminal_tool_calls: HashMap<String, TrackedTerminalToolCall> =
                     HashMap::new();
                 let mut terminal_poll_interval = tokio::time::interval(
@@ -1403,19 +1521,28 @@ async fn run_conversation_loop<'a>(
                             };
                             match update {
                                 SessionMessage::SessionMessage(dispatch) => {
+                                    let cid = conn_id.to_string();
+                                    let h = handle.clone();
                                     let runtime = terminal_runtime.clone();
+                                    let session_id = sid.clone();
                                     if let Err(e) = MatchDispatch::new(dispatch)
                                         .if_notification(
                                             async |notif: SessionNotification| {
-                                                handle_prompt_notification_update(
-                                                    notif.update,
+                                                let should_poll_now = track_terminal_tool_calls(
+                                                    &notif.update,
                                                     &mut tracked_terminal_tool_calls,
-                                                    runtime.as_ref(),
-                                                    &sid,
-                                                    conn_id,
-                                                    handle,
-                                                )
-                                                .await;
+                                                );
+                                                emit_conversation_update(&cid, &h, notif.update);
+                                                if should_poll_now {
+                                                    poll_tracked_terminal_tool_calls(
+                                                        runtime.as_ref(),
+                                                        &session_id,
+                                                        &cid,
+                                                        &h,
+                                                        &mut tracked_terminal_tool_calls,
+                                                    )
+                                                    .await;
+                                                }
                                                 Ok(())
                                             },
                                         )
@@ -1426,16 +1553,30 @@ async fn run_conversation_loop<'a>(
                                     }
                                 }
                                 SessionMessage::StopReason(reason) => {
-                                    emit_turn_complete_after_drain(
-                                        session,
-                                        reason,
-                                        conn_id,
-                                        &sid,
+                                    if !tracked_terminal_tool_calls.is_empty() {
+                                        poll_tracked_terminal_tool_calls(
+                                            terminal_runtime.as_ref(),
+                                            &sid,
+                                            conn_id,
+                                            handle,
+                                            &mut tracked_terminal_tool_calls,
+                                        )
+                                        .await;
+                                    }
+                                    let reason_str = match reason {
+                                        StopReason::EndTurn => "end_turn",
+                                        StopReason::Cancelled => "cancelled",
+                                        _ => "unknown",
+                                    };
+                                    crate::web::event_bridge::emit_event(
                                         handle,
-                                        terminal_runtime.as_ref(),
-                                        &mut tracked_terminal_tool_calls,
-                                    )
-                                    .await;
+                                        "acp://event",
+                                        AcpEvent::TurnComplete {
+                                            connection_id: conn_id.into(),
+                                            session_id: sid.0.to_string(),
+                                            stop_reason: reason_str.into(),
+                                        },
+                                    );
                                     break;
                                 }
                                 _ => {}
@@ -1443,16 +1584,30 @@ async fn run_conversation_loop<'a>(
                         }
                         prompt_result = &mut prompt_response => {
                             let reason = prompt_result?.stop_reason;
-                            emit_turn_complete_after_drain(
-                                session,
-                                reason,
-                                conn_id,
-                                &sid,
+                            if !tracked_terminal_tool_calls.is_empty() {
+                                poll_tracked_terminal_tool_calls(
+                                    terminal_runtime.as_ref(),
+                                    &sid,
+                                    conn_id,
+                                    handle,
+                                    &mut tracked_terminal_tool_calls,
+                                )
+                                .await;
+                            }
+                            let reason_str = match reason {
+                                StopReason::EndTurn => "end_turn",
+                                StopReason::Cancelled => "cancelled",
+                                _ => "unknown",
+                            };
+                            crate::web::event_bridge::emit_event(
                                 handle,
-                                terminal_runtime.as_ref(),
-                                &mut tracked_terminal_tool_calls,
-                            )
-                            .await;
+                                "acp://event",
+                                AcpEvent::TurnComplete {
+                                    connection_id: conn_id.into(),
+                                    session_id: sid.0.to_string(),
+                                    stop_reason: reason_str.into(),
+                                },
+                            );
                             break;
                         }
                         _ = terminal_poll_interval.tick(), if !tracked_terminal_tool_calls.is_empty() => {
@@ -1482,7 +1637,8 @@ async fn run_conversation_loop<'a>(
                                     let req = SetSessionModeRequest::new(sid.clone(), mode_id.clone());
                                     match cx.send_request_to(Agent, req).block_task().await {
                                         Ok(_) => {
-                                            let _ = handle.emit(
+                                            crate::web::event_bridge::emit_event(
+                                                handle,
                                                 "acp://event",
                                                 AcpEvent::ModeChanged {
                                                     connection_id: conn_id.into(),
@@ -1491,7 +1647,8 @@ async fn run_conversation_loop<'a>(
                                             );
                                         }
                                         Err(e) => {
-                                            let _ = handle.emit(
+                                            crate::web::event_bridge::emit_event(
+                                                handle,
                                                 "acp://event",
                                                 AcpEvent::Error {
                                                     connection_id: conn_id.into(),
@@ -1515,7 +1672,8 @@ async fn run_conversation_loop<'a>(
                                     )
                                     .await
                                     {
-                                        let _ = handle.emit(
+                                        crate::web::event_bridge::emit_event(
+                                            handle,
                                             "acp://event",
                                             AcpEvent::Error {
                                                 connection_id: conn_id.into(),
@@ -1544,6 +1702,26 @@ async fn run_conversation_loop<'a>(
                                             RequestPermissionOutcome::Cancelled,
                                         ));
                                     }
+                                    // Immediately emit TurnComplete so the frontend
+                                    // transitions out of "prompting" and the user can
+                                    // send new messages.  Don't wait for the agent —
+                                    // it may be slow to respond or not respond at all.
+                                    crate::web::event_bridge::emit_event(
+                                        handle,
+                                        "acp://event",
+                                        AcpEvent::TurnComplete {
+                                            connection_id: conn_id.into(),
+                                            session_id: sid.0.to_string(),
+                                            stop_reason: "cancelled".into(),
+                                        },
+                                    );
+                                    // Drain the prompt response in the background so
+                                    // the SACP library doesn't log "receiver dropped"
+                                    // errors when the agent eventually responds.
+                                    tokio::spawn(async move {
+                                        let _ = prompt_response.await;
+                                    });
+                                    break;
                                 }
                                 Some(ConnectionCommand::Disconnect) | None => {
                                     eprintln!(
@@ -1579,7 +1757,8 @@ async fn run_conversation_loop<'a>(
                     break;
                 }
 
-                let _ = handle.emit(
+                crate::web::event_bridge::emit_event(
+                    handle,
                     "acp://event",
                     AcpEvent::StatusChanged {
                         connection_id: conn_id.into(),
@@ -1600,7 +1779,8 @@ async fn run_conversation_loop<'a>(
             }
             Some(ConnectionCommand::SetMode { mode_id }) => {
                 if let Err(e) = set_session_mode(session, conn_id, handle, mode_id).await {
-                    let _ = handle.emit(
+                    crate::web::event_bridge::emit_event(
+                        handle,
                         "acp://event",
                         AcpEvent::Error {
                             connection_id: conn_id.into(),
@@ -1618,7 +1798,8 @@ async fn run_conversation_loop<'a>(
                 if let Err(e) =
                     set_session_config_option(&cx, &sid, conn_id, handle, config_id, value_id).await
                 {
-                    let _ = handle.emit(
+                    crate::web::event_bridge::emit_event(
+                        handle,
                         "acp://event",
                         AcpEvent::Error {
                             connection_id: conn_id.into(),
@@ -1641,12 +1822,45 @@ async fn run_conversation_loop<'a>(
                     ));
                 }
             }
+            Some(ConnectionCommand::Fork { reply }) => {
+                if !supports_fork {
+                    let _ = reply.send(Err(AcpError::protocol(
+                        "This agent does not support session/fork".to_string(),
+                    )));
+                    continue;
+                }
+                let cx = session.connection();
+                let sid = session.session_id().clone();
+                eprintln!(
+                    "[ACP] Sending session/fork for session_id={} cwd={}",
+                    sid.0, cwd
+                );
+                let result = crate::acp::fork::fork_session(&cx, &sid, cwd).await;
+                match result {
+                    Ok(fork_response) => {
+                        eprintln!(
+                            "[ACP] Fork succeeded: new_session_id={}",
+                            fork_response.session_id.0
+                        );
+                        return Ok(Some(ForkExitInfo {
+                            fork_response,
+                            original_session_id: sid.0.to_string(),
+                            reply,
+                            connection: cx,
+                        }));
+                    }
+                    Err(e) => {
+                        eprintln!("[ACP] Fork failed: {e}");
+                        let _ = reply.send(Err(e));
+                    }
+                }
+            }
             Some(ConnectionCommand::Disconnect) | None => {
                 break;
             }
         }
     }
-    Ok(())
+    Ok(None)
 }
 
 /// Serialize a Vec<ToolCallContent> into a human-readable text string.
@@ -1739,7 +1953,8 @@ fn emit_conversation_update(
             content: ContentBlock::Text(text),
             ..
         }) => {
-            let _ = app_handle.emit(
+            crate::web::event_bridge::emit_event(
+                app_handle,
                 "acp://event",
                 AcpEvent::ContentDelta {
                     connection_id: connection_id.into(),
@@ -1754,7 +1969,8 @@ fn emit_conversation_update(
             content: ContentBlock::Text(text),
             ..
         }) => {
-            let _ = app_handle.emit(
+            crate::web::event_bridge::emit_event(
+                app_handle,
                 "acp://event",
                 AcpEvent::Thinking {
                     connection_id: connection_id.into(),
@@ -1769,7 +1985,8 @@ fn emit_conversation_update(
             let content = serialize_tool_call_content(&tc.content);
             let raw_input = json_value_to_text(&tc.raw_input);
             let raw_output = json_value_to_text(&tc.raw_output);
-            let _ = app_handle.emit(
+            crate::web::event_bridge::emit_event(
+                app_handle,
                 "acp://event",
                 AcpEvent::ToolCall {
                     connection_id: connection_id.into(),
@@ -1791,7 +2008,8 @@ fn emit_conversation_update(
                 .and_then(serialize_tool_call_content);
             let raw_input = json_value_to_text(&tcu.fields.raw_input);
             let raw_output = json_value_to_text(&tcu.fields.raw_output);
-            let _ = app_handle.emit(
+            crate::web::event_bridge::emit_event(
+                app_handle,
                 "acp://event",
                 AcpEvent::ToolCallUpdate {
                     connection_id: connection_id.into(),
@@ -1806,7 +2024,8 @@ fn emit_conversation_update(
             );
         }
         SessionUpdate::CurrentModeUpdate(update) => {
-            let _ = app_handle.emit(
+            crate::web::event_bridge::emit_event(
+                app_handle,
                 "acp://event",
                 AcpEvent::ModeChanged {
                     connection_id: connection_id.into(),
@@ -1815,7 +2034,8 @@ fn emit_conversation_update(
             );
         }
         SessionUpdate::Plan(plan) => {
-            let _ = app_handle.emit(
+            crate::web::event_bridge::emit_event(
+                app_handle,
                 "acp://event",
                 AcpEvent::PlanUpdate {
                     connection_id: connection_id.into(),
@@ -1842,7 +2062,8 @@ fn emit_conversation_update(
                     }
                 })
                 .collect();
-            let _ = app_handle.emit(
+            crate::web::event_bridge::emit_event(
+                app_handle,
                 "acp://event",
                 AcpEvent::AvailableCommands {
                     connection_id: connection_id.into(),
@@ -1851,7 +2072,8 @@ fn emit_conversation_update(
             );
         }
         SessionUpdate::UsageUpdate(update) => {
-            let _ = app_handle.emit(
+            crate::web::event_bridge::emit_event(
+                app_handle,
                 "acp://event",
                 AcpEvent::UsageUpdate {
                     connection_id: connection_id.into(),

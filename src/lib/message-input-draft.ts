@@ -57,14 +57,13 @@ function ensurePersistenceListeners(): void {
     cancelScheduledDraftPersistence()
     flushPendingDraftPersistence()
   }
-  const onVisibilityChange = () => {
+
+  window.addEventListener("pagehide", flushNow)
+  document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       flushNow()
     }
-  }
-
-  window.addEventListener("pagehide", flushNow)
-  document.addEventListener("visibilitychange", onVisibilityChange)
+  })
 }
 
 function scheduleDraftPersistence(): void {

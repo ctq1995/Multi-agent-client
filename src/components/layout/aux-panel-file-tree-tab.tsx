@@ -8,8 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react"
-import { listen, type UnlistenFn } from "@tauri-apps/api/event"
-import { revealItemInDir } from "@tauri-apps/plugin-opener"
+import { revealItemInDir, subscribe } from "@/lib/platform"
 import ignore from "ignore"
 import { Check, ChevronRight } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -21,6 +20,7 @@ import { useTabContext } from "@/contexts/tab-context"
 import { useTerminalContext } from "@/contexts/terminal-context"
 import { useWorkspaceContext } from "@/contexts/workspace-context"
 import {
+  createFileTreeEntry,
   deleteFileTreeEntry,
   gitAddFiles,
   getGitBranch,
@@ -35,11 +35,10 @@ import {
   saveFileCopy,
   startFileTreeWatch,
   stopFileTreeWatch,
-} from "@/lib/tauri"
-import { disposeTauriListener } from "@/lib/tauri-listener"
+} from "@/lib/api"
 import {
-  emitAppendTextToSession,
   emitAttachFileToSession,
+  emitAppendTextToSession,
 } from "@/lib/session-attachment-events"
 import type {
   FileTreeChangedEvent,
@@ -276,7 +275,10 @@ function filterDirectoryGitCandidates(
     return entries.filter((entry) => entry.status.trim().length > 0)
   }
 
-  return entries.filter((entry) => entry.status.trim().length > 0)
+  return entries.filter((entry) => {
+    const fileState = classifyGitFileState(entry.status)
+    return fileState !== "untracked"
+  })
 }
 
 function buildDirectoryGitTree(
@@ -408,8 +410,10 @@ interface RenderNodeProps {
   gitEnabled: boolean
   gitStatusByPath: ReadonlyMap<string, string>
   gitChangedDirPaths: ReadonlySet<string>
+  untrackedDirPaths: ReadonlySet<string>
   gitignoreIgnoredPaths: ReadonlySet<string>
   ancestorGitignoreIgnored: boolean
+  ancestorUntracked: boolean
   onOpenFilePreview: (path: string) => void
   onOpenFileDiff: (path: string) => void
   onOpenDirDiff: (path: string) => void
@@ -419,6 +423,7 @@ interface RenderNodeProps {
   onOpenDirInTerminal: (dirPath: string, fileName: string) => Promise<void>
   onRequestAddToVcs: (target: FileActionTarget) => void
   onRequestRename: (target: FileActionTarget) => void
+  onRequestCreate: (parentPath: string, kind: "file" | "dir") => void
   onRequestDelete: (target: FileActionTarget) => void
   onRefresh: () => void
 }
@@ -431,8 +436,10 @@ function RenderNode({
   gitEnabled,
   gitStatusByPath,
   gitChangedDirPaths,
+  untrackedDirPaths,
   gitignoreIgnoredPaths,
   ancestorGitignoreIgnored,
+  ancestorUntracked,
   onOpenFilePreview,
   onOpenFileDiff,
   onOpenDirDiff,
@@ -441,6 +448,7 @@ function RenderNode({
   onRequestRollback,
   onOpenDirInTerminal,
   onRequestAddToVcs,
+  onRequestCreate,
   onRequestRename,
   onRequestDelete,
   onRefresh,
@@ -462,7 +470,8 @@ function RenderNode({
         })()
 
   if (node.kind === "file") {
-    const gitStatusCode = gitStatusByPath.get(node.path)
+    const gitStatusCode =
+      gitStatusByPath.get(node.path) ?? (ancestorUntracked ? "??" : undefined)
     const absolutePath = joinFsPath(workspacePath, node.path)
     const dirPath = parentDir(absolutePath)
     const isGitMenuDisabled = !gitEnabled || isGitignoreIgnored
@@ -486,7 +495,7 @@ function RenderNode({
 
     return (
       <ContextMenu>
-        <ContextMenuTrigger asChild>
+        <ContextMenuTrigger>
           <FileTreeFile
             path={node.path}
             name={node.name}
@@ -507,6 +516,21 @@ function RenderNode({
           >
             {t("attachToCurrentSession")}
           </ContextMenuItem>
+          <ContextMenuSub>
+            <ContextMenuSubTrigger>{t("new")}</ContextMenuSubTrigger>
+            <ContextMenuSubContent>
+              <ContextMenuItem
+                onSelect={() => onRequestCreate(node.path, "file")}
+              >
+                {t("newFile")}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onSelect={() => onRequestCreate(node.path, "dir")}
+              >
+                {t("newDirectory")}
+              </ContextMenuItem>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
           <ContextMenuSub>
             <ContextMenuSubTrigger disabled={isGitMenuDisabled}>
               {t("git")}
@@ -581,7 +605,11 @@ function RenderNode({
   }
 
   const absolutePath = joinFsPath(workspacePath, node.path)
-  const dirHasChanges = !isGitignoreIgnored && gitChangedDirPaths.has(node.path)
+  const isThisDirUntracked =
+    ancestorUntracked || untrackedDirPaths.has(node.path)
+  const dirHasChanges =
+    !isGitignoreIgnored &&
+    (gitChangedDirPaths.has(node.path) || isThisDirUntracked)
   const isGitMenuDisabled = !gitEnabled || isGitignoreIgnored
   const shouldRenderChildren = expandedPaths.has(node.path)
 
@@ -607,7 +635,7 @@ function RenderNode({
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
+      <ContextMenuTrigger>
         <FileTreeFolder
           path={node.path}
           name={node.name}
@@ -631,8 +659,10 @@ function RenderNode({
                   gitEnabled={gitEnabled}
                   gitStatusByPath={gitStatusByPath}
                   gitChangedDirPaths={gitChangedDirPaths}
+                  untrackedDirPaths={untrackedDirPaths}
                   gitignoreIgnoredPaths={gitignoreIgnoredPaths}
                   ancestorGitignoreIgnored={isGitignoreIgnored}
+                  ancestorUntracked={isThisDirUntracked}
                   onOpenFilePreview={onOpenFilePreview}
                   onOpenFileDiff={onOpenFileDiff}
                   onOpenDirDiff={onOpenDirDiff}
@@ -640,6 +670,7 @@ function RenderNode({
                   onRequestCompareWithBranch={onRequestCompareWithBranch}
                   onRequestRollback={onRequestRollback}
                   onOpenDirInTerminal={onOpenDirInTerminal}
+                  onRequestCreate={onRequestCreate}
                   onRequestAddToVcs={onRequestAddToVcs}
                   onRequestRename={onRequestRename}
                   onRequestDelete={onRequestDelete}
@@ -656,6 +687,19 @@ function RenderNode({
         >
           {t("attachToCurrentSession")}
         </ContextMenuItem>
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>{t("new")}</ContextMenuSubTrigger>
+          <ContextMenuSubContent>
+            <ContextMenuItem
+              onSelect={() => onRequestCreate(node.path, "file")}
+            >
+              {t("newFile")}
+            </ContextMenuItem>
+            <ContextMenuItem onSelect={() => onRequestCreate(node.path, "dir")}>
+              {t("newDirectory")}
+            </ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
         <ContextMenuSub>
           <ContextMenuSubTrigger disabled={isGitMenuDisabled}>
             {t("git")}
@@ -729,7 +773,8 @@ function RenderNode({
 export function FileTreeTab() {
   const t = useTranslations("Folder.fileTreeTab")
   const tCommon = useTranslations("Folder.common")
-  const { activeTab } = useAuxPanelContext()
+  const { activeTab, pendingRevealPath, consumePendingRevealPath } =
+    useAuxPanelContext()
   const { folder } = useFolderContext()
   const { tabs, activeTabId } = useTabContext()
   const { createTerminalInDirectory } = useTerminalContext()
@@ -753,6 +798,10 @@ export function FileTreeTab() {
   )
   const [renameValue, setRenameValue] = useState("")
   const [renaming, setRenaming] = useState(false)
+  const [createParentPath, setCreateParentPath] = useState<string | null>(null)
+  const [createKind, setCreateKind] = useState<"file" | "dir">("file")
+  const [createName, setCreateName] = useState("")
+  const [creating, setCreating] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<FileActionTarget | null>(
     null
   )
@@ -838,6 +887,24 @@ export function FileTreeTab() {
     externalConflictSignatureByPathRef.current.clear()
   }, [folder?.path])
 
+  // Handle pending reveal path: expand all ancestor directories once tree is loaded
+  const hasNodes = nodes.length > 0
+  useEffect(() => {
+    if (!pendingRevealPath || !hasNodes) return
+    consumePendingRevealPath()
+    setExpandedPaths((prev) => {
+      const next = new Set(prev)
+      next.add(FILE_TREE_ROOT_PATH)
+      let idx = pendingRevealPath.indexOf("/")
+      while (idx !== -1) {
+        next.add(pendingRevealPath.slice(0, idx))
+        idx = pendingRevealPath.indexOf("/", idx + 1)
+      }
+      next.add(pendingRevealPath)
+      return next
+    })
+  }, [pendingRevealPath, consumePendingRevealPath, hasNodes])
+
   useEffect(() => {
     if (!activeFileTab || activeFileTab.kind !== "file") return
     if (!activeFileTab.path) return
@@ -870,7 +937,10 @@ export function FileTreeTab() {
     (entries: { file: string; status: string }[]) => {
       const nextStatusByPath = new Map<string, string>()
       for (const entry of entries) {
-        const normalizedPath = normalizeGitStatusPath(entry.file)
+        const raw = normalizeGitStatusPath(entry.file)
+        if (!raw) continue
+        // Strip trailing slash (directory entries from -unormal)
+        const normalizedPath = raw.replace(/\/+$/, "")
         if (!normalizedPath) continue
         nextStatusByPath.set(normalizedPath, entry.status)
       }
@@ -1083,14 +1153,31 @@ export function FileTreeTab() {
           const result = await readFilePreview(folder.path, gitignoreNode.path)
           const matcher = ignore().add(result.content)
 
-          for (const child of children) {
+          // Collect all descendant nodes so multi-level patterns like
+          // "public/vs" can be matched using relative paths.
+          const descendants: FileTreeNode[] = []
+          const collectDescendants = (parent: string) => {
+            const items = dirChildrenByPath.get(parent)
+            if (!items) return
+            for (const item of items) {
+              descendants.push(item)
+              if (item.kind === "dir") collectDescendants(item.path)
+            }
+          }
+          collectDescendants(dirPath)
+
+          for (const desc of descendants) {
+            if (hasIgnoredAncestor(desc.path, nextIgnoredPaths)) continue
+            const relativePath =
+              dirPath === "" ? desc.path : desc.path.slice(dirPath.length + 1)
+            if (!relativePath) continue
             const ignored =
-              child.kind === "dir"
-                ? matcher.ignores(`${child.name}/`) ||
-                  matcher.ignores(`${child.name}/.codeg-ignore-probe`)
-                : matcher.ignores(child.name)
+              desc.kind === "dir"
+                ? matcher.ignores(`${relativePath}/`) ||
+                  matcher.ignores(`${relativePath}/.codeg-ignore-probe`)
+                : matcher.ignores(relativePath)
             if (ignored) {
-              nextIgnoredPaths.add(child.path)
+              nextIgnoredPaths.add(desc.path)
             }
           }
         } catch {
@@ -1127,6 +1214,20 @@ export function FileTreeTab() {
     return dirs
   }, [gitStatusByPath])
 
+  // Directories that are entirely untracked (from git status -unormal)
+  const untrackedDirPaths = useMemo(() => {
+    const dirs = new Set<string>()
+    for (const [path, status] of gitStatusByPath.entries()) {
+      if (status.trim() === "??") {
+        // Check if this path is a directory in the file tree
+        if (dirChildrenByPath.has(path)) {
+          dirs.add(path)
+        }
+      }
+    }
+    return dirs
+  }, [gitStatusByPath, dirChildrenByPath])
+
   const handleTreeSelect = useCallback(
     (path: string) => {
       if (!filePathSet.has(path)) return
@@ -1155,6 +1256,15 @@ export function FileTreeTab() {
       })
     })
   }, [folder, t])
+
+  const handleRequestCreate = useCallback(
+    (parentPath: string, kind: "file" | "dir") => {
+      setCreateParentPath(parentPath)
+      setCreateKind(kind)
+      setCreateName("")
+    },
+    []
+  )
 
   const handleRequestRename = useCallback((target: FileActionTarget) => {
     setRenameTarget(target)
@@ -1331,6 +1441,19 @@ export function FileTreeTab() {
       ),
     }
   }, [compareBranchList, compareFilterKeyword])
+
+  const groupedCompareRemoteBranches = useMemo(() => {
+    const groups: Record<string, string[]> = {}
+    for (const b of filteredCompareBranches.remote) {
+      const slashIndex = b.indexOf("/")
+      const remoteName = slashIndex > 0 ? b.substring(0, slashIndex) : "origin"
+      if (!groups[remoteName]) groups[remoteName] = []
+      groups[remoteName].push(b)
+    }
+    return groups
+  }, [filteredCompareBranches.remote])
+  const compareRemoteNames = Object.keys(groupedCompareRemoteBranches)
+  const hasMultipleCompareRemotes = compareRemoteNames.length > 1
 
   const directoryGitTreeNodes = useMemo(() => {
     if (!directoryGitActionTarget) return []
@@ -1519,6 +1642,33 @@ export function FileTreeTab() {
       t,
     ]
   )
+
+  const handleCreateConfirm = useCallback(async () => {
+    if (!folder?.path || createParentPath === null) return
+    const trimmedName = createName.trim()
+    if (!trimmedName) {
+      setCreateParentPath(null)
+      return
+    }
+
+    setCreating(true)
+    try {
+      await createFileTreeEntry(
+        folder.path,
+        createParentPath,
+        trimmedName,
+        createKind
+      )
+      setCreateParentPath(null)
+      setCreateName("")
+      await fetchTree()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      toast.error(t("toasts.createFailed"), { description: message })
+    } finally {
+      setCreating(false)
+    }
+  }, [createKind, createName, createParentPath, fetchTree, folder?.path, t])
 
   const handleRenameConfirm = useCallback(async () => {
     if (!folder?.path || !renameTarget) return
@@ -1718,33 +1868,21 @@ export function FileTreeTab() {
     return baseName(folder.path)
   }, [folder?.path, t])
 
-  const rootActionTarget = useMemo<FileActionTarget | null>(() => {
-    if (!folder?.path) return null
-    return {
-      kind: "dir",
-      path: "",
-      name: rootNodeName,
-    }
-  }, [folder?.path, rootNodeName])
+  const systemExplorerLabel =
+    typeof navigator === "undefined"
+      ? t("openInFileManager")
+      : (() => {
+          const platform =
+            `${navigator.platform} ${navigator.userAgent}`.toLowerCase()
+          if (platform.includes("mac")) return t("openInFinder")
+          if (platform.includes("win")) return t("openInExplorer")
+          return t("openInFileManager")
+        })()
 
-  const rootSystemExplorerLabel = useMemo(() => {
-    if (typeof navigator === "undefined") return t("openInFileManager")
-    const platform =
-      `${navigator.platform} ${navigator.userAgent}`.toLowerCase()
-    if (platform.includes("mac")) return t("openInFinder")
-    if (platform.includes("win")) return t("openInExplorer")
-    return t("openInFileManager")
-  }, [t])
-
-  const handleOpenRootInSystemExplorer = useCallback(async () => {
-    if (!folder?.path) return
-    try {
-      await revealItemInDir(folder.path)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      toast.error(t("toasts.openDirectoryFailed"), { description: message })
-    }
-  }, [folder?.path, t])
+  const rootTarget: FileActionTarget = useMemo(
+    () => ({ kind: "dir", path: "", name: rootNodeName }),
+    [rootNodeName]
+  )
 
   useEffect(() => {
     if (!isFileTreeTabActive) return
@@ -1767,7 +1905,7 @@ export function FileTreeTab() {
     const rootPath = folder?.path
     if (!rootPath) return
 
-    let unlisten: UnlistenFn | null = null
+    let unlisten: (() => void) | null = null
     const normalizedRootPath = normalizeComparePath(rootPath)
 
     const scheduleTreeRefresh = (refreshGitStatus: boolean) => {
@@ -1906,20 +2044,17 @@ export function FileTreeTab() {
       }
 
       try {
-        unlisten = await listen<FileTreeChangedEvent>(
+        unlisten = await subscribe<FileTreeChangedEvent>(
           "folder://file-tree-changed",
-          (event) => {
+          (payload) => {
             if (
-              normalizeComparePath(event.payload.root_path) !==
-              normalizedRootPath
+              normalizeComparePath(payload.root_path) !== normalizedRootPath
             ) {
               return
             }
 
-            const changedPaths =
-              event.payload.changed_paths.map(normalizeComparePath)
-            const shouldRefreshGitStatus =
-              event.payload.refresh_git_status ?? true
+            const changedPaths = payload.changed_paths.map(normalizeComparePath)
+            const shouldRefreshGitStatus = payload.refresh_git_status ?? true
             const nonGitChangedPaths = changedPaths.filter(
               (path) => !isGitMetadataPath(path)
             )
@@ -1929,13 +2064,13 @@ export function FileTreeTab() {
               (path) => !filePathSetRef.current.has(path)
             )
             const needsTreeRefresh =
-              event.payload.full_reload ||
+              payload.full_reload ||
               (!onlyGitMetadataChanges &&
-                (event.payload.kind !== "modify" ||
+                (payload.kind !== "modify" ||
                   nonGitChangedPaths.length === 0 ||
                   hasUnknownPath))
 
-            if (onlyGitMetadataChanges && !event.payload.full_reload) {
+            if (onlyGitMetadataChanges && !payload.full_reload) {
               if (shouldRefreshGitStatus) {
                 scheduleStatusRefresh()
               }
@@ -1945,13 +2080,13 @@ export function FileTreeTab() {
               scheduleStatusRefresh()
             }
 
-            if (onlyGitMetadataChanges && !event.payload.full_reload) {
+            if (onlyGitMetadataChanges && !payload.full_reload) {
               return
             }
 
             const changedActivePath = getActiveChangedFilePath(
               nonGitChangedPaths,
-              event.payload.full_reload
+              payload.full_reload
             )
             if (!changedActivePath) return
 
@@ -2005,7 +2140,7 @@ export function FileTreeTab() {
       pendingTreeRefreshRef.current = false
       pendingTreeRefreshNeedsStatusRef.current = false
       pendingStatusRefreshRef.current = false
-      disposeTauriListener(unlisten, "AuxPanelFileTree.fileTreeChanged")
+      unlisten?.()
       void stopFileTreeWatch(rootPath)
     }
   }, [fetchTree, folder?.path, openFilePreview, t])
@@ -2054,123 +2189,162 @@ export function FileTreeTab() {
               onSelect={handleTreeSelect}
             >
               {folder?.path && (
-                <FileTreeFolder
-                  path={FILE_TREE_ROOT_PATH}
-                  name={rootNodeName}
-                  className="font-medium"
-                >
-                  {nodes.map((node) => (
-                    <RenderNode
-                      key={node.path}
-                      node={node}
-                      expandedPaths={expandedPaths}
-                      workspacePath={folder.path}
-                      activeSessionTabId={activeSessionTabId}
-                      gitEnabled={gitEnabled}
-                      gitStatusByPath={gitStatusByPath}
-                      gitChangedDirPaths={gitChangedDirPaths}
-                      gitignoreIgnoredPaths={gitignoreIgnoredPaths}
-                      ancestorGitignoreIgnored={false}
-                      onOpenFilePreview={(path) => {
-                        void openFilePreview(path)
+                <ContextMenu>
+                  <ContextMenuTrigger>
+                    <FileTreeFolder
+                      path={FILE_TREE_ROOT_PATH}
+                      name={rootNodeName}
+                      className="font-medium"
+                    >
+                      {nodes.map((node) => (
+                        <RenderNode
+                          key={node.path}
+                          node={node}
+                          expandedPaths={expandedPaths}
+                          workspacePath={folder.path}
+                          activeSessionTabId={activeSessionTabId}
+                          gitEnabled={gitEnabled}
+                          gitStatusByPath={gitStatusByPath}
+                          gitChangedDirPaths={gitChangedDirPaths}
+                          untrackedDirPaths={untrackedDirPaths}
+                          gitignoreIgnoredPaths={gitignoreIgnoredPaths}
+                          ancestorGitignoreIgnored={false}
+                          ancestorUntracked={false}
+                          onOpenFilePreview={(path) => {
+                            void openFilePreview(path)
+                          }}
+                          onOpenFileDiff={(path) => {
+                            void openWorkingTreeDiff(path)
+                          }}
+                          onOpenDirDiff={(path) => {
+                            void openWorkingTreeDiff(path, {
+                              mode: "overview",
+                            })
+                          }}
+                          onOpenCommitWindow={handleOpenCommitWindow}
+                          onRequestCompareWithBranch={
+                            handleRequestCompareWithBranch
+                          }
+                          onRequestRollback={handleRequestRollback}
+                          onOpenDirInTerminal={handleOpenDirInTerminal}
+                          onRequestCreate={handleRequestCreate}
+                          onRequestAddToVcs={handleAddToVcs}
+                          onRequestRename={handleRequestRename}
+                          onRequestDelete={handleRequestDelete}
+                          onRefresh={fetchTree}
+                        />
+                      ))}
+                    </FileTreeFolder>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuSub>
+                      <ContextMenuSubTrigger>{t("new")}</ContextMenuSubTrigger>
+                      <ContextMenuSubContent>
+                        <ContextMenuItem
+                          onSelect={() => handleRequestCreate("", "file")}
+                        >
+                          {t("newFile")}
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                          onSelect={() => handleRequestCreate("", "dir")}
+                        >
+                          {t("newDirectory")}
+                        </ContextMenuItem>
+                      </ContextMenuSubContent>
+                    </ContextMenuSub>
+                    <ContextMenuSub>
+                      <ContextMenuSubTrigger disabled={!gitEnabled}>
+                        {t("git")}
+                      </ContextMenuSubTrigger>
+                      <ContextMenuSubContent>
+                        <ContextMenuItem
+                          onSelect={() => handleOpenCommitWindow()}
+                          disabled={!gitEnabled}
+                        >
+                          {t("actions.commitCode")}
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                          onSelect={() => void handleAddToVcs(rootTarget)}
+                          disabled={!gitEnabled}
+                        >
+                          {t("actions.addToVcs")}
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                          onSelect={() =>
+                            void openWorkingTreeDiff(".", {
+                              mode: "overview",
+                            })
+                          }
+                          disabled={!gitEnabled}
+                        >
+                          {tCommon("viewDiff")}
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                          onSelect={() =>
+                            handleRequestCompareWithBranch(rootTarget)
+                          }
+                          disabled={!gitEnabled}
+                        >
+                          {t("compareWithBranch")}
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                          variant="destructive"
+                          onSelect={() => handleRequestRollback(rootTarget)}
+                          disabled={!gitEnabled}
+                        >
+                          {t("actions.rollback")}
+                        </ContextMenuItem>
+                      </ContextMenuSubContent>
+                    </ContextMenuSub>
+                    <ContextMenuItem
+                      onSelect={() => {
+                        void fetchTree()
                       }}
-                      onOpenFileDiff={(path) => {
-                        void openWorkingTreeDiff(path)
-                      }}
-                      onOpenDirDiff={(path) => {
-                        void openWorkingTreeDiff(path, { mode: "overview" })
-                      }}
-                      onOpenCommitWindow={handleOpenCommitWindow}
-                      onRequestCompareWithBranch={
-                        handleRequestCompareWithBranch
-                      }
-                      onRequestRollback={handleRequestRollback}
-                      onOpenDirInTerminal={handleOpenDirInTerminal}
-                      onRequestAddToVcs={handleAddToVcs}
-                      onRequestRename={handleRequestRename}
-                      onRequestDelete={handleRequestDelete}
-                      onRefresh={fetchTree}
-                    />
-                  ))}
-                </FileTreeFolder>
+                    >
+                      {t("reloadFromDisk")}
+                    </ContextMenuItem>
+                    <ContextMenuSub>
+                      <ContextMenuSubTrigger>
+                        {t("openIn")}
+                      </ContextMenuSubTrigger>
+                      <ContextMenuSubContent>
+                        <ContextMenuItem
+                          onSelect={() => {
+                            void revealItemInDir(folder.path)
+                          }}
+                        >
+                          {systemExplorerLabel}
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                          onSelect={() => {
+                            void handleOpenDirInTerminal(
+                              folder.path,
+                              rootNodeName
+                            )
+                          }}
+                        >
+                          {t("openInTerminal")}
+                        </ContextMenuItem>
+                      </ContextMenuSubContent>
+                    </ContextMenuSub>
+                  </ContextMenuContent>
+                </ContextMenu>
               )}
             </FileTree>
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          {folder?.path && (
-            <>
-              <ContextMenuSub>
-                <ContextMenuSubTrigger disabled={!gitEnabled}>
-                  {t("git")}
-                </ContextMenuSubTrigger>
-                <ContextMenuSubContent>
-                  <ContextMenuItem
-                    onSelect={() => handleOpenCommitWindow()}
-                    disabled={!gitEnabled}
-                  >
-                    {t("actions.commitCode")}
-                  </ContextMenuItem>
-                  <ContextMenuItem
-                    onSelect={() => {
-                      if (!rootActionTarget) return
-                      void handleAddToVcs(rootActionTarget)
-                    }}
-                    disabled={!gitEnabled || !rootActionTarget}
-                  >
-                    {t("actions.addToVcs")}
-                  </ContextMenuItem>
-                  <ContextMenuItem
-                    onSelect={() => {
-                      void openWorkingTreeDiff()
-                    }}
-                    disabled={!gitEnabled}
-                  >
-                    {tCommon("viewDiff")}
-                  </ContextMenuItem>
-                  <ContextMenuItem
-                    onSelect={() => {
-                      if (!rootActionTarget) return
-                      handleRequestCompareWithBranch(rootActionTarget)
-                    }}
-                    disabled={!gitEnabled || !rootActionTarget}
-                  >
-                    {t("compareWithBranch")}
-                  </ContextMenuItem>
-                  <ContextMenuItem
-                    variant="destructive"
-                    onSelect={() => {
-                      if (!rootActionTarget) return
-                      handleRequestRollback(rootActionTarget)
-                    }}
-                    disabled={!gitEnabled || !rootActionTarget}
-                  >
-                    {t("actions.rollback")}
-                  </ContextMenuItem>
-                </ContextMenuSubContent>
-              </ContextMenuSub>
-
-              <ContextMenuSub>
-                <ContextMenuSubTrigger>{t("openIn")}</ContextMenuSubTrigger>
-                <ContextMenuSubContent>
-                  <ContextMenuItem
-                    onSelect={() => {
-                      void handleOpenRootInSystemExplorer()
-                    }}
-                  >
-                    {rootSystemExplorerLabel}
-                  </ContextMenuItem>
-                  <ContextMenuItem
-                    onSelect={() => {
-                      void handleOpenDirInTerminal(folder.path, rootNodeName)
-                    }}
-                  >
-                    {t("openInTerminal")}
-                  </ContextMenuItem>
-                </ContextMenuSubContent>
-              </ContextMenuSub>
-            </>
-          )}
+          <ContextMenuSub>
+            <ContextMenuSubTrigger>{t("new")}</ContextMenuSubTrigger>
+            <ContextMenuSubContent>
+              <ContextMenuItem onSelect={() => handleRequestCreate("", "file")}>
+                {t("newFile")}
+              </ContextMenuItem>
+              <ContextMenuItem onSelect={() => handleRequestCreate("", "dir")}>
+                {t("newDirectory")}
+              </ContextMenuItem>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
           <ContextMenuItem
             onSelect={() => {
               void fetchTree()
@@ -2182,6 +2356,75 @@ export function FileTreeTab() {
       </ContextMenu>
 
       <Dialog
+        open={createParentPath !== null}
+        onOpenChange={(open) => {
+          if (open) return
+          setCreateParentPath(null)
+          setCreateName("")
+        }}
+      >
+        <DialogContent
+          onOpenAutoFocus={(e) => {
+            e.preventDefault()
+            const input = (
+              e.currentTarget as HTMLElement | null
+            )?.querySelector("input")
+            if (input) requestAnimationFrame(() => input.focus())
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {createKind === "dir"
+                ? t("createDialog.newDirectory")
+                : t("createDialog.newFile")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("createDialog.description", {
+                kind:
+                  createKind === "dir"
+                    ? t("newDirectory").toLowerCase()
+                    : t("newFile").toLowerCase(),
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault()
+              void handleCreateConfirm()
+            }}
+            className="space-y-4"
+          >
+            <Input
+              value={createName}
+              onChange={(event) => setCreateName(event.target.value)}
+              disabled={creating}
+              placeholder={
+                createKind === "dir"
+                  ? t("createDialog.placeholderDirectory")
+                  : t("createDialog.placeholderFile")
+              }
+            />
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={creating}
+                onClick={() => {
+                  setCreateParentPath(null)
+                  setCreateName("")
+                }}
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button type="submit" disabled={creating || !createName.trim()}>
+                {tCommon("create")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
         open={Boolean(renameTarget)}
         onOpenChange={(open) => {
           if (open) return
@@ -2189,7 +2432,15 @@ export function FileTreeTab() {
           setRenameValue("")
         }}
       >
-        <DialogContent>
+        <DialogContent
+          onOpenAutoFocus={(e) => {
+            e.preventDefault()
+            const input = (
+              e.currentTarget as HTMLElement | null
+            )?.querySelector("input")
+            if (input) requestAnimationFrame(() => input.focus())
+          }}
+        >
           <DialogHeader>
             <DialogTitle>
               {renameTarget?.kind === "dir"
@@ -2210,7 +2461,6 @@ export function FileTreeTab() {
             <Input
               value={renameValue}
               onChange={(event) => setRenameValue(event.target.value)}
-              autoFocus
               disabled={renaming}
               placeholder={
                 renameTarget?.kind === "dir"
@@ -2474,21 +2724,65 @@ export function FileTreeTab() {
                       </CollapsibleTrigger>
                       <CollapsibleContent className="space-y-1 pt-1">
                         {filteredCompareBranches.remote.length > 0 ? (
-                          filteredCompareBranches.remote.map((branch) => (
-                            <Button
-                              key={`remote-${branch}`}
-                              type="button"
-                              size="xs"
-                              variant="ghost"
-                              className="w-full justify-start"
-                              onClick={() => {
-                                void handleCompareBranchClick(branch)
-                              }}
-                              disabled={comparing}
-                            >
-                              {branch}
-                            </Button>
-                          ))
+                          hasMultipleCompareRemotes ? (
+                            compareRemoteNames.map((remoteName) => (
+                              <Collapsible key={remoteName}>
+                                <CollapsibleTrigger className="flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 pl-5 text-sm hover:bg-accent hover:text-accent-foreground select-none outline-hidden">
+                                  <ChevronRight className="h-3 w-3 shrink-0 transition-transform [[data-state=open]>&]:rotate-90" />
+                                  {remoteName} (
+                                  {
+                                    groupedCompareRemoteBranches[remoteName]
+                                      .length
+                                  }
+                                  )
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="space-y-1 pt-1 pl-3">
+                                  {groupedCompareRemoteBranches[remoteName].map(
+                                    (branch) => (
+                                      <Button
+                                        key={`remote-${branch}`}
+                                        type="button"
+                                        size="xs"
+                                        variant="ghost"
+                                        className="w-full justify-start"
+                                        onClick={() => {
+                                          void handleCompareBranchClick(branch)
+                                        }}
+                                        disabled={comparing}
+                                      >
+                                        {branch.substring(
+                                          remoteName.length + 1
+                                        )}
+                                      </Button>
+                                    )
+                                  )}
+                                </CollapsibleContent>
+                              </Collapsible>
+                            ))
+                          ) : (
+                            filteredCompareBranches.remote.map((branch) => {
+                              const slashIndex = branch.indexOf("/")
+                              const shortName =
+                                slashIndex > 0
+                                  ? branch.substring(slashIndex + 1)
+                                  : branch
+                              return (
+                                <Button
+                                  key={`remote-${branch}`}
+                                  type="button"
+                                  size="xs"
+                                  variant="ghost"
+                                  className="w-full justify-start pl-4"
+                                  onClick={() => {
+                                    void handleCompareBranchClick(branch)
+                                  }}
+                                  disabled={comparing}
+                                >
+                                  {shortName}
+                                </Button>
+                              )
+                            })
+                          )
                         ) : (
                           <div className="px-2 text-xs text-muted-foreground">
                             {t("compareDialog.noMatchingBranches")}

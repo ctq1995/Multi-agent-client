@@ -13,7 +13,7 @@
     "arabic": "阿拉伯语"
   },
   "WelcomePage": {
-    "title": "欢迎使用Multi-agent-client",
+    "title": "欢迎使用 Multi-agent-client",
     "openSettings": "打开设置",
     "searchPlaceholder": "搜索文件夹...",
     "loading": "加载中...",
@@ -28,7 +28,7 @@
       "removeFromHistoryFailed": "移除历史记录失败",
       "openSettingsFailed": "打开设置失败",
       "cloneFailed": "克隆仓库失败",
-      "cloneProgressUnavailable": "???????????????"
+      "cloneProgressUnavailable": "克隆进度追踪不可用"
     },
     "errors": {
       "unknown": "发生未知错误",
@@ -58,6 +58,27 @@
       "clone": "克隆"
     }
   },
+  "GitCredentialDialog": {
+    "title": "需要身份验证",
+    "description": "远程服务器要求输入凭据。请输入用户名和密码（或个人访问令牌）。",
+    "username": "用户名",
+    "usernamePlaceholder": "用户名或邮箱",
+    "password": "密码 / 令牌",
+    "passwordPlaceholder": "密码或个人访问令牌",
+    "passwordHint": "请输入服务器的用户名和密码。",
+    "cancel": "取消",
+    "authenticate": "认证",
+    "authenticating": "认证中...",
+    "invalidCredentials": "凭据无效，请重试。",
+    "saveCredentials": "保存凭据以供后续操作使用",
+    "githubTitle": "GitHub 身份验证",
+    "githubDescription": "输入个人访问令牌以连接 GitHub。令牌验证成功后将自动保存到账号列表。",
+    "githubToken": "个人访问令牌",
+    "githubTokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "githubTokenHint": "在 GitHub → Settings → Developer settings → Personal access tokens 中生成令牌。",
+    "githubAuthenticate": "验证并连接",
+    "generateToken": "生成令牌"
+  },
   "SettingsShell": {
     "title": "设置",
     "preferences": "偏好设置",
@@ -67,7 +88,9 @@
       "mcp": "MCP",
       "skills": "Skills",
       "shortcuts": "快捷键",
-      "system": "系统"
+      "version_control": "版本控制",
+      "system": "系统",
+      "web_service": "Web 服务"
     }
   },
   "AppearanceSettings": {
@@ -79,11 +102,6 @@
     "light": "浅色",
     "dark": "深色",
     "currentTheme": "当前生效主题：{theme}",
-    "messageSectionTitle": "消息显示",
-    "messageSectionDescription": "控制聊天中长用户消息的显示方式。",
-    "autoCollapseLongUserMessages": "自动折叠长用户消息",
-    "autoCollapseLongUserMessagesDescription": "默认折叠过长的用户输入，避免消息列表被撑开。",
-    "autoCollapseLongUserMessagesAria": "自动折叠长用户消息",
     "resolvedTheme": {
       "light": "浅色",
       "dark": "深色",
@@ -111,6 +129,7 @@
     "languageSaveSuccess": "语言设置已保存",
     "languageSaveFailed": "语言设置保存失败：{message}",
     "updateTitle": "应用升级",
+    "versionTitle": "软件更新",
     "updateDescription": "点击检查后会从配置的发布源拉取最新版本信息，有新版本时可直接下载并安装。",
     "currentVersion": "当前版本",
     "upgradableVersion": "最新版本",
@@ -132,6 +151,75 @@
       "downloadFailed": "下载更新包失败，请稍后重试。",
       "installFailed": "安装更新失败，请关闭应用后重试。",
       "unknown": "更新失败，请稍后重试。"
+    }
+  },
+  "VersionControlSettings": {
+    "loading": "加载中...",
+    "sectionTitle": "版本控制",
+    "sectionDescription": "配置 Git 可执行文件并管理 GitHub 账号。",
+    "gitTitle": "Git 配置",
+    "gitDescription": "配置应用使用的 Git 可执行文件。",
+    "gitDetected": "已检测到 Git",
+    "gitNotFound": "未在系统中找到 Git",
+    "gitVersion": "版本",
+    "gitPath": "路径",
+    "customGitPath": "自定义 Git 路径",
+    "customGitPathPlaceholder": "/usr/bin/git",
+    "customGitPathHint": "留空则使用自动检测的路径。",
+    "test": "测试",
+    "testing": "测试中...",
+    "testSuccess": "Git 可执行文件有效。",
+    "testFailed": "Git 测试失败：{message}",
+    "save": "保存",
+    "saving": "保存中...",
+    "saveSuccess": "Git 设置已保存。",
+    "saveFailed": "保存失败：{message}",
+    "githubTitle": "GitHub 账号",
+    "githubDescription": "管理用于身份验证的 GitHub 账号。令牌存储在本地。",
+    "noAccounts": "暂无 GitHub 账号。",
+    "addAccount": "添加账号",
+    "serverUrl": "服务器地址",
+    "serverUrlPlaceholder": "https://github.com",
+    "token": "个人访问令牌",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "generateToken": "生成令牌",
+    "tokenHint": "在 GitHub → Settings → Developer settings → Personal access tokens 中生成令牌。",
+    "validateAndAdd": "验证并添加",
+    "validating": "验证中...",
+    "addSuccess": "账号 {username} 添加成功。",
+    "addFailed": "添加账号失败：{message}",
+    "testConnection": "测试",
+    "connectionSuccess": "连接成功。",
+    "connectionFailed": "连接失败：{message}",
+    "setDefault": "设为默认",
+    "defaultLabel": "默认",
+    "defaultSet": "默认账号已更新。",
+    "removeAccount": "删除",
+    "removeConfirmTitle": "删除账号",
+    "removeConfirmMessage": "确定要删除账号「{username}」吗？",
+    "removeConfirm": "删除",
+    "removeCancel": "取消",
+    "removeSuccess": "账号已删除。",
+    "scopes": "权限范围",
+    "loadFailed": "加载设置失败：{message}",
+    "gitAccount": {
+      "sectionTitle": "Git 服务器账号",
+      "sectionDescription": "管理非 GitHub 的 Git 服务器凭据（GitLab、Bitbucket、自建服务等）。",
+      "noAccounts": "暂无 Git 服务器账号。",
+      "addAccount": "添加账号",
+      "addTitle": "添加 Git 账号",
+      "addDescription": "输入服务器地址、用户名和密码或访问令牌。",
+      "serverUrl": "服务器地址",
+      "serverUrlPlaceholder": "https://gitlab.example.com",
+      "username": "用户名",
+      "usernamePlaceholder": "用户名或邮箱",
+      "password": "密码 / 令牌",
+      "passwordPlaceholder": "密码或访问令牌",
+      "passwordHint": "输入服务器的密码或个人访问令牌。",
+      "add": "添加",
+      "serverRequired": "请输入服务器地址。",
+      "usernameRequired": "请输入用户名。",
+      "passwordRequired": "请输入密码。"
     }
   },
   "ShortcutSettings": {
@@ -412,6 +500,10 @@
     },
     "codex": {
       "configDescription": "支持 API URL、API Key、模型名称、Reasoning Effort 快捷配置，并与 `auth.json` / `config.toml` 双向联动。",
+      "authMode": "认证方式",
+      "chatgptSubscription": "官网订阅",
+      "chatgptSubscriptionHint": "使用 ChatGPT 官网订阅登录，无需配置 API Key",
+      "apiKeyHint": "使用 API Key 连接 OpenAI 或兼容的 API 服务",
       "selectProvider": "选择 Provider",
       "modelName": "模型名称",
       "selectReasoningEffort": "选择 Reasoning Effort",
@@ -524,6 +616,7 @@
       "openClawSaved": "OpenClaw 配置已保存",
       "saveOpenClawFailed": "保存 OpenClaw 配置失败",
       "configSaved": "配置已保存",
+      "configSavedHint": "已有会话需要重新打开才能生效",
       "saveConfigManagementFailed": "保存配置管理失败"
     },
     "version": {
@@ -538,16 +631,15 @@
       "latest": "{versionText}。已是最新版本。"
     },
     "modelSelector": {
+      "filterHint": "输入以筛选模型",
+      "empty": "未找到模型",
+      "select": "选择",
       "fetchModels": "获取模型",
       "fetchedCount": "已获取 {count} 个模型",
-      "fetchFirst": "填写 API URL 和 API Key 后可获取模型",
-      "fetchProviderFirst": "填写当前 Provider 的 API URL 和 API Key 后可获取模型",
-      "fetchCurrentProviderModelsFirst": "请先获取当前 Provider 的模型列表",
-      "configureProviderFirst": "请先配置一个 Provider",
-      "empty": "暂无可选模型",
-      "filterHint": "输入内容即可自动过滤筛选模型",
-      "select": "选择",
-      "contextWindow": "上下文 {count}"
+      "fetchFirst": "点击获取模型以加载",
+      "configureProviderFirst": "请先配置提供商",
+      "fetchProviderFirst": "点击获取以加载提供商模型",
+      "fetchCurrentProviderModelsFirst": "点击获取以加载此提供商的模型"
     }
   },
   "SettingsPages": {
@@ -557,6 +649,32 @@
     "title": "提交代码",
     "invalidFolderId": "无效的 folderId",
     "loadingRepo": "正在加载仓库..."
+  },
+  "MergePage": {
+    "title": "解决冲突",
+    "invalidFolderId": "无效的 folderId",
+    "loadingRepo": "正在加载仓库...",
+    "localVersion": "本地（我们的）",
+    "result": "结果",
+    "remoteVersion": "远程（他们的）",
+    "acceptLocal": "采用本地",
+    "acceptRemote": "采用远程",
+    "markResolved": "标记已解决",
+    "abortMerge": "中止",
+    "completeMerge": "完成合并",
+    "unresolvedConflicts": "文件中仍有未解决的冲突标记",
+    "fileResolved": "文件已解决",
+    "allResolved": "所有冲突已解决",
+    "conflictFiles": "冲突文件",
+    "loadingFile": "正在加载文件...",
+    "preparingMerge": "正在准备合并...",
+    "selectFile": "选择一个文件进行解决",
+    "noConflicts": "无冲突文件",
+    "skipFile": "跳过",
+    "abortSuccess": "操作已中止",
+    "applyAllNonConflicting": "应用所有非冲突变更",
+    "applyLeftNonConflicting": "应用本地",
+    "applyRightNonConflicting": "应用远程"
   },
   "Folder": {
     "common": {
@@ -575,7 +693,8 @@
       "create": "创建",
       "createAndSwitch": "创建并切换",
       "openFile": "打开文件",
-      "viewDiff": "查看差异"
+      "viewDiff": "查看差异",
+      "push": "推送..."
     },
     "modes": {
       "conversation": "会话模式",
@@ -616,7 +735,10 @@
       "reloaded": "当前会话已重新加载",
       "reload": "重新加载",
       "newConversation": "新建会话",
-      "closeConversation": "关闭会话"
+      "closeConversation": "关闭会话",
+      "forkSession": "分叉会话",
+      "forkSessionSuccess": "会话分叉成功",
+      "forkSessionFailed": "会话分叉失败：{error}"
     },
     "conversationCard": {
       "untitledConversation": "未命名会话",
@@ -633,11 +755,15 @@
       "save": "保存"
     },
     "search": {
-      "dialogTitle": "搜索会话",
+      "dialogTitle": "搜索",
+      "tabConversations": "会话",
+      "tabFiles": "文件",
       "placeholder": "搜索会话...",
+      "filePlaceholder": "搜索文件或目录...",
       "allAgents": "全部",
       "searching": "搜索中...",
       "typeToSearch": "输入关键词搜索会话",
+      "typeToSearchFiles": "输入关键词搜索文件或目录",
       "noResults": "未找到结果。",
       "untitledConversation": "未命名会话"
     },
@@ -715,7 +841,9 @@
       "closeFileTab": "关闭文件标签",
       "close": "关闭",
       "closeOthers": "关闭其它",
-      "closeAll": "关闭所有"
+      "closeAll": "关闭所有",
+      "preview": "预览",
+      "editSource": "编辑源码"
     },
     "terminal": {
       "rename": "重命名",
@@ -757,11 +885,15 @@
       "next": "下一个",
       "jumpToLine": "跳转到第 {line} 行",
       "noParsedDiffSections": "未解析到差异区块",
-      "loadingEditor": "编辑器加载中..."
+      "loadingEditor": "编辑器加载中...",
+      "imageZoomIn": "放大",
+      "imageZoomOut": "缩小",
+      "imageZoomReset": "重置缩放"
     },
     "branchDropdown": {
       "toasts": {
         "commitCodeCompleted": "提交代码完成",
+        "pushCodeCompleted": "推送代码完成",
         "committedFiles": "已提交 {count} 个文件",
         "taskCompleted": "{label} 完成",
         "taskFailed": "{label} 失败",
@@ -770,6 +902,7 @@
         "allFilesUpToDate": "所有文件均为最新版本",
         "updatedFiles": "已更新 {count} 个文件",
         "openCommitWindowFailed": "打开提交窗口失败",
+        "openPushWindowFailed": "打开推送窗口失败",
         "upstreamSet": "已设置远程跟踪分支",
         "upstreamSetAndPushed": "已设置远程跟踪分支并推送 {count} 个提交",
         "noCommitsToPush": "没有可推送的提交",
@@ -795,7 +928,9 @@
         "deleteTitle": "删除分支",
         "mergeDescription": "确定将 {branchName} 合并到当前分支 {currentBranch} 吗？",
         "rebaseDescription": "确定将当前分支 {currentBranch} 变基到 {branchName} 吗？",
-        "deleteDescription": "确定删除分支 {branchName} 吗？此操作不可恢复。"
+        "deleteDescription": "确定删除分支 {branchName} 吗？此操作不可恢复。",
+        "forceDeleteTitle": "强制删除分支",
+        "forceDeleteDescription": "分支 {branchName} 尚未完全合并，确定要强制删除吗？此操作不可恢复。"
       },
       "current": "当前",
       "switchToBranch": "切换到此分支",
@@ -810,8 +945,9 @@
       "pushCode": "推送...",
       "newBranch": "新建分支...",
       "newWorktree": "新建工作树...",
-      "stashChanges": "贮藏更改",
+      "stashChanges": "贮藏更改...",
       "stashPop": "取消贮藏...",
+      "manageRemotes": "管理远程...",
       "localBranches": "本地分支 ({count})",
       "noLocalBranches": "无本地分支",
       "remoteBranches": "远程分支 ({count})",
@@ -825,7 +961,47 @@
         "newWorktreeDescription": "从当前分支 {branch} 创建新的工作树",
         "branchNameLabel": "分支名称",
         "worktreePathLabel": "工作树路径",
-        "worktreePathPlaceholder": "工作树路径"
+        "worktreePathPlaceholder": "工作树路径",
+        "manageRemotesTitle": "管理远程",
+        "manageRemotesEmpty": "未配置远程仓库",
+        "remoteNamePlaceholder": "远程名称",
+        "remoteUrlPlaceholder": "远程 URL",
+        "addRemote": "添加",
+        "savingRemotes": "保存中..."
+      },
+      "conflict": {
+        "title": "合并冲突",
+        "description": "以下文件存在冲突，需要手动解决：",
+        "abort": "中止合并",
+        "openMergeTool": "打开合并工具",
+        "completeMerge": "完成合并",
+        "abortSuccess": "合并已中止",
+        "completeSuccess": "合并完成"
+      },
+      "stashDialog": {
+        "title": "贮藏更改",
+        "description": "将当前更改保存到贮藏区",
+        "messageLabel": "消息",
+        "messagePlaceholder": "贮藏消息（可选）",
+        "keepIndex": "保留暂存区（已暂存的更改保持不变）",
+        "cancel": "取消",
+        "stash": "贮藏",
+        "success": "更改已贮藏",
+        "error": "贮藏更改失败"
+      },
+      "unstashDialog": {
+        "title": "取消贮藏",
+        "noStashes": "没有贮藏记录",
+        "selectFile": "选择文件查看差异",
+        "viewDiff": "查看差异",
+        "original": "原始",
+        "modified": "修改后",
+        "apply": "应用",
+        "drop": "删除",
+        "applySuccess": "贮藏已应用",
+        "dropSuccess": "贮藏已删除",
+        "confirmApply": "将贮藏 {ref} 应用到工作目录？",
+        "cancel": "取消"
       }
     },
     "commitDialog": {
@@ -837,13 +1013,17 @@
         "fileDeleted": "文件已删除",
         "deleteFailed": "删除失败",
         "fileRolledBack": "文件已回滚",
-        "rollbackFailed": "回滚失败"
+        "rollbackFailed": "回滚失败",
+        "dirRolledBack": "目录已回滚",
+        "dirDeleted": "目录已删除"
       },
       "confirm": {
         "deleteTitle": "确认删除",
         "deleteDescription": "确定要删除文件「{file}」吗？此操作不可恢复。",
         "rollbackTitle": "确认回滚",
-        "rollbackDescription": "确定要回滚文件「{file}」到 HEAD 版本吗？未保存的修改将丢失。"
+        "rollbackDescription": "确定要回滚文件「{file}」到 HEAD 版本吗？未保存的修改将丢失。",
+        "rollbackDirDescription": "确定要回滚目录「{dir}」到 HEAD 版本吗？未保存的修改将丢失。",
+        "deleteDirDescription": "确定要删除目录「{dir}」吗？此操作不可恢复。"
       },
       "actions": {
         "select": "选择",
@@ -873,6 +1053,24 @@
       "clickFileToDiff": "点击文件名查看差异",
       "loadingDiff": "加载差异..."
     },
+    "pushWindow": {
+      "title": "推送代码",
+      "noUnpushedCommits": "没有未推送的提交",
+      "newBranchNoPushedCommits": "新分支 — 推送以创建远程跟踪分支",
+      "unpushed": "未推送",
+      "selectFileToViewDiff": "选择文件查看差异",
+      "before": "修改前",
+      "after": "修改后",
+      "push": "推送",
+      "toasts": {
+        "pushSuccess": "推送成功",
+        "pushFailed": "推送失败",
+        "upstreamSet": "已设置远程跟踪分支",
+        "upstreamSetAndPushed": "已设置远程跟踪分支并推送 {count} 个提交",
+        "noCommitsToPush": "没有可推送的提交",
+        "pushedCommits": "已推送 {count} 个提交"
+      }
+    },
     "gitLogTab": {
       "filesTitle": "文件",
       "expandAllFiles": "展开全部文件",
@@ -882,6 +1080,7 @@
       "noCommitsFound": "未找到提交记录",
       "hash": "Hash",
       "copyHash": "复制哈希",
+      "copyMessage": "复制提交消息",
       "author": "作者",
       "noFileChangeDetails": "暂无文件变更详情。",
       "branchesTitle": "分支",
@@ -905,7 +1104,8 @@
       "toasts": {
         "createdAndSwitchedNewBranch": "已创建并切换到新分支",
         "newBranchFromCommit": "{name}（来自 {shortHash}）",
-        "createBranchFailed": "新建分支失败"
+        "createBranchFailed": "新建分支失败",
+        "openPushWindowFailed": "打开推送窗口失败"
       },
       "branchSelector": {
         "selectBranchPlaceholder": "选择分支...",
@@ -932,7 +1132,8 @@
       "actions": {
         "commitCode": "提交代码",
         "rollback": "回滚",
-        "addToVcs": "添加到 VCS"
+        "addToVcs": "添加到 VCS",
+        "delete": "删除"
       },
       "toasts": {
         "noAddableFilesInDir": "该目录下没有可添加到 VCS 的变更文件",
@@ -943,11 +1144,16 @@
         "rolledBack": "已回滚 {name}",
         "rollbackFailed": "回滚失败",
         "addedFilesToVcs": "已添加 {count} 个文件到 VCS",
-        "rolledBackFiles": "已回滚 {count} 个文件"
+        "rolledBackFiles": "已回滚 {count} 个文件",
+        "deleted": "已删除 {name}",
+        "deleteFailed": "删除失败",
+        "deletedFiles": "已删除 {count} 个文件",
+        "noDeletableFilesInDir": "该目录下没有可删除的变更文件"
       },
       "directoryDialog": {
         "descriptionAdd": "选择目录 {path} 下要添加到 VCS 的文件。",
         "descriptionRollback": "选择目录 {path} 下要回滚的文件。",
+        "descriptionDelete": "选择目录 {path} 下要删除的文件。此操作不可撤销。",
         "descriptionFallback": "选择要操作的文件。",
         "selectionCount": "已选择 {selected} / {total} 个文件",
         "selectAll": "全选",
@@ -959,6 +1165,13 @@
         "title": "确认回滚",
         "descriptionWithTarget": "确定回滚{kind}「{name}」的本地修改吗？",
         "descriptionFallback": "确定回滚本地修改吗？",
+        "kindDirectory": "目录",
+        "kindFile": "文件"
+      },
+      "deleteConfirm": {
+        "title": "确认删除",
+        "descriptionWithTarget": "确定删除{kind}「{name}」吗？此操作不可撤销。",
+        "descriptionFallback": "确定删除吗？此操作不可撤销。",
         "kindDirectory": "目录",
         "kindFile": "文件"
       }
@@ -978,6 +1191,9 @@
       "attachToCurrentSession": "附加到当前会话",
       "compareWithBranch": "与分支比较...",
       "reloadFromDisk": "从磁盘重新加载",
+      "new": "新建",
+      "newFile": "文件",
+      "newDirectory": "目录",
       "openIn": "打开于",
       "openInTerminal": "在终端打开",
       "actions": {
@@ -1007,7 +1223,15 @@
         "rolledBackFiles": "已回滚 {count} 个文件",
         "savedAsCopy": "已另存为副本",
         "saveCopyFailed": "另存为副本失败",
-        "watchStartFailed": "文件监听启动失败"
+        "watchStartFailed": "文件监听启动失败",
+        "createFailed": "创建失败"
+      },
+      "createDialog": {
+        "newFile": "新建文件",
+        "newDirectory": "新建目录",
+        "description": "输入新{kind}的名称。",
+        "placeholderFile": "文件名.ext",
+        "placeholderDirectory": "文件夹名"
       },
       "renameDialog": {
         "renameDirectory": "重命名目录",
@@ -1147,12 +1371,11 @@
       },
       "messageThread": {
         "emptyTitle": "暂无消息",
-        "emptyDescription": "开始一个会话后，消息会显示在这里",
-        "scrollToBottom": "滚动到最后"
+        "emptyDescription": "开始一个会话后，消息会显示在这里"
       },
       "chatInput": {
         "connecting": "连接中...",
-        "agentResponding": "Agent 正在响应...",
+        "agentResponding": "{agent} 正在响应...",
         "sendMessage": "发送消息..."
       },
       "messageInput": {
@@ -1163,7 +1386,8 @@
         "loadingSettings": "正在加载设置...",
         "loadingMode": "正在加载模式...",
         "cancel": "取消",
-        "send": "发送"
+        "send": "发送",
+        "forkAndSend": "分叉发送"
       },
       "messageQueue": {
         "addToQueue": "加入队列",
@@ -1184,7 +1408,7 @@
         "openAgentsSettings": "打开 Agents 设置"
       },
       "agentPlanOverlay": {
-        "title": "Agent 计划",
+        "title": "计划任务",
         "collapsePlanAria": "折叠计划",
         "collapsedSummary": "计划 {completed}/{total}",
         "status": {
@@ -1234,11 +1458,13 @@
         "attachedResources": "附加资源",
         "loading": "加载中...",
         "error": "错误：{message}",
-        "emptyConversation": "当前会话暂无消息。"
+        "emptyConversation": "当前会话暂无消息。",
+        "systemMessage": "系统消息"
       },
       "liveTurnStats": {
         "thinking": "思考中...",
         "streaming": "生成中",
+        "elapsedHours": "{value} 小时",
         "elapsedMinutes": "{value} 分钟",
         "elapsedSeconds": "{value} 秒",
         "toolUseCount": "{count} 个工具 {count, plural, one {use} other {uses}}"
@@ -1266,10 +1492,6 @@
         "showingTailOutput": "为保证性能，流式输出时仅显示尾部内容。",
         "result": "结果",
         "unknown": "未知",
-        "userText": {
-          "expand": "展开全文",
-          "collapse": "收起"
-        },
         "replaceAll": "全部替换",
         "filesCount": "文件：{count}",
         "update": "更新",
@@ -1345,6 +1567,10 @@
           "todosProgress": "待办（{done}/{total}）",
           "skillWithName": "Skill：{name}",
           "genericWithContext": "{tool}：{context}"
+        },
+        "userText": {
+          "expand": "展开",
+          "collapse": "收起"
         }
       }
     },

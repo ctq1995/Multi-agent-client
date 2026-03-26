@@ -219,23 +219,8 @@ export const AGENT_DISPLAY_ORDER: AgentType[] = [
   "codex",
   "claude_code",
   "open_code",
-  "auggie",
-  "autohand",
-  "cline",
-  "codebuddy_code",
-  "corust_agent",
   "gemini",
-  "github_copilot",
-  "goose",
-  "junie",
-  "qoder",
-  "qwen_code",
-  "factory_droid",
-  "kimi",
-  "minion_code",
-  "mistral_vibe",
   "open_claw",
-  "stakpak",
 ]
 
 const AGENT_DISPLAY_ORDER_INDEX = new Map(
@@ -250,10 +235,10 @@ export function compareAgentType(a: AgentType, b: AgentType): number {
 
 export const AGENT_LABELS: Record<AgentType, string> = {
   claude_code: "Claude Code",
-  codex: "Codex",
+  codex: "Codex CLI",
   open_code: "OpenCode",
   auggie: "Auggie",
-  autohand: "Autohand Code",
+  autohand: "Autohand",
   cline: "Cline",
   codebuddy_code: "Codebuddy Code",
   corust_agent: "Corust Agent",
@@ -261,10 +246,10 @@ export const AGENT_LABELS: Record<AgentType, string> = {
   github_copilot: "GitHub Copilot",
   goose: "goose",
   junie: "Junie",
-  qoder: "Qoder",
+  qoder: "Qoder CLI",
   qwen_code: "Qwen Code",
   factory_droid: "Factory Droid",
-  kimi: "Kimi",
+  kimi: "Kimi CLI",
   minion_code: "Minion Code",
   mistral_vibe: "Mistral Vibe",
   open_claw: "OpenClaw",
@@ -281,17 +266,17 @@ export const AGENT_COLORS: Record<AgentType, string> = {
   codebuddy_code: "bg-violet-500",
   corust_agent: "bg-amber-500",
   gemini: "bg-blue-400",
-  github_copilot: "bg-gray-700",
+  github_copilot: "bg-gray-600",
   goose: "bg-lime-500",
   junie: "bg-pink-500",
   qoder: "bg-teal-500",
-  qwen_code: "bg-indigo-500",
+  qwen_code: "bg-purple-600",
   factory_droid: "bg-yellow-600",
-  kimi: "bg-cyan-500",
+  kimi: "bg-sky-500",
   minion_code: "bg-fuchsia-500",
-  mistral_vibe: "bg-red-500",
+  mistral_vibe: "bg-orange-600",
   open_claw: "bg-emerald-600",
-  stakpak: "bg-slate-600",
+  stakpak: "bg-slate-500",
 }
 
 // ACP connection status (matches Rust ConnectionStatus)
@@ -400,14 +385,6 @@ export interface SessionUsageUpdateInfo {
   size: number
 }
 
-export interface RemoteModelInfo {
-  id: string
-  name: string
-  owned_by?: string | null
-  context_window?: number | null
-  description?: string | null
-}
-
 // ACP events pushed from Rust backend (discriminated by "type" field)
 export type AcpEvent =
   | { type: "content_delta"; connection_id: string; text: string }
@@ -472,6 +449,11 @@ export type AcpEvent =
       prompt_capabilities: PromptCapabilitiesInfo
     }
   | {
+      type: "fork_supported"
+      connection_id: string
+      supported: boolean
+    }
+  | {
       type: "mode_changed"
       connection_id: string
       mode_id: string
@@ -526,6 +508,14 @@ export interface AcpAgentInfo {
   codex_config_toml: string | null
 }
 
+// Lightweight agent status returned by acp_get_agent_status
+export interface AcpAgentStatus {
+  agent_type: AgentType
+  available: boolean
+  enabled: boolean
+  installed_version: string | null
+}
+
 export type AgentSkillScope = "global" | "project"
 export type AgentSkillLayout = "markdown_file" | "skill_directory"
 
@@ -576,6 +566,45 @@ export type LanguageMode = "system" | "manual"
 export interface SystemLanguageSettings {
   mode: LanguageMode
   language: AppLocale
+}
+
+// --- Version Control ---
+
+export interface GitCredentials {
+  username: string
+  password: string
+}
+
+export interface GitDetectResult {
+  installed: boolean
+  version: string | null
+  path: string | null
+}
+
+export interface GitSettings {
+  custom_path: string | null
+}
+
+export interface GitHubAccount {
+  id: string
+  server_url: string
+  username: string
+  scopes: string[]
+  avatar_url: string | null
+  is_default: boolean
+  created_at: string
+}
+
+export interface GitHubAccountsSettings {
+  accounts: GitHubAccount[]
+}
+
+export interface GitHubTokenValidation {
+  success: boolean
+  username: string | null
+  scopes: string[]
+  avatar_url: string | null
+  message: string | null
 }
 
 export type McpAppType = "claude_code" | "codex" | "open_code"
@@ -674,8 +703,16 @@ export interface GitBranchList {
   worktree_branches: string[]
 }
 
+export interface GitConflictInfo {
+  has_conflicts: boolean
+  conflicted_files: string[]
+  operation: string
+  upstream_commit?: string | null
+}
+
 export interface GitPullResult {
   updated_files: number
+  conflict?: GitConflictInfo | null
 }
 
 export interface GitPushResult {
@@ -683,12 +720,44 @@ export interface GitPushResult {
   upstream_set: boolean
 }
 
+export interface GitPushInfo {
+  branch: string
+  remotes: GitRemote[]
+  tracking_remote: string | null
+}
+
 export interface GitMergeResult {
   merged_commits: number
+  conflict?: GitConflictInfo | null
+}
+
+export interface GitRebaseResult {
+  message: string
+  conflict?: GitConflictInfo | null
+}
+
+export interface GitConflictFileVersions {
+  base: string
+  ours: string
+  theirs: string
+  merged: string
 }
 
 export interface GitCommitResult {
   committed_files: number
+}
+
+export interface GitRemote {
+  name: string
+  url: string
+}
+
+export interface GitStashEntry {
+  index: number
+  message: string
+  branch: string
+  date: string
+  ref_name: string
 }
 
 export type FileTreeNode =
@@ -698,7 +767,6 @@ export type FileTreeNode =
 export interface FilePreviewContent {
   path: string
   content: string
-  truncated: boolean
 }
 
 export interface FileEditContent {
@@ -707,7 +775,6 @@ export interface FileEditContent {
   etag: string
   mtime_ms: number | null
   readonly: boolean
-  truncated: boolean
   line_ending: "lf" | "crlf" | "mixed" | "none"
 }
 
@@ -725,6 +792,11 @@ export interface FileTreeChangedEvent {
   kind: "create" | "modify" | "remove" | "access" | "any" | "other"
   full_reload: boolean
   refresh_git_status: boolean
+}
+
+export interface GitLogResult {
+  entries: GitLogEntry[]
+  has_upstream: boolean
 }
 
 export interface GitLogEntry {
@@ -796,4 +868,11 @@ export interface PreflightResult {
   agent_name: string
   passed: boolean
   checks: CheckItem[]
+}
+
+export interface RemoteModelInfo {
+  id: string
+  name: string
+  owned_by?: string
+  context_window?: number
 }

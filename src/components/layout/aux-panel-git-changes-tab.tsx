@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react"
-import { listen, type UnlistenFn } from "@tauri-apps/api/event"
+import { subscribe } from "@/lib/platform"
 import { ChevronsDownUp, ChevronsUpDown } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
@@ -38,6 +38,7 @@ import { useAuxPanelContext } from "@/contexts/aux-panel-context"
 import { useFolderContext } from "@/contexts/folder-context"
 import { useWorkspaceContext } from "@/contexts/workspace-context"
 import {
+  deleteFileTreeEntry,
   gitDiff,
   gitAddFiles,
   gitRollbackFile,
@@ -45,8 +46,7 @@ import {
   openCommitWindow,
   startFileTreeWatch,
   stopFileTreeWatch,
-} from "@/lib/tauri"
-import { disposeTauriListener } from "@/lib/tauri-listener"
+} from "@/lib/api"
 import type { FileTreeChangedEvent, GitStatusEntry } from "@/lib/types"
 import {
   AlertDialog,
@@ -80,7 +80,11 @@ interface GitActionTarget {
   name: string
 }
 
-type DirectoryGitAction = "add" | "rollback"
+type DirectoryGitAction =
+  | "add"
+  | "rollback"
+  | "delete-tracked"
+  | "delete-untracked"
 
 interface DirectoryGitCandidateEntry {
   path: string
@@ -115,6 +119,26 @@ const TRACKED_ROOT_PATH = "__working_tree_tracked_root__"
 const UNTRACKED_ROOT_PATH = "__working_tree_untracked_root__"
 const UNTRACKED_STATUS = "??"
 
+type GitFileState =
+  | "untracked"
+  | "modified"
+  | "staged"
+  | "conflicted"
+  | "deleted"
+  | "renamed"
+
+function classifyGitFileState(status: string): GitFileState | null {
+  const code = status.trim().toUpperCase()
+  if (!code) return null
+  if (code === UNTRACKED_STATUS) return "untracked"
+  if (code.includes("U")) return "conflicted"
+  if (code.includes("R") || code.includes("C")) return "renamed"
+  if (code.includes("D")) return "deleted"
+  if (code.includes("M") || code.includes("T")) return "modified"
+  if (code.includes("A")) return "staged"
+  return null
+}
+
 function normalizePathSegments(path: string): string[] {
   const normalized = path.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "")
   if (!normalized) return []
@@ -122,7 +146,7 @@ function normalizePathSegments(path: string): string[] {
 }
 
 function normalizeGitStatusPath(path: string): string {
-  const normalized = path.trim()
+  const normalized = path.trim().replace(/\/+$/, "")
   const renameSeparator = " -> "
   const renameIndex = normalized.lastIndexOf(renameSeparator)
   if (renameIndex < 0) return normalized
@@ -168,6 +192,10 @@ function scopeGitStatusEntriesForDirectory(
   )
 }
 
+function isDeleteAction(action: DirectoryGitAction): boolean {
+  return action === "delete-tracked" || action === "delete-untracked"
+}
+
 function filterDirectoryGitCandidates(
   entries: DirectoryGitCandidateEntry[],
   action: DirectoryGitAction
@@ -176,7 +204,24 @@ function filterDirectoryGitCandidates(
     return entries.filter((entry) => entry.status.trim().length > 0)
   }
 
-  return entries.filter((entry) => entry.status.trim().length > 0)
+  if (action === "delete-tracked") {
+    return entries.filter((entry) => {
+      const fileState = classifyGitFileState(entry.status)
+      return fileState !== null && fileState !== "untracked"
+    })
+  }
+
+  if (action === "delete-untracked") {
+    return entries.filter((entry) => {
+      const fileState = classifyGitFileState(entry.status)
+      return fileState === "untracked"
+    })
+  }
+
+  return entries.filter((entry) => {
+    const fileState = classifyGitFileState(entry.status)
+    return fileState !== "untracked"
+  })
 }
 
 function normalizeDiffPath(rawPath: string): string | null {
@@ -423,6 +468,8 @@ export function GitChangesTab() {
     null
   )
   const [rollingBack, setRollingBack] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<GitActionTarget | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [directoryGitActionType, setDirectoryGitActionType] =
     useState<DirectoryGitAction | null>(null)
   const [directoryGitActionTarget, setDirectoryGitActionTarget] =
@@ -450,11 +497,6 @@ export function GitChangesTab() {
     const parts = path.split(/[\\/]/).filter(Boolean)
     return (parts[parts.length - 1] ?? path) || t("workspace")
   }, [folder?.path, t])
-
-  const rootActionTarget = useMemo<GitActionTarget | null>(() => {
-    if (!folder?.path) return null
-    return { kind: "dir", path: "", name: folderName }
-  }, [folder?.path, folderName])
 
   const trackedChanges = useMemo(
     () => changes.filter((change) => !isUntrackedStatus(change.status)),
@@ -540,7 +582,7 @@ export function GitChangesTab() {
       setError(null)
 
       try {
-        const statusEntries = await gitStatus(folder.path)
+        const statusEntries = await gitStatus(folder.path, true)
         const hasTrackedEntries = statusEntries.some(
           (entry) => !isUntrackedStatus(entry.status)
         )
@@ -568,7 +610,7 @@ export function GitChangesTab() {
     const rootPath = folder?.path
     if (!rootPath || !isChangesTabActive) return
 
-    let unlisten: UnlistenFn | null = null
+    let unlisten: (() => void) | null = null
     const normalizedRootPath = normalizeComparePath(rootPath)
 
     const scheduleRefresh = () => {
@@ -588,16 +630,15 @@ export function GitChangesTab() {
       }
 
       try {
-        unlisten = await listen<FileTreeChangedEvent>(
+        unlisten = await subscribe<FileTreeChangedEvent>(
           "folder://file-tree-changed",
-          (event) => {
+          (payload) => {
             if (
-              normalizeComparePath(event.payload.root_path) !==
-              normalizedRootPath
+              normalizeComparePath(payload.root_path) !== normalizedRootPath
             ) {
               return
             }
-            if (!shouldRefreshFromEvent(event.payload)) return
+            if (!shouldRefreshFromEvent(payload)) return
             scheduleRefresh()
           }
         )
@@ -613,7 +654,7 @@ export function GitChangesTab() {
         clearTimeout(refreshTimerRef.current)
         refreshTimerRef.current = null
       }
-      disposeTauriListener(unlisten, "AuxPanelGitChanges.fileTreeChanged")
+      unlisten?.()
       void stopFileTreeWatch(rootPath)
     }
   }, [fetchChanges, folder?.path, isChangesTabActive])
@@ -696,7 +737,7 @@ export function GitChangesTab() {
       setDirectoryGitLoading(true)
 
       try {
-        const statusEntries = await gitStatus(folder.path)
+        const statusEntries = await gitStatus(folder.path, true)
         const scopedEntries = scopeGitStatusEntriesForDirectory(
           statusEntries,
           target.path
@@ -708,7 +749,9 @@ export function GitChangesTab() {
           toast.info(
             action === "add"
               ? t("toasts.noAddableFilesInDir")
-              : t("toasts.noRollbackFilesInDir")
+              : isDeleteAction(action)
+                ? t("toasts.noDeletableFilesInDir")
+                : t("toasts.noRollbackFilesInDir")
           )
           return
         }
@@ -775,6 +818,37 @@ export function GitChangesTab() {
     }
   }, [fetchChanges, folder?.path, rollbackTarget, t])
 
+  const handleRequestDelete = useCallback(
+    (target: GitActionTarget, scope: "tracked" | "untracked") => {
+      if (target.kind === "dir") {
+        void openDirectoryGitActionDialog(
+          scope === "tracked" ? "delete-tracked" : "delete-untracked",
+          target
+        )
+        return
+      }
+      setDeleteTarget(target)
+    },
+    [openDirectoryGitActionDialog]
+  )
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!folder?.path || !deleteTarget) return
+
+    setDeleting(true)
+    try {
+      await deleteFileTreeEntry(folder.path, deleteTarget.path)
+      toast.success(t("toasts.deleted", { name: deleteTarget.name }))
+      setDeleteTarget(null)
+      await fetchChanges({ inline: true })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      toast.error(t("toasts.deleteFailed"), { description: message })
+    } finally {
+      setDeleting(false)
+    }
+  }, [deleteTarget, fetchChanges, folder?.path, t])
+
   const directoryGitAllFilePaths = useMemo(
     () => directoryGitCandidates.map((entry) => entry.path),
     [directoryGitCandidates]
@@ -830,6 +904,15 @@ export function GitChangesTab() {
             count: selectedPaths.length,
           })
         )
+      } else if (isDeleteAction(directoryGitActionType)) {
+        for (const filePath of selectedPaths) {
+          await deleteFileTreeEntry(folder.path, filePath)
+        }
+        toast.success(
+          t("toasts.deletedFiles", {
+            count: selectedPaths.length,
+          })
+        )
       } else {
         for (const filePath of selectedPaths) {
           await gitRollbackFile(folder.path, filePath)
@@ -849,7 +932,9 @@ export function GitChangesTab() {
       toast.error(
         directoryGitActionType === "add"
           ? t("toasts.addToVcsFailed")
-          : t("toasts.rollbackFailed"),
+          : isDeleteAction(directoryGitActionType)
+            ? t("toasts.deleteFailed")
+            : t("toasts.rollbackFailed"),
         {
           description: message,
         }
@@ -882,7 +967,7 @@ export function GitChangesTab() {
 
         return (
           <ContextMenu key={`tracked:${node.path}`}>
-            <ContextMenuTrigger asChild>
+            <ContextMenuTrigger>
               <FileTreeFolder
                 path={node.path}
                 name={node.name}
@@ -923,6 +1008,14 @@ export function GitChangesTab() {
               >
                 {t("actions.addToVcs")}
               </ContextMenuItem>
+              <ContextMenuItem
+                onSelect={() => {
+                  handleRequestDelete(target, "tracked")
+                }}
+                variant="destructive"
+              >
+                {t("actions.delete")}
+              </ContextMenuItem>
             </ContextMenuContent>
           </ContextMenu>
         )
@@ -938,7 +1031,7 @@ export function GitChangesTab() {
 
       return (
         <ContextMenu key={`tracked:${file.path}`}>
-          <ContextMenuTrigger asChild>
+          <ContextMenuTrigger>
             <FileTreeFile
               className="w-full min-w-0 cursor-pointer"
               name={node.name}
@@ -1003,6 +1096,14 @@ export function GitChangesTab() {
             >
               {t("actions.addToVcs")}
             </ContextMenuItem>
+            <ContextMenuItem
+              onSelect={() => {
+                handleRequestDelete(target, "tracked")
+              }}
+              variant="destructive"
+            >
+              {t("actions.delete")}
+            </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
       )
@@ -1010,6 +1111,7 @@ export function GitChangesTab() {
     [
       handleOpenCommitWindow,
       handleAddToVcs,
+      handleRequestDelete,
       handleRequestRollback,
       openFilePreview,
       openWorkingTreeDiff,
@@ -1029,7 +1131,7 @@ export function GitChangesTab() {
 
         return (
           <ContextMenu key={`untracked:${node.path}`}>
-            <ContextMenuTrigger asChild>
+            <ContextMenuTrigger>
               <FileTreeFolder
                 path={node.path}
                 name={node.name}
@@ -1070,6 +1172,14 @@ export function GitChangesTab() {
               >
                 {t("actions.addToVcs")}
               </ContextMenuItem>
+              <ContextMenuItem
+                onSelect={() => {
+                  handleRequestDelete(target, "untracked")
+                }}
+                variant="destructive"
+              >
+                {t("actions.delete")}
+              </ContextMenuItem>
             </ContextMenuContent>
           </ContextMenu>
         )
@@ -1084,7 +1194,7 @@ export function GitChangesTab() {
 
       return (
         <ContextMenu key={`untracked:${file.path}`}>
-          <ContextMenuTrigger asChild>
+          <ContextMenuTrigger>
             <FileTreeFile
               className="w-full min-w-0 cursor-pointer"
               name={node.name}
@@ -1140,6 +1250,14 @@ export function GitChangesTab() {
             >
               {t("actions.addToVcs")}
             </ContextMenuItem>
+            <ContextMenuItem
+              onSelect={() => {
+                handleRequestDelete(target, "untracked")
+              }}
+              variant="destructive"
+            >
+              {t("actions.delete")}
+            </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
       )
@@ -1147,6 +1265,7 @@ export function GitChangesTab() {
     [
       handleOpenCommitWindow,
       handleAddToVcs,
+      handleRequestDelete,
       handleRequestRollback,
       openFilePreview,
       openWorkingTreeDiff,
@@ -1178,8 +1297,10 @@ export function GitChangesTab() {
     <>
       <div className="h-full min-h-0 overflow-y-auto">
         {trackedChanges.length === 0 && untrackedChanges.length === 0 ? (
-          <div className="px-2 py-2 text-xs text-muted-foreground">
-            {t("noChanges")}
+          <div className="flex items-center justify-center h-full p-4">
+            <p className="text-xs text-muted-foreground text-center">
+              {t("noChanges")}
+            </p>
           </div>
         ) : (
           <div className="space-y-2 pb-2">
@@ -1219,7 +1340,7 @@ export function GitChangesTab() {
                   onExpandedChange={setExpandedTrackedPaths}
                 >
                   <ContextMenu>
-                    <ContextMenuTrigger asChild>
+                    <ContextMenuTrigger>
                       <FileTreeFolder
                         path={TRACKED_ROOT_PATH}
                         name={folderName}
@@ -1240,7 +1361,7 @@ export function GitChangesTab() {
                       </ContextMenuItem>
                       <ContextMenuItem
                         onSelect={() => {
-                          void openWorkingTreeDiff(undefined, {
+                          void openWorkingTreeDiff(".", {
                             mode: "overview",
                           })
                         }}
@@ -1249,22 +1370,41 @@ export function GitChangesTab() {
                       </ContextMenuItem>
                       <ContextMenuItem
                         onSelect={() => {
-                          if (!rootActionTarget) return
-                          handleRequestRollback(rootActionTarget)
+                          handleRequestRollback({
+                            kind: "dir",
+                            path: "",
+                            name: folderName,
+                          })
                         }}
                         variant="destructive"
-                        disabled={!rootActionTarget}
                       >
                         {t("actions.rollback")}
                       </ContextMenuItem>
                       <ContextMenuItem
                         onSelect={() => {
-                          if (!rootActionTarget) return
-                          void handleAddToVcs(rootActionTarget)
+                          void handleAddToVcs({
+                            kind: "dir",
+                            path: "",
+                            name: folderName,
+                          })
                         }}
-                        disabled={!rootActionTarget}
                       >
                         {t("actions.addToVcs")}
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onSelect={() => {
+                          handleRequestDelete(
+                            {
+                              kind: "dir",
+                              path: "",
+                              name: folderName,
+                            },
+                            "tracked"
+                          )
+                        }}
+                        variant="destructive"
+                      >
+                        {t("actions.delete")}
                       </ContextMenuItem>
                     </ContextMenuContent>
                   </ContextMenu>
@@ -1308,7 +1448,7 @@ export function GitChangesTab() {
                   onExpandedChange={setExpandedUntrackedPaths}
                 >
                   <ContextMenu>
-                    <ContextMenuTrigger asChild>
+                    <ContextMenuTrigger>
                       <FileTreeFolder
                         path={UNTRACKED_ROOT_PATH}
                         name={folderName}
@@ -1329,7 +1469,7 @@ export function GitChangesTab() {
                       </ContextMenuItem>
                       <ContextMenuItem
                         onSelect={() => {
-                          void openWorkingTreeDiff(undefined, {
+                          void openWorkingTreeDiff(".", {
                             mode: "overview",
                           })
                         }}
@@ -1338,12 +1478,41 @@ export function GitChangesTab() {
                       </ContextMenuItem>
                       <ContextMenuItem
                         onSelect={() => {
-                          if (!rootActionTarget) return
-                          void handleAddToVcs(rootActionTarget)
+                          handleRequestRollback({
+                            kind: "dir",
+                            path: "",
+                            name: folderName,
+                          })
                         }}
-                        disabled={!rootActionTarget}
+                        variant="destructive"
+                      >
+                        {t("actions.rollback")}
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onSelect={() => {
+                          void handleAddToVcs({
+                            kind: "dir",
+                            path: "",
+                            name: folderName,
+                          })
+                        }}
                       >
                         {t("actions.addToVcs")}
+                      </ContextMenuItem>
+                      <ContextMenuItem
+                        onSelect={() => {
+                          handleRequestDelete(
+                            {
+                              kind: "dir",
+                              path: "",
+                              name: folderName,
+                            },
+                            "untracked"
+                          )
+                        }}
+                        variant="destructive"
+                      >
+                        {t("actions.delete")}
                       </ContextMenuItem>
                     </ContextMenuContent>
                   </ContextMenu>
@@ -1366,7 +1535,10 @@ export function GitChangesTab() {
             <DialogTitle>
               {directoryGitActionType === "add"
                 ? t("actions.addToVcs")
-                : t("actions.rollback")}
+                : directoryGitActionType &&
+                    isDeleteAction(directoryGitActionType)
+                  ? t("actions.delete")
+                  : t("actions.rollback")}
             </DialogTitle>
             <DialogDescription>
               {directoryGitActionTarget
@@ -1374,9 +1546,14 @@ export function GitChangesTab() {
                   ? t("directoryDialog.descriptionAdd", {
                       path: directoryGitActionTarget.path,
                     })
-                  : t("directoryDialog.descriptionRollback", {
-                      path: directoryGitActionTarget.path,
-                    })
+                  : directoryGitActionType &&
+                      isDeleteAction(directoryGitActionType)
+                    ? t("directoryDialog.descriptionDelete", {
+                        path: directoryGitActionTarget.path,
+                      })
+                    : t("directoryDialog.descriptionRollback", {
+                        path: directoryGitActionTarget.path,
+                      })
                 : t("directoryDialog.descriptionFallback")}
             </DialogDescription>
           </DialogHeader>
@@ -1436,9 +1613,11 @@ export function GitChangesTab() {
                         <span className="flex-1 truncate" title={entry.path}>
                           {entry.path}
                         </span>
-                        <span className="shrink-0 text-muted-foreground">
-                          {entry.status}
-                        </span>
+                        {entry.status !== UNTRACKED_STATUS && (
+                          <span className="shrink-0 text-muted-foreground">
+                            {entry.status}
+                          </span>
+                        )}
                       </button>
                     )
                   })}
@@ -1461,7 +1640,9 @@ export function GitChangesTab() {
               <Button
                 type="button"
                 variant={
-                  directoryGitActionType === "rollback"
+                  directoryGitActionType === "rollback" ||
+                  (directoryGitActionType &&
+                    isDeleteAction(directoryGitActionType))
                     ? "destructive"
                     : "default"
                 }
@@ -1476,7 +1657,10 @@ export function GitChangesTab() {
               >
                 {directoryGitActionType === "add"
                   ? t("actions.addToVcs")
-                  : t("actions.rollback")}
+                  : directoryGitActionType &&
+                      isDeleteAction(directoryGitActionType)
+                    ? t("actions.delete")
+                    : t("actions.rollback")}
               </Button>
             </DialogFooter>
           </div>
@@ -1517,6 +1701,45 @@ export function GitChangesTab() {
               }}
             >
               {t("actions.rollback")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (open) return
+          setDeleteTarget(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteConfirm.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget
+                ? t("deleteConfirm.descriptionWithTarget", {
+                    kind:
+                      deleteTarget.kind === "dir"
+                        ? t("deleteConfirm.kindDirectory")
+                        : t("deleteConfirm.kindFile"),
+                    name: deleteTarget.name,
+                  })
+                : t("deleteConfirm.descriptionFallback")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deleting}
+              onClick={() => {
+                void handleDeleteConfirm()
+              }}
+            >
+              {t("actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

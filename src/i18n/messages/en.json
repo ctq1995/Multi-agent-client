@@ -28,7 +28,7 @@
       "removeFromHistoryFailed": "Failed to remove folder",
       "openSettingsFailed": "Failed to open settings",
       "cloneFailed": "Failed to clone repository",
-      "cloneProgressUnavailable": "Clone progress is unavailable (still cloning)."
+      "cloneProgressUnavailable": "Clone progress tracking unavailable"
     },
     "errors": {
       "unknown": "Unexpected error",
@@ -58,6 +58,27 @@
       "clone": "Clone"
     }
   },
+  "GitCredentialDialog": {
+    "title": "Authentication Required",
+    "description": "The remote server requires credentials. Enter your username and password (or personal access token).",
+    "username": "Username",
+    "usernamePlaceholder": "Username or email",
+    "password": "Password / Token",
+    "passwordPlaceholder": "Password or personal access token",
+    "passwordHint": "For non-GitHub servers, enter your username and password.",
+    "cancel": "Cancel",
+    "authenticate": "Authenticate",
+    "authenticating": "Authenticating...",
+    "invalidCredentials": "Invalid credentials. Please try again.",
+    "saveCredentials": "Save credentials for future operations",
+    "githubTitle": "GitHub Authentication",
+    "githubDescription": "Enter a personal access token to authenticate with GitHub. The token will be validated and saved to your accounts.",
+    "githubToken": "Personal Access Token",
+    "githubTokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "githubTokenHint": "Generate a token at GitHub → Settings → Developer settings → Personal access tokens.",
+    "githubAuthenticate": "Validate & Connect",
+    "generateToken": "Generate token"
+  },
   "SettingsShell": {
     "title": "Settings",
     "preferences": "Preferences",
@@ -67,7 +88,9 @@
       "mcp": "MCP",
       "skills": "Skills",
       "shortcuts": "Shortcuts",
-      "system": "System"
+      "version_control": "Version Control",
+      "system": "System",
+      "web_service": "Web Service"
     }
   },
   "AppearanceSettings": {
@@ -79,11 +102,6 @@
     "light": "Light",
     "dark": "Dark",
     "currentTheme": "Current effective theme: {theme}",
-    "messageSectionTitle": "Message Display",
-    "messageSectionDescription": "Control how long user messages are displayed in chat.",
-    "autoCollapseLongUserMessages": "Auto-collapse long user messages",
-    "autoCollapseLongUserMessagesDescription": "Long user messages will be collapsed by default to keep the thread readable.",
-    "autoCollapseLongUserMessagesAria": "Auto-collapse long user messages",
     "resolvedTheme": {
       "light": "Light",
       "dark": "Dark",
@@ -111,6 +129,7 @@
     "languageSaveSuccess": "Language settings saved",
     "languageSaveFailed": "Failed to save language settings: {message}",
     "updateTitle": "App Update",
+    "versionTitle": "Software Update",
     "updateDescription": "Check the configured release source for newer versions and install directly when available.",
     "currentVersion": "Current version",
     "upgradableVersion": "Latest version",
@@ -132,6 +151,75 @@
       "downloadFailed": "Failed to download update package. Please try again later.",
       "installFailed": "Failed to install update. Please close the app and try again.",
       "unknown": "Update failed. Please try again later."
+    }
+  },
+  "VersionControlSettings": {
+    "loading": "Loading...",
+    "sectionTitle": "Version Control",
+    "sectionDescription": "Configure Git executable and manage GitHub accounts.",
+    "gitTitle": "Git Configuration",
+    "gitDescription": "Configure the Git executable used by the application.",
+    "gitDetected": "Git detected",
+    "gitNotFound": "Git not found on this system",
+    "gitVersion": "Version",
+    "gitPath": "Path",
+    "customGitPath": "Custom Git Path",
+    "customGitPathPlaceholder": "/usr/bin/git",
+    "customGitPathHint": "Leave empty to use the auto-detected path.",
+    "test": "Test",
+    "testing": "Testing...",
+    "testSuccess": "Git executable is valid.",
+    "testFailed": "Git test failed: {message}",
+    "save": "Save",
+    "saving": "Saving...",
+    "saveSuccess": "Git settings saved.",
+    "saveFailed": "Failed to save: {message}",
+    "githubTitle": "GitHub Accounts",
+    "githubDescription": "Manage GitHub accounts for authentication. Tokens are stored locally.",
+    "noAccounts": "No GitHub accounts configured.",
+    "addAccount": "Add Account",
+    "serverUrl": "Server URL",
+    "serverUrlPlaceholder": "https://github.com",
+    "token": "Personal Access Token",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "generateToken": "Generate token",
+    "tokenHint": "Generate a token at GitHub → Settings → Developer settings → Personal access tokens.",
+    "validateAndAdd": "Validate & Add",
+    "validating": "Validating...",
+    "addSuccess": "Account {username} added successfully.",
+    "addFailed": "Failed to add account: {message}",
+    "testConnection": "Test",
+    "connectionSuccess": "Connection successful.",
+    "connectionFailed": "Connection failed: {message}",
+    "setDefault": "Set Default",
+    "defaultLabel": "Default",
+    "defaultSet": "Default account updated.",
+    "removeAccount": "Remove",
+    "removeConfirmTitle": "Remove Account",
+    "removeConfirmMessage": "Are you sure you want to remove the account \"{username}\"?",
+    "removeConfirm": "Remove",
+    "removeCancel": "Cancel",
+    "removeSuccess": "Account removed.",
+    "scopes": "Scopes",
+    "loadFailed": "Failed to load settings: {message}",
+    "gitAccount": {
+      "sectionTitle": "Git Accounts",
+      "sectionDescription": "Manage credentials for non-GitHub Git servers (GitLab, Bitbucket, self-hosted, etc.).",
+      "noAccounts": "No Git server accounts configured.",
+      "addAccount": "Add Account",
+      "addTitle": "Add Git Account",
+      "addDescription": "Enter the server address, username, and password or access token.",
+      "serverUrl": "Server URL",
+      "serverUrlPlaceholder": "https://gitlab.example.com",
+      "username": "Username",
+      "usernamePlaceholder": "Username or email",
+      "password": "Password / Token",
+      "passwordPlaceholder": "Password or access token",
+      "passwordHint": "Enter your password or a personal access token for the server.",
+      "add": "Add",
+      "serverRequired": "Server URL is required.",
+      "usernameRequired": "Username is required.",
+      "passwordRequired": "Password is required."
     }
   },
   "ShortcutSettings": {
@@ -412,6 +500,10 @@
     },
     "codex": {
       "configDescription": "Supports quick configuration for API URL, API Key, model name and reasoning effort, and syncs with `auth.json` / `config.toml`.",
+      "authMode": "Auth Mode",
+      "chatgptSubscription": "Official Subscription",
+      "chatgptSubscriptionHint": "Log in with ChatGPT official subscription, no API Key required",
+      "apiKeyHint": "Connect using API Key to OpenAI or compatible API services",
       "selectProvider": "Select Provider",
       "modelName": "Model Name",
       "selectReasoningEffort": "Select Reasoning Effort",
@@ -524,6 +616,7 @@
       "openClawSaved": "OpenClaw config saved",
       "saveOpenClawFailed": "Failed to save OpenClaw config",
       "configSaved": "Config saved",
+      "configSavedHint": "Existing sessions need to be reopened to take effect",
       "saveConfigManagementFailed": "Failed to save config management"
     },
     "version": {
@@ -538,16 +631,15 @@
       "latest": "{versionText}. Already latest."
     },
     "modelSelector": {
-      "fetchModels": "Fetch models",
-      "fetchedCount": "{count} models loaded",
-      "fetchFirst": "Fill API URL and API key first",
-      "fetchProviderFirst": "Fill current provider API URL and API key first",
-      "fetchCurrentProviderModelsFirst": "Fetch current provider models first",
-      "configureProviderFirst": "Configure a provider first",
-      "empty": "No models available",
-      "filterHint": "Type to automatically filter models",
+      "filterHint": "Type to filter models",
+      "empty": "No models found",
       "select": "Select",
-      "contextWindow": "Context {count}"
+      "fetchModels": "Fetch Models",
+      "fetchedCount": "{count} models fetched",
+      "fetchFirst": "Click Fetch Models to load",
+      "configureProviderFirst": "Configure a provider first",
+      "fetchProviderFirst": "Click fetch to load provider models",
+      "fetchCurrentProviderModelsFirst": "Click fetch to load models for this provider"
     }
   },
   "SettingsPages": {
@@ -557,6 +649,32 @@
     "title": "Commit",
     "invalidFolderId": "Invalid folder ID",
     "loadingRepo": "Loading repository..."
+  },
+  "MergePage": {
+    "title": "Resolve Conflicts",
+    "invalidFolderId": "Invalid folder ID",
+    "loadingRepo": "Loading repository...",
+    "localVersion": "Local (Ours)",
+    "result": "Result",
+    "remoteVersion": "Remote (Theirs)",
+    "acceptLocal": "Accept Local",
+    "acceptRemote": "Accept Remote",
+    "markResolved": "Mark Resolved",
+    "abortMerge": "Abort",
+    "completeMerge": "Complete Merge",
+    "unresolvedConflicts": "There are still unresolved conflict markers in this file",
+    "fileResolved": "File resolved successfully",
+    "allResolved": "All conflicts resolved",
+    "conflictFiles": "Conflict Files",
+    "loadingFile": "Loading file...",
+    "preparingMerge": "Preparing merge...",
+    "selectFile": "Select a file to resolve",
+    "noConflicts": "No conflict files",
+    "skipFile": "Skip",
+    "abortSuccess": "Operation aborted",
+    "applyAllNonConflicting": "Apply All Non-Conflicting",
+    "applyLeftNonConflicting": "Apply Local",
+    "applyRightNonConflicting": "Apply Remote"
   },
   "Folder": {
     "common": {
@@ -575,7 +693,8 @@
       "create": "Create",
       "createAndSwitch": "Create and Switch",
       "openFile": "Open File",
-      "viewDiff": "View Diff"
+      "viewDiff": "View Diff",
+      "push": "Push..."
     },
     "modes": {
       "conversation": "Conversation Mode",
@@ -616,7 +735,10 @@
       "reloaded": "Conversation reloaded",
       "reload": "Reload",
       "newConversation": "New Conversation",
-      "closeConversation": "Close Conversation"
+      "closeConversation": "Close Conversation",
+      "forkSession": "Fork Session",
+      "forkSessionSuccess": "Session forked successfully",
+      "forkSessionFailed": "Failed to fork session: {error}"
     },
     "conversationCard": {
       "untitledConversation": "Untitled conversation",
@@ -633,11 +755,15 @@
       "save": "Save"
     },
     "search": {
-      "dialogTitle": "Search conversations",
+      "dialogTitle": "Search",
+      "tabConversations": "Conversations",
+      "tabFiles": "Files",
       "placeholder": "Search conversations...",
+      "filePlaceholder": "Search files or directories...",
       "allAgents": "All",
       "searching": "Searching...",
       "typeToSearch": "Type to search conversations",
+      "typeToSearchFiles": "Type to search files or directories",
       "noResults": "No results found.",
       "untitledConversation": "Untitled conversation"
     },
@@ -715,7 +841,9 @@
       "closeFileTab": "Close file tab",
       "close": "Close",
       "closeOthers": "Close Others",
-      "closeAll": "Close All"
+      "closeAll": "Close All",
+      "preview": "Preview",
+      "editSource": "Edit Source"
     },
     "terminal": {
       "rename": "Rename",
@@ -757,11 +885,15 @@
       "next": "Next",
       "jumpToLine": "Jump to line {line}",
       "noParsedDiffSections": "No parsed diff sections",
-      "loadingEditor": "Loading editor..."
+      "loadingEditor": "Loading editor...",
+      "imageZoomIn": "Zoom in",
+      "imageZoomOut": "Zoom out",
+      "imageZoomReset": "Reset zoom"
     },
     "branchDropdown": {
       "toasts": {
         "commitCodeCompleted": "Code commit completed",
+        "pushCodeCompleted": "Code push completed",
         "committedFiles": "Committed {count, plural, one {# file} other {# files}}",
         "taskCompleted": "{label} completed",
         "taskFailed": "{label} failed",
@@ -770,6 +902,7 @@
         "allFilesUpToDate": "All files are up to date",
         "updatedFiles": "Updated {count, plural, one {# file} other {# files}}",
         "openCommitWindowFailed": "Failed to open commit window",
+        "openPushWindowFailed": "Failed to open push window",
         "upstreamSet": "Upstream branch has been set",
         "upstreamSetAndPushed": "Upstream branch set and pushed {count, plural, one {# commit} other {# commits}}",
         "noCommitsToPush": "No commits to push",
@@ -795,7 +928,9 @@
         "deleteTitle": "Delete branch",
         "mergeDescription": "Merge {branchName} into current branch {currentBranch}?",
         "rebaseDescription": "Rebase current branch {currentBranch} onto {branchName}?",
-        "deleteDescription": "Delete branch {branchName}? This action cannot be undone."
+        "deleteDescription": "Delete branch {branchName}? This action cannot be undone.",
+        "forceDeleteTitle": "Force Delete Branch",
+        "forceDeleteDescription": "Branch {branchName} is not fully merged. Are you sure you want to force delete it? This action cannot be undone."
       },
       "current": "Current",
       "switchToBranch": "Switch to this branch",
@@ -810,8 +945,9 @@
       "pushCode": "Push...",
       "newBranch": "New branch...",
       "newWorktree": "New worktree...",
-      "stashChanges": "Stash changes",
-      "stashPop": "Pop stash...",
+      "stashChanges": "Stash changes...",
+      "stashPop": "Unstash...",
+      "manageRemotes": "Manage Remotes...",
       "localBranches": "Local branches ({count, plural, one {#} other {#}})",
       "noLocalBranches": "No local branches",
       "remoteBranches": "Remote branches ({count, plural, one {#} other {#}})",
@@ -825,7 +961,47 @@
         "newWorktreeDescription": "Create a new worktree from current branch {branch}",
         "branchNameLabel": "Branch name",
         "worktreePathLabel": "Worktree path",
-        "worktreePathPlaceholder": "Worktree path"
+        "worktreePathPlaceholder": "Worktree path",
+        "manageRemotesTitle": "Manage Remotes",
+        "manageRemotesEmpty": "No remotes configured",
+        "remoteNamePlaceholder": "Remote name",
+        "remoteUrlPlaceholder": "Remote URL",
+        "addRemote": "Add",
+        "savingRemotes": "Saving..."
+      },
+      "conflict": {
+        "title": "Merge Conflicts",
+        "description": "The following files have conflicts that need to be resolved:",
+        "abort": "Abort Merge",
+        "openMergeTool": "Open Merge Tool",
+        "completeMerge": "Complete Merge",
+        "abortSuccess": "Merge aborted successfully",
+        "completeSuccess": "Merge completed successfully"
+      },
+      "stashDialog": {
+        "title": "Stash Changes",
+        "description": "Save your current changes to a stash",
+        "messageLabel": "Message",
+        "messagePlaceholder": "Stash message (optional)",
+        "keepIndex": "Keep index (staged changes remain staged)",
+        "cancel": "Cancel",
+        "stash": "Stash",
+        "success": "Changes stashed successfully",
+        "error": "Failed to stash changes"
+      },
+      "unstashDialog": {
+        "title": "Unstash Changes",
+        "noStashes": "No stashes found",
+        "selectFile": "Select a file to view diff",
+        "viewDiff": "View Diff",
+        "original": "Original",
+        "modified": "Modified",
+        "apply": "Apply",
+        "drop": "Drop",
+        "applySuccess": "Stash applied successfully",
+        "dropSuccess": "Stash dropped",
+        "confirmApply": "Apply stash {ref} to working directory?",
+        "cancel": "Cancel"
       }
     },
     "commitDialog": {
@@ -837,13 +1013,17 @@
         "fileDeleted": "File deleted",
         "deleteFailed": "Delete failed",
         "fileRolledBack": "File rolled back",
-        "rollbackFailed": "Rollback failed"
+        "rollbackFailed": "Rollback failed",
+        "dirRolledBack": "Directory rolled back",
+        "dirDeleted": "Directory deleted"
       },
       "confirm": {
         "deleteTitle": "Confirm deletion",
         "deleteDescription": "Delete file \"{file}\"? This action cannot be undone.",
         "rollbackTitle": "Confirm rollback",
-        "rollbackDescription": "Rollback file \"{file}\" to HEAD? Unsaved changes will be lost."
+        "rollbackDescription": "Rollback file \"{file}\" to HEAD? Unsaved changes will be lost.",
+        "rollbackDirDescription": "Rollback directory \"{dir}\" to HEAD? Unsaved changes will be lost.",
+        "deleteDirDescription": "Delete directory \"{dir}\"? This action cannot be undone."
       },
       "actions": {
         "select": "Select",
@@ -873,6 +1053,24 @@
       "clickFileToDiff": "Click a file name to view diff",
       "loadingDiff": "Loading diff..."
     },
+    "pushWindow": {
+      "title": "Push Code",
+      "noUnpushedCommits": "No unpushed commits",
+      "newBranchNoPushedCommits": "New branch — push to create remote tracking branch",
+      "unpushed": "Unpushed",
+      "selectFileToViewDiff": "Select a file to view diff",
+      "before": "Before",
+      "after": "After",
+      "push": "Push",
+      "toasts": {
+        "pushSuccess": "Push successful",
+        "pushFailed": "Push failed",
+        "upstreamSet": "Upstream branch has been set",
+        "upstreamSetAndPushed": "Upstream branch set and pushed {count, plural, one {# commit} other {# commits}}",
+        "noCommitsToPush": "No commits to push",
+        "pushedCommits": "Pushed {count, plural, one {# commit} other {# commits}}"
+      }
+    },
     "gitLogTab": {
       "filesTitle": "Files",
       "expandAllFiles": "Expand all files",
@@ -882,6 +1080,7 @@
       "noCommitsFound": "No commits found",
       "hash": "Hash",
       "copyHash": "Copy hash",
+      "copyMessage": "Copy message",
       "author": "Author",
       "noFileChangeDetails": "No file change details available.",
       "branchesTitle": "Branches",
@@ -905,7 +1104,8 @@
       "toasts": {
         "createdAndSwitchedNewBranch": "Created and switched to new branch",
         "newBranchFromCommit": "{name} (from {shortHash})",
-        "createBranchFailed": "Failed to create branch"
+        "createBranchFailed": "Failed to create branch",
+        "openPushWindowFailed": "Failed to open push window"
       },
       "branchSelector": {
         "selectBranchPlaceholder": "Select branch...",
@@ -932,7 +1132,8 @@
       "actions": {
         "commitCode": "Commit code",
         "rollback": "Rollback",
-        "addToVcs": "Add to VCS"
+        "addToVcs": "Add to VCS",
+        "delete": "Delete"
       },
       "toasts": {
         "noAddableFilesInDir": "No changed files in this directory can be added to VCS",
@@ -943,11 +1144,16 @@
         "rolledBack": "Rolled back {name}",
         "rollbackFailed": "Rollback failed",
         "addedFilesToVcs": "Added {count, plural, one {# file} other {# files}} to VCS",
-        "rolledBackFiles": "Rolled back {count, plural, one {# file} other {# files}}"
+        "rolledBackFiles": "Rolled back {count, plural, one {# file} other {# files}}",
+        "deleted": "Deleted {name}",
+        "deleteFailed": "Delete failed",
+        "deletedFiles": "Deleted {count, plural, one {# file} other {# files}}",
+        "noDeletableFilesInDir": "No changed files in this directory can be deleted"
       },
       "directoryDialog": {
         "descriptionAdd": "Select files under directory {path} to add to VCS.",
         "descriptionRollback": "Select files under directory {path} to roll back.",
+        "descriptionDelete": "Select files under directory {path} to delete. This action cannot be undone.",
         "descriptionFallback": "Select files to proceed.",
         "selectionCount": "Selected {selected} / {total} files",
         "selectAll": "Select all",
@@ -959,6 +1165,13 @@
         "title": "Confirm rollback",
         "descriptionWithTarget": "Roll back local changes for {kind} \"{name}\"?",
         "descriptionFallback": "Roll back local changes?",
+        "kindDirectory": "directory",
+        "kindFile": "file"
+      },
+      "deleteConfirm": {
+        "title": "Confirm deletion",
+        "descriptionWithTarget": "Delete {kind} \"{name}\"? This action cannot be undone.",
+        "descriptionFallback": "This action cannot be undone.",
         "kindDirectory": "directory",
         "kindFile": "file"
       }
@@ -978,6 +1191,9 @@
       "attachToCurrentSession": "Attach to current session",
       "compareWithBranch": "Compare with branch...",
       "reloadFromDisk": "Reload from disk",
+      "new": "New",
+      "newFile": "File",
+      "newDirectory": "Directory",
       "openIn": "Open in",
       "openInTerminal": "Open in terminal",
       "actions": {
@@ -1007,7 +1223,15 @@
         "rolledBackFiles": "Rolled back {count, plural, one {# file} other {# files}}",
         "savedAsCopy": "Saved as a copy",
         "saveCopyFailed": "Failed to save as copy",
-        "watchStartFailed": "Failed to start file watch"
+        "watchStartFailed": "Failed to start file watch",
+        "createFailed": "Failed to create"
+      },
+      "createDialog": {
+        "newFile": "New file",
+        "newDirectory": "New directory",
+        "description": "Enter a name for the new {kind}.",
+        "placeholderFile": "file-name.ext",
+        "placeholderDirectory": "folder-name"
       },
       "renameDialog": {
         "renameDirectory": "Rename directory",
@@ -1147,12 +1371,11 @@
       },
       "messageThread": {
         "emptyTitle": "No messages yet",
-        "emptyDescription": "Start a conversation to see messages here",
-        "scrollToBottom": "Scroll to bottom"
+        "emptyDescription": "Start a conversation to see messages here"
       },
       "chatInput": {
         "connecting": "Connecting...",
-        "agentResponding": "Agent is responding...",
+        "agentResponding": "{agent} is responding...",
         "sendMessage": "Send a message..."
       },
       "messageInput": {
@@ -1163,7 +1386,8 @@
         "loadingSettings": "Loading settings...",
         "loadingMode": "Loading mode...",
         "cancel": "Cancel",
-        "send": "Send"
+        "send": "Send",
+        "forkAndSend": "Fork & Send"
       },
       "messageQueue": {
         "addToQueue": "Queue message",
@@ -1234,11 +1458,13 @@
         "attachedResources": "Attached resources",
         "loading": "Loading...",
         "error": "Error: {message}",
-        "emptyConversation": "No messages in this conversation."
+        "emptyConversation": "No messages in this conversation.",
+        "systemMessage": "System message"
       },
       "liveTurnStats": {
         "thinking": "Thinking...",
         "streaming": "Streaming",
+        "elapsedHours": "{value}h",
         "elapsedMinutes": "{value}m",
         "elapsedSeconds": "{value}s",
         "toolUseCount": "{count} tool {count, plural, one {use} other {uses}}"
@@ -1266,10 +1492,6 @@
         "showingTailOutput": "Showing tail output while streaming for performance.",
         "result": "Result",
         "unknown": "unknown",
-        "userText": {
-          "expand": "Expand",
-          "collapse": "Collapse"
-        },
         "replaceAll": "REPLACE ALL",
         "filesCount": "Files: {count}",
         "update": "update",
@@ -1345,6 +1567,10 @@
           "todosProgress": "Todos ({done}/{total})",
           "skillWithName": "Skill: {name}",
           "genericWithContext": "{tool}: {context}"
+        },
+        "userText": {
+          "expand": "Show more",
+          "collapse": "Show less"
         }
       }
     },

@@ -28,7 +28,7 @@
       "removeFromHistoryFailed": "فشل إزالة المجلد من السجل",
       "openSettingsFailed": "فشل فتح الإعدادات",
       "cloneFailed": "فشل استنساخ المستودع",
-      "cloneProgressUnavailable": "???? ?????? ??? ???? ????????? (?????? ?????????)."
+      "cloneProgressUnavailable": "تتبع تقدم الاستنساخ غير متاح"
     },
     "errors": {
       "unknown": "حدث خطأ غير متوقع",
@@ -58,6 +58,27 @@
       "clone": "استنساخ"
     }
   },
+  "GitCredentialDialog": {
+    "title": "المصادقة مطلوبة",
+    "description": "يتطلب الخادم البعيد بيانات اعتماد. أدخل اسم المستخدم وكلمة المرور (أو رمز الوصول الشخصي).",
+    "username": "اسم المستخدم",
+    "usernamePlaceholder": "اسم المستخدم أو البريد الإلكتروني",
+    "password": "كلمة المرور / الرمز",
+    "passwordPlaceholder": "كلمة المرور أو رمز الوصول الشخصي",
+    "passwordHint": "أدخل اسم المستخدم وكلمة المرور للخادم.",
+    "cancel": "إلغاء",
+    "authenticate": "مصادقة",
+    "authenticating": "جارٍ المصادقة...",
+    "invalidCredentials": "بيانات الاعتماد غير صالحة. يرجى المحاولة مرة أخرى.",
+    "saveCredentials": "حفظ بيانات الاعتماد للعمليات المستقبلية",
+    "githubTitle": "مصادقة GitHub",
+    "githubDescription": "أدخل رمز وصول شخصي للاتصال بـ GitHub. سيتم التحقق من الرمز وحفظه تلقائيًا.",
+    "githubToken": "رمز الوصول الشخصي",
+    "githubTokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "githubTokenHint": "أنشئ رمزًا في GitHub → Settings → Developer settings → Personal access tokens.",
+    "githubAuthenticate": "التحقق والاتصال",
+    "generateToken": "إنشاء رمز"
+  },
   "SettingsShell": {
     "title": "الإعدادات",
     "preferences": "التفضيلات",
@@ -67,7 +88,9 @@
       "mcp": "MCP",
       "skills": "Skills",
       "shortcuts": "الاختصارات",
-      "system": "النظام"
+      "version_control": "التحكم بالإصدارات",
+      "system": "النظام",
+      "web_service": "خدمة الويب"
     }
   },
   "AppearanceSettings": {
@@ -106,6 +129,7 @@
     "languageSaveSuccess": "تم حفظ إعدادات اللغة",
     "languageSaveFailed": "فشل حفظ إعدادات اللغة: {message}",
     "updateTitle": "تحديث التطبيق",
+    "versionTitle": "تحديث البرنامج",
     "updateDescription": "تحقق من المصدر المهيأ للإصدارات الأحدث وثبّت التحديث مباشرة عند توفره.",
     "currentVersion": "الإصدار الحالي",
     "upgradableVersion": "أحدث إصدار",
@@ -127,6 +151,75 @@
       "downloadFailed": "فشل تنزيل حزمة التحديث. يرجى المحاولة مرة أخرى لاحقًا.",
       "installFailed": "فشل تثبيت التحديث. يرجى إغلاق التطبيق ثم إعادة المحاولة.",
       "unknown": "فشل التحديث. يرجى المحاولة مرة أخرى لاحقًا."
+    }
+  },
+  "VersionControlSettings": {
+    "loading": "جارٍ التحميل...",
+    "sectionTitle": "التحكم بالإصدارات",
+    "sectionDescription": "تكوين ملف Git التنفيذي وإدارة حسابات GitHub.",
+    "gitTitle": "إعدادات Git",
+    "gitDescription": "تكوين ملف Git التنفيذي المستخدم بواسطة التطبيق.",
+    "gitDetected": "تم اكتشاف Git",
+    "gitNotFound": "لم يتم العثور على Git في النظام",
+    "gitVersion": "الإصدار",
+    "gitPath": "المسار",
+    "customGitPath": "مسار Git مخصص",
+    "customGitPathPlaceholder": "/usr/bin/git",
+    "customGitPathHint": "اتركه فارغًا لاستخدام المسار المكتشف تلقائيًا.",
+    "test": "اختبار",
+    "testing": "جارٍ الاختبار...",
+    "testSuccess": "ملف Git التنفيذي صالح.",
+    "testFailed": "فشل اختبار Git: {message}",
+    "save": "حفظ",
+    "saving": "جارٍ الحفظ...",
+    "saveSuccess": "تم حفظ إعدادات Git.",
+    "saveFailed": "فشل الحفظ: {message}",
+    "githubTitle": "حسابات GitHub",
+    "githubDescription": "إدارة حسابات GitHub للمصادقة. يتم تخزين الرموز محليًا.",
+    "noAccounts": "لا توجد حسابات GitHub مكوّنة.",
+    "addAccount": "إضافة حساب",
+    "serverUrl": "عنوان الخادم",
+    "serverUrlPlaceholder": "https://github.com",
+    "token": "رمز الوصول الشخصي",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "generateToken": "إنشاء رمز",
+    "tokenHint": "أنشئ رمزًا في GitHub → Settings → Developer settings → Personal access tokens.",
+    "validateAndAdd": "التحقق والإضافة",
+    "validating": "جارٍ التحقق...",
+    "addSuccess": "تمت إضافة الحساب {username} بنجاح.",
+    "addFailed": "فشل إضافة الحساب: {message}",
+    "testConnection": "اختبار",
+    "connectionSuccess": "نجح الاتصال.",
+    "connectionFailed": "فشل الاتصال: {message}",
+    "setDefault": "تعيين كافتراضي",
+    "defaultLabel": "افتراضي",
+    "defaultSet": "تم تحديث الحساب الافتراضي.",
+    "removeAccount": "إزالة",
+    "removeConfirmTitle": "إزالة الحساب",
+    "removeConfirmMessage": "هل أنت متأكد من إزالة الحساب \"{username}\"؟",
+    "removeConfirm": "إزالة",
+    "removeCancel": "إلغاء",
+    "removeSuccess": "تمت إزالة الحساب.",
+    "scopes": "النطاقات",
+    "loadFailed": "فشل تحميل الإعدادات: {message}",
+    "gitAccount": {
+      "sectionTitle": "حسابات خادم Git",
+      "sectionDescription": "إدارة بيانات الاعتماد لخوادم Git غير GitHub (GitLab، Bitbucket، الخوادم الذاتية، إلخ).",
+      "noAccounts": "لا توجد حسابات خادم Git مكوّنة.",
+      "addAccount": "إضافة حساب",
+      "addTitle": "إضافة حساب Git",
+      "addDescription": "أدخل عنوان الخادم واسم المستخدم وكلمة المرور أو رمز الوصول.",
+      "serverUrl": "عنوان الخادم",
+      "serverUrlPlaceholder": "https://gitlab.example.com",
+      "username": "اسم المستخدم",
+      "usernamePlaceholder": "اسم المستخدم أو البريد الإلكتروني",
+      "password": "كلمة المرور / الرمز",
+      "passwordPlaceholder": "كلمة المرور أو رمز الوصول",
+      "passwordHint": "أدخل كلمة مرور الخادم أو رمز الوصول.",
+      "add": "إضافة",
+      "serverRequired": "عنوان الخادم مطلوب.",
+      "usernameRequired": "اسم المستخدم مطلوب.",
+      "passwordRequired": "كلمة المرور مطلوبة."
     }
   },
   "ShortcutSettings": {
@@ -407,6 +500,10 @@
     },
     "codex": {
       "configDescription": "يدعم الإعداد السريع لعنوان API ومفتاح API واسم النموذج وجهد الاستدلال، مع المزامنة مع `auth.json` / `config.toml`.",
+      "authMode": "طريقة المصادقة",
+      "chatgptSubscription": "اشتراك رسمي",
+      "chatgptSubscriptionHint": "تسجيل الدخول باشتراك ChatGPT الرسمي، لا حاجة لـ API Key",
+      "apiKeyHint": "الاتصال باستخدام API Key بخدمات OpenAI أو الخدمات المتوافقة",
       "selectProvider": "اختر المزود",
       "modelName": "اسم النموذج",
       "selectReasoningEffort": "اختر Reasoning Effort",
@@ -519,6 +616,7 @@
       "openClawSaved": "تم حفظ إعداد OpenClaw",
       "saveOpenClawFailed": "فشل حفظ إعداد OpenClaw",
       "configSaved": "تم حفظ الإعداد",
+      "configSavedHint": "يجب إعادة فتح الجلسات الحالية لتطبيق التغييرات",
       "saveConfigManagementFailed": "فشل حفظ إدارة الإعدادات"
     },
     "version": {
@@ -533,16 +631,15 @@
       "latest": "{versionText}. أنت على أحدث إصدار."
     },
     "modelSelector": {
-      "fetchModels": "Fetch models",
-      "fetchedCount": "{count} models loaded",
-      "fetchFirst": "Fill API URL and API key first",
-      "fetchProviderFirst": "Fill current provider API URL and API key first",
-      "fetchCurrentProviderModelsFirst": "Fetch current provider models first",
-      "configureProviderFirst": "Configure a provider first",
-      "empty": "No models available",
-      "filterHint": "Type to automatically filter models",
-      "select": "Select",
-      "contextWindow": "Context {count}"
+      "filterHint": "اكتب لتصفية النماذج",
+      "empty": "لم يتم العثور على نماذج",
+      "select": "اختر",
+      "fetchModels": "جلب النماذج",
+      "fetchedCount": "تم جلب {count} نموذج",
+      "fetchFirst": "انقر على جلب النماذج للتحميل",
+      "configureProviderFirst": "قم بتكوين مزود أولاً",
+      "fetchProviderFirst": "انقر على جلب لتحميل نماذج المزود",
+      "fetchCurrentProviderModelsFirst": "انقر على جلب لتحميل نماذج هذا المزود"
     }
   },
   "SettingsPages": {
@@ -552,6 +649,32 @@
     "title": "التزام",
     "invalidFolderId": "معرّف المجلد غير صالح",
     "loadingRepo": "جارٍ تحميل المستودع..."
+  },
+  "MergePage": {
+    "title": "حل التعارضات",
+    "invalidFolderId": "معرّف المجلد غير صالح",
+    "loadingRepo": "جارٍ تحميل المستودع...",
+    "localVersion": "محلي (الخاص بنا)",
+    "result": "النتيجة",
+    "remoteVersion": "بعيد (الخاص بهم)",
+    "acceptLocal": "قبول المحلي",
+    "acceptRemote": "قبول البعيد",
+    "markResolved": "تحديد كمحلول",
+    "abortMerge": "إلغاء",
+    "completeMerge": "إتمام الدمج",
+    "unresolvedConflicts": "لا تزال هناك علامات تعارض غير محلولة في هذا الملف",
+    "fileResolved": "تم حل الملف بنجاح",
+    "allResolved": "تم حل جميع التعارضات",
+    "conflictFiles": "ملفات متعارضة",
+    "loadingFile": "جارٍ تحميل الملف...",
+    "preparingMerge": "جارٍ تحضير الدمج...",
+    "selectFile": "اختر ملفًا لحله",
+    "noConflicts": "لا توجد ملفات متعارضة",
+    "skipFile": "تخطي",
+    "abortSuccess": "تم إلغاء العملية",
+    "applyAllNonConflicting": "تطبيق جميع التغييرات غير المتعارضة",
+    "applyLeftNonConflicting": "تطبيق المحلي",
+    "applyRightNonConflicting": "تطبيق البعيد"
   },
   "Folder": {
     "common": {
@@ -570,7 +693,8 @@
       "create": "إنشاء",
       "createAndSwitch": "إنشاء والتبديل",
       "openFile": "فتح الملف",
-      "viewDiff": "عرض Diff"
+      "viewDiff": "عرض Diff",
+      "push": "دفع..."
     },
     "modes": {
       "conversation": "وضع المحادثة",
@@ -611,7 +735,10 @@
       "reloaded": "تمت إعادة تحميل المحادثة",
       "reload": "إعادة تحميل",
       "newConversation": "محادثة جديدة",
-      "closeConversation": "إغلاق المحادثة"
+      "closeConversation": "إغلاق المحادثة",
+      "forkSession": "تفريع الجلسة",
+      "forkSessionSuccess": "تم تفريع الجلسة بنجاح",
+      "forkSessionFailed": "فشل في تفريع الجلسة: {error}"
     },
     "conversationCard": {
       "untitledConversation": "محادثة بدون عنوان",
@@ -628,11 +755,15 @@
       "save": "حفظ"
     },
     "search": {
-      "dialogTitle": "البحث في المحادثات",
+      "dialogTitle": "بحث",
+      "tabConversations": "المحادثات",
+      "tabFiles": "الملفات",
       "placeholder": "البحث في المحادثات...",
+      "filePlaceholder": "البحث في الملفات أو المجلدات...",
       "allAgents": "الكل",
       "searching": "جارٍ البحث...",
       "typeToSearch": "اكتب للبحث في المحادثات",
+      "typeToSearchFiles": "اكتب للبحث في الملفات أو المجلدات",
       "noResults": "لم يتم العثور على نتائج.",
       "untitledConversation": "محادثة بدون عنوان"
     },
@@ -710,7 +841,9 @@
       "closeFileTab": "إغلاق تبويب الملف",
       "close": "إغلاق",
       "closeOthers": "إغلاق البقية",
-      "closeAll": "إغلاق الكل"
+      "closeAll": "إغلاق الكل",
+      "preview": "معاينة",
+      "editSource": "تحرير المصدر"
     },
     "terminal": {
       "rename": "إعادة تسمية",
@@ -752,11 +885,15 @@
       "next": "التالي",
       "jumpToLine": "الانتقال إلى السطر {line}",
       "noParsedDiffSections": "لا توجد أقسام diff محللة",
-      "loadingEditor": "جارٍ تحميل المحرر..."
+      "loadingEditor": "جارٍ تحميل المحرر...",
+      "imageZoomIn": "تكبير",
+      "imageZoomOut": "تصغير",
+      "imageZoomReset": "إعادة تعيين التكبير"
     },
     "branchDropdown": {
       "toasts": {
         "commitCodeCompleted": "اكتمل التزام الكود",
+        "pushCodeCompleted": "اكتمل دفع الكود",
         "committedFiles": "{count, plural, one {# ملف تم الالتزام به} other {# ملفات تم الالتزام بها}}",
         "taskCompleted": "اكتمل {label}",
         "taskFailed": "فشل {label}",
@@ -765,6 +902,7 @@
         "allFilesUpToDate": "كل الملفات محدثة",
         "updatedFiles": "{count, plural, one {# ملف تم تحديثه} other {# ملفات تم تحديثها}}",
         "openCommitWindowFailed": "فشل فتح نافذة الالتزام",
+        "openPushWindowFailed": "فشل فتح نافذة الدفع",
         "upstreamSet": "تم تعيين فرع upstream",
         "upstreamSetAndPushed": "تم تعيين فرع upstream ودفع {count, plural, one {# التزام} other {# التزامات}}",
         "noCommitsToPush": "لا توجد التزامات للدفع",
@@ -790,7 +928,9 @@
         "deleteTitle": "حذف الفرع",
         "mergeDescription": "دمج {branchName} في الفرع الحالي {currentBranch}؟",
         "rebaseDescription": "إجراء rebase للفرع الحالي {currentBranch} على {branchName}؟",
-        "deleteDescription": "حذف الفرع {branchName}؟ لا يمكن التراجع عن هذا الإجراء."
+        "deleteDescription": "حذف الفرع {branchName}؟ لا يمكن التراجع عن هذا الإجراء.",
+        "forceDeleteTitle": "حذف الفرع بالقوة",
+        "forceDeleteDescription": "الفرع {branchName} لم يتم دمجه بالكامل. هل أنت متأكد من أنك تريد حذفه بالقوة؟ لا يمكن التراجع عن هذا الإجراء."
       },
       "current": "الحالي",
       "switchToBranch": "التبديل إلى هذا الفرع",
@@ -805,8 +945,9 @@
       "pushCode": "دفع...",
       "newBranch": "فرع جديد...",
       "newWorktree": "Worktree جديد...",
-      "stashChanges": "تخزين التغييرات في stash",
+      "stashChanges": "...تخبئة التغييرات",
       "stashPop": "استرجاع stash...",
+      "manageRemotes": "إدارة المستودعات البعيدة...",
       "localBranches": "الفروع المحلية ({count, plural, one {#} other {#}})",
       "noLocalBranches": "لا توجد فروع محلية",
       "remoteBranches": "الفروع البعيدة ({count, plural, one {#} other {#}})",
@@ -820,7 +961,47 @@
         "newWorktreeDescription": "إنشاء worktree جديد من الفرع الحالي {branch}",
         "branchNameLabel": "اسم الفرع",
         "worktreePathLabel": "مسار worktree",
-        "worktreePathPlaceholder": "مسار worktree"
+        "worktreePathPlaceholder": "مسار worktree",
+        "manageRemotesTitle": "إدارة المستودعات البعيدة",
+        "manageRemotesEmpty": "لم يتم تكوين أي مستودعات بعيدة",
+        "remoteNamePlaceholder": "اسم المستودع البعيد",
+        "remoteUrlPlaceholder": "عنوان URL للمستودع البعيد",
+        "addRemote": "إضافة",
+        "savingRemotes": "جارٍ الحفظ..."
+      },
+      "conflict": {
+        "title": "تعارضات الدمج",
+        "description": "الملفات التالية بها تعارضات تحتاج إلى حل:",
+        "abort": "إلغاء الدمج",
+        "openMergeTool": "فتح أداة الدمج",
+        "completeMerge": "إتمام الدمج",
+        "abortSuccess": "تم إلغاء الدمج بنجاح",
+        "completeSuccess": "تم إتمام الدمج بنجاح"
+      },
+      "stashDialog": {
+        "title": "تخبئة التغييرات",
+        "description": "حفظ التغييرات الحالية في المخبأ",
+        "messageLabel": "رسالة",
+        "messagePlaceholder": "رسالة التخبئة (اختياري)",
+        "keepIndex": "الاحتفاظ بالفهرس (التغييرات المرحلة تبقى مرحلة)",
+        "cancel": "إلغاء",
+        "stash": "تخبئة",
+        "success": "تم تخبئة التغييرات",
+        "error": "فشل في تخبئة التغييرات"
+      },
+      "unstashDialog": {
+        "title": "تطبيق المخبأ",
+        "noStashes": "لا توجد تخبئات",
+        "selectFile": "اختر ملفاً لعرض الفرق",
+        "viewDiff": "عرض الفرق",
+        "original": "الأصلي",
+        "modified": "المعدل",
+        "apply": "تطبيق",
+        "drop": "حذف",
+        "applySuccess": "تم تطبيق التخبئة",
+        "dropSuccess": "تم حذف التخبئة",
+        "confirmApply": "تطبيق التخبئة {ref} على دليل العمل؟",
+        "cancel": "إلغاء"
       }
     },
     "commitDialog": {
@@ -832,13 +1013,17 @@
         "fileDeleted": "تم حذف الملف",
         "deleteFailed": "فشل الحذف",
         "fileRolledBack": "تم التراجع عن الملف",
-        "rollbackFailed": "فشل التراجع"
+        "rollbackFailed": "فشل التراجع",
+        "dirRolledBack": "تم استعادة المجلد",
+        "dirDeleted": "تم حذف المجلد"
       },
       "confirm": {
         "deleteTitle": "تأكيد الحذف",
         "deleteDescription": "حذف الملف \"{file}\"؟ لا يمكن التراجع عن هذا الإجراء.",
         "rollbackTitle": "تأكيد التراجع",
-        "rollbackDescription": "التراجع عن الملف \"{file}\" إلى HEAD؟ ستفقد التغييرات غير المحفوظة."
+        "rollbackDescription": "التراجع عن الملف \"{file}\" إلى HEAD؟ ستفقد التغييرات غير المحفوظة.",
+        "rollbackDirDescription": "هل تريد استعادة المجلد \"{dir}\" إلى HEAD؟ ستفقد التغييرات غير المحفوظة.",
+        "deleteDirDescription": "هل تريد حذف المجلد \"{dir}\"؟ لا يمكن التراجع عن هذا الإجراء."
       },
       "actions": {
         "select": "تحديد",
@@ -868,6 +1053,24 @@
       "clickFileToDiff": "انقر اسم الملف لعرض الفرق",
       "loadingDiff": "جارٍ تحميل diff..."
     },
+    "pushWindow": {
+      "title": "دفع الكود",
+      "noUnpushedCommits": "لا توجد التزامات غير مدفوعة",
+      "newBranchNoPushedCommits": "فرع جديد — ادفع لإنشاء فرع تتبع عن بُعد",
+      "unpushed": "غير مدفوع",
+      "selectFileToViewDiff": "اختر ملفًا لعرض الفرق",
+      "before": "قبل",
+      "after": "بعد",
+      "push": "دفع",
+      "toasts": {
+        "pushSuccess": "تم الدفع بنجاح",
+        "pushFailed": "فشل الدفع",
+        "upstreamSet": "تم تعيين الفرع البعيد",
+        "upstreamSetAndPushed": "تم تعيين الفرع البعيد ودفع {count} التزام",
+        "noCommitsToPush": "لا توجد التزامات للدفع",
+        "pushedCommits": "تم دفع {count} التزام"
+      }
+    },
     "gitLogTab": {
       "filesTitle": "الملفات",
       "expandAllFiles": "توسيع كل الملفات",
@@ -877,6 +1080,7 @@
       "noCommitsFound": "لم يتم العثور على التزامات",
       "hash": "بصمة الالتزام",
       "copyHash": "نسخ الـ hash",
+      "copyMessage": "نسخ الرسالة",
       "author": "المؤلف",
       "noFileChangeDetails": "لا توجد تفاصيل تغييرات ملفات متاحة.",
       "branchesTitle": "الفروع",
@@ -900,7 +1104,8 @@
       "toasts": {
         "createdAndSwitchedNewBranch": "تم إنشاء فرع جديد والتبديل إليه",
         "newBranchFromCommit": "{name} (من {shortHash})",
-        "createBranchFailed": "فشل إنشاء الفرع"
+        "createBranchFailed": "فشل إنشاء الفرع",
+        "openPushWindowFailed": "فشل فتح نافذة الدفع"
       },
       "branchSelector": {
         "selectBranchPlaceholder": "اختر فرعًا...",
@@ -927,7 +1132,8 @@
       "actions": {
         "commitCode": "التزام الكود",
         "rollback": "تراجع",
-        "addToVcs": "إضافة إلى VCS"
+        "addToVcs": "إضافة إلى VCS",
+        "delete": "حذف"
       },
       "toasts": {
         "noAddableFilesInDir": "لا توجد ملفات متغيرة في هذا الدليل يمكن إضافتها إلى VCS",
@@ -938,11 +1144,16 @@
         "rolledBack": "تم التراجع عن {name}",
         "rollbackFailed": "فشل التراجع",
         "addedFilesToVcs": "تمت إضافة {count, plural, one {# ملف} other {# ملفات}} إلى VCS",
-        "rolledBackFiles": "تم التراجع عن {count, plural, one {# ملف} other {# ملفات}}"
+        "rolledBackFiles": "تم التراجع عن {count, plural, one {# ملف} other {# ملفات}}",
+        "deleted": "تم حذف {name}",
+        "deleteFailed": "فشل الحذف",
+        "deletedFiles": "تم حذف {count} ملفات",
+        "noDeletableFilesInDir": "لا توجد ملفات معدّلة في هذا الدليل يمكن حذفها"
       },
       "directoryDialog": {
         "descriptionAdd": "اختر ملفات داخل الدليل {path} لإضافتها إلى VCS.",
         "descriptionRollback": "اختر ملفات داخل الدليل {path} للتراجع عنها.",
+        "descriptionDelete": "اختر ملفات داخل الدليل {path} لحذفها. لا يمكن التراجع عن هذا الإجراء.",
         "descriptionFallback": "اختر ملفات للمتابعة.",
         "selectionCount": "تم تحديد {selected} / {total} ملف",
         "selectAll": "تحديد الكل",
@@ -954,6 +1165,13 @@
         "title": "تأكيد التراجع",
         "descriptionWithTarget": "التراجع عن التغييرات المحلية لـ {kind} \"{name}\"؟",
         "descriptionFallback": "التراجع عن التغييرات المحلية؟",
+        "kindDirectory": "الدليل",
+        "kindFile": "الملف"
+      },
+      "deleteConfirm": {
+        "title": "تأكيد الحذف",
+        "descriptionWithTarget": "حذف {kind} \"{name}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+        "descriptionFallback": "لا يمكن التراجع عن هذا الإجراء.",
         "kindDirectory": "الدليل",
         "kindFile": "الملف"
       }
@@ -973,6 +1191,9 @@
       "attachToCurrentSession": "إرفاق بالجلسة الحالية",
       "compareWithBranch": "المقارنة مع الفرع...",
       "reloadFromDisk": "إعادة التحميل من القرص",
+      "new": "جديد",
+      "newFile": "ملف",
+      "newDirectory": "مجلد",
       "openIn": "فتح في",
       "openInTerminal": "فتح في الطرفية",
       "actions": {
@@ -1002,7 +1223,15 @@
         "rolledBackFiles": "{count, plural, one {تم التراجع عن ملف واحد} other {تم التراجع عن # ملفات}}",
         "savedAsCopy": "تم الحفظ كنسخة",
         "saveCopyFailed": "فشل الحفظ كنسخة",
-        "watchStartFailed": "فشل بدء مراقبة الملفات"
+        "watchStartFailed": "فشل بدء مراقبة الملفات",
+        "createFailed": "فشل في الإنشاء"
+      },
+      "createDialog": {
+        "newFile": "ملف جديد",
+        "newDirectory": "مجلد جديد",
+        "description": "أدخل اسمًا لـ{kind} الجديد.",
+        "placeholderFile": "file-name.ext",
+        "placeholderDirectory": "folder-name"
       },
       "renameDialog": {
         "renameDirectory": "إعادة تسمية المجلد",
@@ -1123,7 +1352,7 @@
         "connectFailedTitle": "فشل اتصال {agent}",
         "toolFallbackTitle": "أداة",
         "eventErrorTitle": "خطأ الوكيل",
-        "notificationTurnComplete": "أنهى {agent} الاستجابة"
+        "notificationTurnComplete": "{agent} أنهى الاستجابة"
       },
       "connectionLifecycle": {
         "tasks": {
@@ -1146,7 +1375,7 @@
       },
       "chatInput": {
         "connecting": "جارٍ الاتصال...",
-        "agentResponding": "الوكيل يرد...",
+        "agentResponding": "{agent} يرد...",
         "sendMessage": "أرسل رسالة..."
       },
       "messageInput": {
@@ -1157,7 +1386,8 @@
         "loadingSettings": "جارٍ تحميل الإعدادات...",
         "loadingMode": "جارٍ تحميل الوضع...",
         "cancel": "إلغاء",
-        "send": "إرسال"
+        "send": "إرسال",
+        "forkAndSend": "تفريع وإرسال"
       },
       "messageQueue": {
         "addToQueue": "إضافة للقائمة",
@@ -1228,11 +1458,13 @@
         "attachedResources": "الموارد المرفقة",
         "loading": "جارٍ التحميل...",
         "error": "خطأ: {message}",
-        "emptyConversation": "لا توجد رسائل في هذه المحادثة."
+        "emptyConversation": "لا توجد رسائل في هذه المحادثة.",
+        "systemMessage": "رسالة النظام"
       },
       "liveTurnStats": {
         "thinking": "جارٍ التفكير...",
         "streaming": "جارٍ البث",
+        "elapsedHours": "{value}س",
         "elapsedMinutes": "{value}د",
         "elapsedSeconds": "{value}ث",
         "toolUseCount": "{count} أداة {count, plural, one {use} other {uses}}"
@@ -1335,6 +1567,10 @@
           "todosProgress": "المهام ({done}/{total})",
           "skillWithName": "Skill: {name}",
           "genericWithContext": "{tool} ({context})"
+        },
+        "userText": {
+          "expand": "عرض المزيد",
+          "collapse": "عرض أقل"
         }
       }
     },

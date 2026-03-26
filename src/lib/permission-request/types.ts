@@ -9,7 +9,7 @@ export interface PermissionFileChange {
 
 export interface PermissionPlanEntry {
   text: string
-  status: string | null
+  status: string | null | undefined
 }
 
 export interface PermissionAllowedPrompt {
@@ -34,5 +34,5 @@ export interface ParsedPermissionToolCall {
   url: string | null
   query: string | null
   prompt: string | null
-  jsonPreview: string
+  jsonPreview: string | null
 }

@@ -1,7 +1,13 @@
 "use client"
 
 import { useState, useRef, useCallback, useMemo, useEffect } from "react"
-import { listen, type UnlistenFn } from "@tauri-apps/api/event"
+const emitEvent = async (event: string, payload?: unknown) => {
+  try {
+    const { emit } = await import("@tauri-apps/api/event")
+    await emit(event, payload)
+  } catch { /* not in Tauri */ }
+}
+import { openFileDialog, subscribe } from "@/lib/platform"
 import {
   GitBranch,
   ChevronDown,
@@ -21,6 +27,7 @@ import {
   FolderGit2,
   FolderOpen,
   ArrowLeftRight,
+  Globe,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -61,12 +68,10 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { open } from "@tauri-apps/plugin-dialog"
 import {
   gitInit,
   gitPull,
   gitFetch,
-  gitPush,
   gitNewBranch,
   gitWorktreeAdd,
   gitCheckout,
@@ -74,18 +79,22 @@ import {
   gitMerge,
   gitRebase,
   gitDeleteBranch,
-  gitStash,
-  gitStashPop,
   openFolderWindow,
   openCommitWindow,
   setFolderParentBranch,
-} from "@/lib/tauri"
-import { disposeTauriListener } from "@/lib/tauri-listener"
-import type { GitBranchList } from "@/lib/types"
+  openStashWindow,
+  openPushWindow,
+} from "@/lib/api"
+import { RemoteManageDialog } from "@/components/layout/remote-manage-dialog"
+import { ConflictDialog } from "@/components/layout/conflict-dialog"
+import { StashDialog } from "@/components/layout/stash-dialog"
+import { toErrorMessage } from "@/lib/app-error"
+import type { GitBranchList, GitConflictInfo } from "@/lib/types"
 import { toast } from "sonner"
 import { useFolderContext } from "@/contexts/folder-context"
 import { useTaskContext } from "@/contexts/task-context"
 import { useAlertContext } from "@/contexts/alert-context"
+import { useGitCredential } from "@/contexts/git-credential-context"
 
 interface BranchDropdownProps {
   branch: string | null
@@ -94,13 +103,19 @@ interface BranchDropdownProps {
 }
 
 type ConfirmAction = {
-  type: "merge" | "rebase" | "delete"
+  type: "merge" | "rebase" | "delete" | "forceDelete"
   branchName: string
 }
 
 interface GitCommitSucceededEventPayload {
   folder_id: number
   committed_files: number
+}
+
+interface GitPushSucceededEventPayload {
+  folder_id: number
+  pushed_commits: number
+  upstream_set: boolean
 }
 
 export function BranchDropdown({
@@ -114,6 +129,7 @@ export function BranchDropdown({
   const folderPath = folder?.path ?? ""
   const { addTask, updateTask, removeTask } = useTaskContext()
   const { pushAlert } = useAlertContext()
+  const { withCredentialRetry } = useGitCredential()
   const [branchList, setBranchList] = useState<GitBranchList>({
     local: [],
     remote: [],
@@ -131,24 +147,39 @@ export function BranchDropdown({
   const [worktreeOpen, setWorktreeOpen] = useState(false)
   const [worktreeBranchName, setWorktreeBranchName] = useState("")
   const [worktreePath, setWorktreePath] = useState("")
+  const [manageRemotesOpen, setManageRemotesOpen] = useState(false)
+  const [stashDialogOpen, setStashDialogOpen] = useState(false)
+  const [conflictInfo, setConflictInfo] = useState<GitConflictInfo | null>(null)
   const taskSeq = useRef(0)
   const worktreeBranchSet = useMemo(
     () => new Set(branchList.worktree_branches),
     [branchList.worktree_branches]
   )
+  const groupedRemoteBranches = useMemo(() => {
+    const groups: Record<string, string[]> = {}
+    for (const b of branchList.remote) {
+      const slashIndex = b.indexOf("/")
+      const remoteName = slashIndex > 0 ? b.substring(0, slashIndex) : "origin"
+      if (!groups[remoteName]) groups[remoteName] = []
+      groups[remoteName].push(b)
+    }
+    return groups
+  }, [branchList.remote])
+  const remoteNames = Object.keys(groupedRemoteBranches)
+  const hasMultipleRemotes = remoteNames.length > 1
 
   useEffect(() => {
     if (!folder) return
 
-    let unlisten: UnlistenFn | null = null
+    let unlisten: (() => void) | null = null
 
-    listen<GitCommitSucceededEventPayload>(
+    subscribe<GitCommitSucceededEventPayload>(
       "folder://git-commit-succeeded",
-      (event) => {
-        if (event.payload.folder_id !== folder.id) return
+      (payload) => {
+        if (payload.folder_id !== folder.id) return
         toast.success(t("toasts.commitCodeCompleted"), {
           description: t("toasts.committedFiles", {
-            count: event.payload.committed_files,
+            count: payload.committed_files,
           }),
         })
         onBranchChange()
@@ -162,14 +193,52 @@ export function BranchDropdown({
       })
 
     return () => {
-      disposeTauriListener(unlisten, "BranchDropdown.gitCommitSucceeded")
+      unlisten?.()
+    }
+  }, [folder, onBranchChange, t])
+
+  useEffect(() => {
+    if (!folder) return
+
+    let unlisten: (() => void) | null = null
+
+    subscribe<GitPushSucceededEventPayload>(
+      "folder://git-push-succeeded",
+      (payload) => {
+        if (payload.folder_id !== folder.id) return
+        const { pushed_commits, upstream_set } = payload
+        let description: string
+        if (upstream_set) {
+          description =
+            pushed_commits === 0
+              ? t("toasts.upstreamSet")
+              : t("toasts.upstreamSetAndPushed", { count: pushed_commits })
+        } else if (pushed_commits === 0) {
+          description = t("toasts.noCommitsToPush")
+        } else {
+          description = t("toasts.pushedCommits", { count: pushed_commits })
+        }
+        toast.success(t("toasts.pushCodeCompleted"), { description })
+        onBranchChange()
+      }
+    )
+      .then((fn) => {
+        unlisten = fn
+      })
+      .catch((err) => {
+        console.error("[BranchDropdown] failed to listen push event:", err)
+      })
+
+    return () => {
+      unlisten?.()
     }
   }, [folder, onBranchChange, t])
 
   async function runGitTask<T>(
     label: string,
     action: () => Promise<T>,
-    getSuccessDescription?: (result: T) => string | undefined
+    getSuccessDescription?: (result: T) => string | false | undefined,
+    onError?: (errorMsg: string) => boolean
   ) {
     const taskId = `git-${++taskSeq.current}-${Date.now()}`
     setLoading(true)
@@ -180,19 +249,28 @@ export function BranchDropdown({
       const successDescription = getSuccessDescription?.(result)
       updateTask(taskId, { status: "completed" })
       onBranchChange()
-      toast.success(
-        t("toasts.taskCompleted", { label }),
-        successDescription
-          ? {
-              description: successDescription,
-            }
-          : undefined
-      )
+      void emitEvent("folder://git-branch-changed", {
+        folder_id: folder?.id,
+      })
+      if (successDescription !== false) {
+        toast.success(
+          t("toasts.taskCompleted", { label }),
+          successDescription
+            ? {
+                description: successDescription,
+              }
+            : undefined
+        )
+      }
     } catch (err) {
       removeTask(taskId)
+      const errorMsg = toErrorMessage(err)
+      if (onError?.(errorMsg)) {
+        return
+      }
       const errorTitle = t("toasts.taskFailed", { label })
-      pushAlert("error", errorTitle, String(err))
-      toast.error(errorTitle, { description: String(err) })
+      pushAlert("error", errorTitle, errorMsg)
+      toast.error(errorTitle, { description: errorMsg })
     } finally {
       setLoading(false)
     }
@@ -252,9 +330,11 @@ export function BranchDropdown({
   }
 
   async function handleBrowseWorktreePath() {
-    const selected = await open({ directory: true, multiple: false })
+    const selected = await openFileDialog({ directory: true, multiple: false })
     if (selected) {
-      setWorktreePath(selected)
+      setWorktreePath(
+        Array.isArray(selected) ? selected[0] : selected,
+      )
     }
   }
 
@@ -265,7 +345,7 @@ export function BranchDropdown({
     setWorktreeOpen(false)
     await runGitTask(t("tasks.newWorktree", { name }), async () => {
       await gitWorktreeAdd(folderPath, name, wtPath)
-      await openFolderWindow(wtPath)
+      await openFolderWindow(wtPath, { newWindow: true })
       await setFolderParentBranch(wtPath, branch)
     })
   }
@@ -301,6 +381,10 @@ export function BranchDropdown({
           t("tasks.mergeBranch", { branchName }),
           () => gitMerge(folderPath, branchName),
           (result) => {
+            if (result.conflict?.has_conflicts) {
+              setConflictInfo(result.conflict)
+              return false
+            }
             if (result.merged_commits === 0) {
               return t("toasts.mergeNoNewCommits", { branchName })
             }
@@ -309,13 +393,35 @@ export function BranchDropdown({
         )
         break
       case "rebase":
-        await runGitTask(t("tasks.rebaseTo", { branchName }), () =>
-          gitRebase(folderPath, branchName)
+        await runGitTask(
+          t("tasks.rebaseTo", { branchName }),
+          () => gitRebase(folderPath, branchName),
+          (result) => {
+            if (result.conflict?.has_conflicts) {
+              setConflictInfo(result.conflict)
+              return false
+            }
+            return undefined
+          }
         )
         break
       case "delete":
+        await runGitTask(
+          t("tasks.deleteBranch", { branchName }),
+          () => gitDeleteBranch(folderPath, branchName),
+          undefined,
+          (errorMsg) => {
+            if (/not fully merged/i.test(errorMsg)) {
+              setConfirmAction({ type: "forceDelete", branchName })
+              return true
+            }
+            return false
+          }
+        )
+        break
+      case "forceDelete":
         await runGitTask(t("tasks.deleteBranch", { branchName }), () =>
-          gitDeleteBranch(folderPath, branchName)
+          gitDeleteBranch(folderPath, branchName, true)
         )
         break
     }
@@ -330,6 +436,8 @@ export function BranchDropdown({
         return t("confirm.rebaseTitle")
       case "delete":
         return t("confirm.deleteTitle")
+      case "forceDelete":
+        return t("confirm.forceDeleteTitle")
     }
   }
 
@@ -350,10 +458,19 @@ export function BranchDropdown({
         return t("confirm.deleteDescription", {
           branchName: confirmAction.branchName,
         })
+      case "forceDelete":
+        return t("confirm.forceDeleteDescription", {
+          branchName: confirmAction.branchName,
+        })
     }
   }
 
-  function renderBranchItem(b: string, isRemote: boolean) {
+  function renderBranchItem(
+    b: string,
+    isRemote: boolean,
+    displayName?: string
+  ) {
+    const label = displayName ?? b
     const isCurrent = b === branch
     const isWorktree = worktreeBranchSet.has(
       isRemote ? b.replace(/^[^/]+\//, "") : b
@@ -367,7 +484,7 @@ export function BranchDropdown({
           className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm opacity-50 select-none"
         >
           <BranchIcon className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate">{b}</span>
+          <span className="truncate">{label}</span>
           <span className="ml-auto text-xs">{t("current")}</span>
         </div>
       )
@@ -397,7 +514,7 @@ export function BranchDropdown({
           onPointerLeave={(e) => e.preventDefault()}
         >
           <BranchIcon className="h-3.5 w-3.5" />
-          {b}
+          {label}
         </DropdownMenuSubTrigger>
         <DropdownMenuSubContent>
           <DropdownMenuItem
@@ -498,8 +615,15 @@ export function BranchDropdown({
               onSelect={() =>
                 runGitTask(
                   t("tasks.pullCode"),
-                  () => gitPull(folderPath),
+                  () =>
+                    withCredentialRetry((creds) => gitPull(folderPath, creds), {
+                      folderPath,
+                    }),
                   (result) => {
+                    if (result.conflict?.has_conflicts) {
+                      setConflictInfo(result.conflict)
+                      return false
+                    }
                     if (result.updated_files === 0) {
                       return t("toasts.allFilesUpToDate")
                     }
@@ -516,7 +640,11 @@ export function BranchDropdown({
             <DropdownMenuItem
               disabled={loading}
               onSelect={() =>
-                runGitTask(t("tasks.fetchInfo"), () => gitFetch(folderPath))
+                runGitTask(t("tasks.fetchInfo"), () =>
+                  withCredentialRetry((creds) => gitFetch(folderPath, creds), {
+                    folderPath,
+                  })
+                )
               }
             >
               <RefreshCw className="h-3.5 w-3.5" />
@@ -532,8 +660,9 @@ export function BranchDropdown({
                 setDropdownOpen(false)
                 openCommitWindow(folder.id).catch((err) => {
                   const title = t("toasts.openCommitWindowFailed")
-                  pushAlert("error", title, String(err))
-                  toast.error(title, { description: String(err) })
+                  const msg = toErrorMessage(err)
+                  pushAlert("error", title, msg)
+                  toast.error(title, { description: msg })
                 })
               }}
             >
@@ -542,28 +671,16 @@ export function BranchDropdown({
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={loading}
-              onSelect={() =>
-                runGitTask(
-                  t("tasks.pushCode"),
-                  () => gitPush(folderPath),
-                  (result) => {
-                    if (result.upstream_set) {
-                      if (result.pushed_commits === 0) {
-                        return t("toasts.upstreamSet")
-                      }
-                      return t("toasts.upstreamSetAndPushed", {
-                        count: result.pushed_commits,
-                      })
-                    }
-                    if (result.pushed_commits === 0) {
-                      return t("toasts.noCommitsToPush")
-                    }
-                    return t("toasts.pushedCommits", {
-                      count: result.pushed_commits,
-                    })
-                  }
-                )
-              }
+              onSelect={() => {
+                if (!folder) return
+                setDropdownOpen(false)
+                openPushWindow(folder.id).catch((err) => {
+                  const title = t("toasts.openPushWindowFailed")
+                  const msg = toErrorMessage(err)
+                  pushAlert("error", title, msg)
+                  toast.error(title, { description: msg })
+                })
+              }}
             >
               <Upload className="h-3.5 w-3.5" />
               {t("pushCode")}
@@ -593,21 +710,39 @@ export function BranchDropdown({
           <DropdownMenuGroup>
             <DropdownMenuItem
               disabled={loading}
-              onSelect={() =>
-                runGitTask(t("tasks.stashChanges"), () => gitStash(folderPath))
-              }
+              onSelect={() => {
+                setDropdownOpen(false)
+                setStashDialogOpen(true)
+              }}
             >
               <Archive className="h-3.5 w-3.5" />
               {t("stashChanges")}
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={loading}
-              onSelect={() =>
-                runGitTask(t("tasks.stashPop"), () => gitStashPop(folderPath))
-              }
+              onSelect={() => {
+                if (!folder) return
+                openStashWindow(folder.id).catch((err) => {
+                  const msg = toErrorMessage(err)
+                  pushAlert("error", t("stashPop"), msg)
+                })
+              }}
             >
               <ArchiveRestore className="h-3.5 w-3.5" />
               {t("stashPop")}
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              disabled={loading}
+              onSelect={() => {
+                setDropdownOpen(false)
+                setManageRemotesOpen(true)
+              }}
+            >
+              <Globe className="h-3.5 w-3.5" />
+              {t("manageRemotes")}
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
@@ -643,8 +778,32 @@ export function BranchDropdown({
                     <DropdownMenuItem disabled>
                       {t("noRemoteBranches")}
                     </DropdownMenuItem>
+                  ) : hasMultipleRemotes ? (
+                    remoteNames.map((remoteName) => (
+                      <Collapsible key={remoteName}>
+                        <CollapsibleTrigger className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 pl-6 text-sm hover:bg-accent hover:text-accent-foreground select-none outline-hidden">
+                          <ChevronRight className="h-3 w-3 shrink-0 transition-transform [[data-state=open]>&]:rotate-90" />
+                          {remoteName} (
+                          {groupedRemoteBranches[remoteName].length})
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="pl-3">
+                          {groupedRemoteBranches[remoteName].map((b) =>
+                            renderBranchItem(
+                              b,
+                              true,
+                              b.substring(remoteName.length + 1)
+                            )
+                          )}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ))
                   ) : (
-                    branchList.remote.map((b) => renderBranchItem(b, true))
+                    branchList.remote.map((b) => {
+                      const slashIndex = b.indexOf("/")
+                      const shortName =
+                        slashIndex > 0 ? b.substring(slashIndex + 1) : b
+                      return renderBranchItem(b, true, shortName)
+                    })
                   )}
                 </CollapsibleContent>
               </Collapsible>
@@ -782,6 +941,28 @@ export function BranchDropdown({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RemoteManageDialog
+        open={manageRemotesOpen}
+        onOpenChange={setManageRemotesOpen}
+        folderPath={folderPath}
+        onSaved={() => loadAllBranches()}
+      />
+
+      <ConflictDialog
+        conflictInfo={conflictInfo}
+        folderId={folder?.id ?? 0}
+        folderPath={folderPath}
+        onClose={() => setConflictInfo(null)}
+        onResolved={onBranchChange}
+      />
+
+      <StashDialog
+        open={stashDialogOpen}
+        folderPath={folderPath}
+        onClose={() => setStashDialogOpen(false)}
+        onStashed={onBranchChange}
+      />
     </>
   )
 }

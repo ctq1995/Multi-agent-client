@@ -93,6 +93,7 @@ export interface ConnectionState {
   status: ConnectionStatus
   promptCapabilities: PromptCapabilitiesInfo
   selectorsReady: boolean
+  supportsFork: boolean
   sessionId: string | null
   modes: SessionModeStateInfo | null
   configOptions: SessionConfigOptionInfo[] | null
@@ -176,6 +177,11 @@ type Action =
   | {
       type: "SELECTORS_READY"
       contextKey: string
+    }
+  | {
+      type: "FORK_SUPPORTED"
+      contextKey: string
+      supported: boolean
     }
   | {
       type: "PROMPT_CAPABILITIES"
@@ -603,6 +609,7 @@ function connectionsReducer(
           embedded_context: false,
         },
         selectorsReady: false,
+        supportsFork: false,
         sessionId: null,
         modes: null,
         configOptions: null,
@@ -972,6 +979,17 @@ function connectionsReducer(
       return next
     }
 
+    case "FORK_SUPPORTED": {
+      const conn = state.get(action.contextKey)
+      if (!conn) return state
+      const next = new Map(state)
+      next.set(action.contextKey, {
+        ...conn,
+        supportsFork: action.supported,
+      })
+      return next
+    }
+
     case "PROMPT_CAPABILITIES": {
       const conn = state.get(action.contextKey)
       if (!conn) return state
@@ -1160,6 +1178,7 @@ export interface AcpActionsValue {
   setActiveKey(key: string | null): void
   touchActivity(contextKey: string): void
   setRetainedContext(contextKey: string, retained: boolean): void
+  registerOpenTabKeys(keys: Set<string>): void
 }
 
 const AcpActionsContext = createContext<AcpActionsValue | null>(null)
@@ -1573,6 +1592,14 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
           dispatch({
             type: "SELECTORS_READY",
             contextKey,
+          })
+          break
+        case "fork_supported":
+          flushStreamingQueue()
+          dispatch({
+            type: "FORK_SUPPORTED",
+            contextKey,
+            supported: e.supported,
           })
           break
         case "prompt_capabilities":
@@ -2055,6 +2082,10 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
     [dispatch]
   )
 
+  const registerOpenTabKeys = useCallback((_keys: Set<string>) => {
+    // no-op: tab key registration is informational only
+  }, [])
+
   const actions = useMemo<AcpActionsValue>(
     () => ({
       connect,
@@ -2068,6 +2099,7 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
       setActiveKey,
       touchActivity,
       setRetainedContext,
+      registerOpenTabKeys,
     }),
     [
       connect,
@@ -2081,6 +2113,7 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
       setActiveKey,
       touchActivity,
       setRetainedContext,
+      registerOpenTabKeys,
     ]
   )
 

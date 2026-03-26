@@ -9,6 +9,7 @@ import type {
   SidebarData,
   ConnectionInfo,
   AcpAgentInfo,
+  AcpAgentStatus,
   AgentSkillScope,
   AgentSkillLayout,
   AgentSkillItem,
@@ -23,25 +24,35 @@ import type {
   GitBranchList,
   GitPullResult,
   GitPushResult,
+  GitPushInfo,
   GitMergeResult,
+  GitRebaseResult,
+  GitConflictFileVersions,
   GitCommitResult,
+  GitRemote,
+  GitStashEntry,
   PreflightResult,
   FolderCommand,
   TerminalInfo,
   PromptInputBlock,
-  RemoteModelInfo,
   FileTreeNode,
   FilePreviewContent,
   FileEditContent,
   FileSaveResult,
-  GitLogEntry,
+  GitLogResult,
   SystemLanguageSettings,
   SystemProxySettings,
+  GitCredentials,
+  GitDetectResult,
+  GitSettings,
+  GitHubAccountsSettings,
+  GitHubTokenValidation,
   McpAppType,
   LocalMcpServer,
   McpMarketplaceProvider,
   McpMarketplaceItem,
   McpMarketplaceServerDetail,
+  RemoteModelInfo,
 } from "./types"
 
 export async function listConversations(params?: {
@@ -117,6 +128,15 @@ export async function acpCancel(connectionId: string): Promise<void> {
   return invoke("acp_cancel", { connectionId })
 }
 
+export interface ForkResult {
+  forkedSessionId: string
+  originalSessionId: string
+}
+
+export async function acpFork(connectionId: string): Promise<ForkResult> {
+  return invoke("acp_fork", { connectionId })
+}
+
 export async function acpRespondPermission(
   connectionId: string,
   requestId: string,
@@ -139,6 +159,12 @@ export async function acpListConnections(): Promise<ConnectionInfo[]> {
 
 export async function acpListAgents(): Promise<AcpAgentInfo[]> {
   return invoke("acp_list_agents")
+}
+
+export async function acpGetAgentStatus(
+  agentType: AgentType
+): Promise<AcpAgentStatus> {
+  return invoke("acp_get_agent_status", { agentType })
 }
 
 export async function acpClearBinaryCache(agentType: AgentType): Promise<void> {
@@ -208,18 +234,12 @@ export async function acpReorderAgents(agentTypes: AgentType[]): Promise<void> {
 }
 
 export async function acpPreflight(
-  agentType: AgentType
+  agentType: AgentType,
+  forceRefresh?: boolean
 ): Promise<PreflightResult> {
-  return invoke("acp_preflight", { agentType })
-}
-
-export async function fetchRemoteModels(params: {
-  baseUrl: string
-  apiKey?: string | null
-}): Promise<RemoteModelInfo[]> {
-  return invoke("fetch_remote_models", {
-    baseUrl: params.baseUrl,
-    apiKey: params.apiKey ?? null,
+  return invoke("acp_preflight", {
+    agentType,
+    forceRefresh: forceRefresh ?? null,
   })
 }
 
@@ -297,6 +317,60 @@ export async function updateSystemLanguageSettings(
   settings: SystemLanguageSettings
 ): Promise<SystemLanguageSettings> {
   return invoke("update_system_language_settings", { settings })
+}
+
+// --- Version Control ---
+
+export async function detectGit(): Promise<GitDetectResult> {
+  return invoke("detect_git")
+}
+
+export async function testGitPath(path: string): Promise<GitDetectResult> {
+  return invoke("test_git_path", { path })
+}
+
+export async function getGitSettings(): Promise<GitSettings> {
+  return invoke("get_git_settings")
+}
+
+export async function updateGitSettings(
+  settings: GitSettings
+): Promise<GitSettings> {
+  return invoke("update_git_settings", { settings })
+}
+
+export async function getGitHubAccounts(): Promise<GitHubAccountsSettings> {
+  return invoke("get_github_accounts")
+}
+
+export async function validateGitHubToken(
+  serverUrl: string,
+  token: string
+): Promise<GitHubTokenValidation> {
+  return invoke("validate_github_token", { serverUrl, token })
+}
+
+export async function updateGitHubAccounts(
+  settings: GitHubAccountsSettings
+): Promise<GitHubAccountsSettings> {
+  return invoke("update_github_accounts", { settings })
+}
+
+export async function saveAccountToken(
+  accountId: string,
+  token: string
+): Promise<void> {
+  return invoke("save_account_token", { accountId, token })
+}
+
+export async function getAccountToken(
+  accountId: string
+): Promise<string | null> {
+  return invoke("get_account_token", { accountId })
+}
+
+export async function deleteAccountToken(accountId: string): Promise<void> {
+  return invoke("delete_account_token", { accountId })
 }
 
 export async function mcpScanLocal(): Promise<LocalMcpServer[]> {
@@ -443,9 +517,14 @@ export async function createFolderDirectory(path: string): Promise<void> {
 
 export async function cloneRepository(
   url: string,
-  targetDir: string
+  targetDir: string,
+  credentials?: GitCredentials | null
 ): Promise<void> {
-  return invoke("clone_repository", { url, targetDir })
+  return invoke("clone_repository", {
+    url,
+    targetDir,
+    credentials: credentials ?? null,
+  })
 }
 
 export async function getGitBranch(path: string): Promise<string | null> {
@@ -456,16 +535,45 @@ export async function gitInit(path: string): Promise<void> {
   return invoke("git_init", { path })
 }
 
-export async function gitPull(path: string): Promise<GitPullResult> {
-  return invoke("git_pull", { path })
+export async function gitPull(
+  path: string,
+  credentials?: GitCredentials | null
+): Promise<GitPullResult> {
+  return invoke("git_pull", { path, credentials: credentials ?? null })
 }
 
-export async function gitFetch(path: string): Promise<string> {
-  return invoke("git_fetch", { path })
+export async function gitStartPullMerge(
+  path: string,
+  upstreamCommit?: string | null
+): Promise<void> {
+  return invoke("git_start_pull_merge", { path, upstreamCommit })
 }
 
-export async function gitPush(path: string): Promise<GitPushResult> {
-  return invoke("git_push", { path })
+export async function gitHasMergeHead(path: string): Promise<boolean> {
+  return invoke("git_has_merge_head", { path })
+}
+
+export async function gitFetch(
+  path: string,
+  credentials?: GitCredentials | null
+): Promise<string> {
+  return invoke("git_fetch", { path, credentials: credentials ?? null })
+}
+
+export async function gitPushInfo(path: string): Promise<GitPushInfo> {
+  return invoke("git_push_info", { path })
+}
+
+export async function gitPush(
+  path: string,
+  remote?: string | null,
+  credentials?: GitCredentials | null
+): Promise<GitPushResult> {
+  return invoke("git_push", {
+    path,
+    remote: remote ?? null,
+    credentials: credentials ?? null,
+  })
 }
 
 export async function gitNewBranch(
@@ -513,7 +621,7 @@ export async function gitMerge(
 export async function gitRebase(
   path: string,
   branchName: string
-): Promise<string> {
+): Promise<GitRebaseResult> {
   return invoke("git_rebase", { path, branchName })
 }
 
@@ -525,16 +633,154 @@ export async function gitDeleteBranch(
   return invoke("git_delete_branch", { path, branchName, force })
 }
 
-export async function gitStash(path: string): Promise<string> {
-  return invoke("git_stash", { path })
+export async function gitListConflicts(path: string): Promise<string[]> {
+  return invoke("git_list_conflicts", { path })
 }
 
-export async function gitStashPop(path: string): Promise<string> {
-  return invoke("git_stash_pop", { path })
+export async function gitConflictFileVersions(
+  path: string,
+  file: string
+): Promise<GitConflictFileVersions> {
+  return invoke("git_conflict_file_versions", { path, file })
 }
 
-export async function gitStatus(path: string): Promise<GitStatusEntry[]> {
-  return invoke("git_status", { path })
+export async function gitResolveConflict(
+  path: string,
+  file: string,
+  content: string
+): Promise<void> {
+  return invoke("git_resolve_conflict", { path, file, content })
+}
+
+export async function gitAbortOperation(
+  path: string,
+  operation: string
+): Promise<void> {
+  return invoke("git_abort_operation", { path, operation })
+}
+
+export async function gitContinueOperation(
+  path: string,
+  operation: string
+): Promise<void> {
+  return invoke("git_continue_operation", { path, operation })
+}
+
+export async function openMergeWindow(
+  folderId: number,
+  operation: string,
+  upstreamCommit?: string | null
+): Promise<void> {
+  return invoke("open_merge_window", {
+    folderId,
+    operation,
+    upstreamCommit: upstreamCommit ?? null,
+  })
+}
+
+export async function openStashWindow(folderId: number): Promise<void> {
+  return invoke("open_stash_window", { folderId })
+}
+
+export async function openPushWindow(folderId: number): Promise<void> {
+  return invoke("open_push_window", { folderId })
+}
+
+export async function gitStashPush(
+  path: string,
+  message?: string,
+  keepIndex?: boolean
+): Promise<string> {
+  return invoke("git_stash_push", {
+    path,
+    message: message ?? null,
+    keepIndex: keepIndex ?? false,
+  })
+}
+
+export async function gitStashPop(
+  path: string,
+  stashRef?: string
+): Promise<string> {
+  return invoke("git_stash_pop", { path, stashRef: stashRef ?? null })
+}
+
+export async function gitStashList(path: string): Promise<GitStashEntry[]> {
+  return invoke("git_stash_list", { path })
+}
+
+export async function gitStashApply(
+  path: string,
+  stashRef: string
+): Promise<string> {
+  return invoke("git_stash_apply", { path, stashRef })
+}
+
+export async function gitStashDrop(
+  path: string,
+  stashRef: string
+): Promise<string> {
+  return invoke("git_stash_drop", { path, stashRef })
+}
+
+export async function gitStashClear(path: string): Promise<string> {
+  return invoke("git_stash_clear", { path })
+}
+
+export async function gitStashShow(
+  path: string,
+  stashRef: string
+): Promise<GitStatusEntry[]> {
+  return invoke("git_stash_show", { path, stashRef })
+}
+
+export async function gitListRemotes(path: string): Promise<GitRemote[]> {
+  return invoke("git_list_remotes", { path })
+}
+
+export async function gitFetchRemote(
+  path: string,
+  name: string,
+  credentials?: GitCredentials | null
+): Promise<string> {
+  return invoke("git_fetch_remote", {
+    path,
+    name,
+    credentials: credentials ?? null,
+  })
+}
+
+export async function gitAddRemote(
+  path: string,
+  name: string,
+  url: string
+): Promise<void> {
+  return invoke("git_add_remote", { path, name, url })
+}
+
+export async function gitRemoveRemote(
+  path: string,
+  name: string
+): Promise<void> {
+  return invoke("git_remove_remote", { path, name })
+}
+
+export async function gitSetRemoteUrl(
+  path: string,
+  name: string,
+  url: string
+): Promise<void> {
+  return invoke("git_set_remote_url", { path, name, url })
+}
+
+export async function gitStatus(
+  path: string,
+  showAllUntracked?: boolean
+): Promise<GitStatusEntry[]> {
+  return invoke("git_status", {
+    path,
+    showAllUntracked: showAllUntracked ?? null,
+  })
 }
 
 export async function gitDiff(path: string, file?: string): Promise<string> {
@@ -763,26 +1009,16 @@ export async function readFileBase64(
 
 export async function readFilePreview(
   rootPath: string,
-  path: string,
-  maxBytes?: number
+  path: string
 ): Promise<FilePreviewContent> {
-  return invoke("read_file_preview", {
-    rootPath,
-    path,
-    maxBytes: maxBytes ?? null,
-  })
+  return invoke("read_file_preview", { rootPath, path })
 }
 
 export async function readFileForEdit(
   rootPath: string,
-  path: string,
-  maxBytes?: number
+  path: string
 ): Promise<FileEditContent> {
-  return invoke("read_file_for_edit", {
-    rootPath,
-    path,
-    maxBytes: maxBytes ?? null,
-  })
+  return invoke("read_file_for_edit", { rootPath, path })
 }
 
 export async function saveFileContent(
@@ -826,15 +1062,26 @@ export async function deleteFileTreeEntry(
   return invoke("delete_file_tree_entry", { rootPath, path })
 }
 
+export async function createFileTreeEntry(
+  rootPath: string,
+  path: string,
+  name: string,
+  kind: "file" | "dir"
+): Promise<string> {
+  return invoke("create_file_tree_entry", { rootPath, path, name, kind })
+}
+
 export async function gitLog(
   path: string,
   limit?: number,
-  branch?: string
-): Promise<GitLogEntry[]> {
+  branch?: string,
+  remote?: string
+): Promise<GitLogResult> {
   return invoke("git_log", {
     path,
     limit: limit ?? null,
     branch: branch ?? null,
+    remote: remote ?? null,
   })
 }
 
@@ -878,4 +1125,14 @@ export async function terminalKill(terminalId: string): Promise<void> {
 
 export async function terminalList(): Promise<TerminalInfo[]> {
   return invoke("terminal_list")
+}
+
+export async function fetchRemoteModels(params: {
+  baseUrl: string
+  apiKey?: string | null
+}): Promise<RemoteModelInfo[]> {
+  return invoke("fetch_remote_models", {
+    baseUrl: params.baseUrl,
+    apiKey: params.apiKey ?? null,
+  })
 }

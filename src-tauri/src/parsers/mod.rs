@@ -9,7 +9,8 @@ use std::sync::OnceLock;
 use regex::Regex;
 
 use crate::models::{
-    ConversationDetail, ConversationSummary, MessageTurn, SessionStats, TurnUsage,
+    ContentBlock, ConversationDetail, ConversationSummary, MessageTurn, SessionStats, TurnRole,
+    TurnUsage,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -207,6 +208,30 @@ pub fn merge_context_window_stats(
 }
 
 /// Extract the last path component as the folder name.
+/// Move `ToolResult` blocks that ended up in standalone `User` turns into the
+/// preceding `Assistant` turn.  This can happen when parsers emit tool-result
+/// messages separately from the assistant turn that issued the corresponding
+/// tool-use call.
+pub fn relocate_orphaned_tool_results(turns: &mut Vec<MessageTurn>) {
+    let mut i = 0;
+    while i < turns.len() {
+        let is_orphaned_user = matches!(turns[i].role, TurnRole::User)
+            && !turns[i].blocks.is_empty()
+            && turns[i]
+                .blocks
+                .iter()
+                .all(|b| matches!(b, ContentBlock::ToolResult { .. }));
+
+        if is_orphaned_user && i > 0 && matches!(turns[i - 1].role, TurnRole::Assistant) {
+            let blocks = turns.remove(i).blocks;
+            turns[i - 1].blocks.extend(blocks);
+            // don't advance i — re-check same index
+        } else {
+            i += 1;
+        }
+    }
+}
+
 pub fn folder_name_from_path(path: &str) -> String {
     path.rsplit(['/', '\\']).next().unwrap_or(path).to_string()
 }

@@ -15,34 +15,23 @@ pub async fn send_notification(
         } else {
             "app.multiagentclient"
         };
-        mac_notification_sys::set_application(app_id).map_err(|e| {
-            AppCommandError::task_execution_failed("Failed to set notification application")
-                .with_detail(e.to_string())
-        })?;
+        let _ = mac_notification_sys::set_application(app_id);
 
-        mac_notification_sys::Notification::default()
+        let _ = mac_notification_sys::Notification::default()
             .title(&title)
             .message(&body)
-            .send()
-            .map(|_| ())
-            .map_err(|e| {
-                AppCommandError::task_execution_failed("Failed to send notification")
-                    .with_detail(e.to_string())
-            })?;
+            .send();
     }
 
     #[cfg(not(target_os = "macos"))]
     {
         use tauri_plugin_notification::NotificationExt;
-        app.notification()
+        let _ = app
+            .notification()
             .builder()
             .title(title)
             .body(body)
-            .show()
-            .map_err(|e| {
-                AppCommandError::task_execution_failed("Failed to send notification")
-                    .with_detail(e.to_string())
-            })?;
+            .show();
     }
 
     Ok(())

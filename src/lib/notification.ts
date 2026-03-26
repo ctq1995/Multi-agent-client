@@ -1,18 +1,22 @@
-import { invoke } from "@tauri-apps/api/core"
-import { getCurrentWindow } from "@tauri-apps/api/window"
-
-async function shouldNotifyTurnComplete(): Promise<boolean> {
-  if (document.hidden) {
-    return true
-  }
-
-  return !(await getCurrentWindow().isFocused())
-}
+import { getTransport } from "./transport"
+import { isDesktop } from "./transport"
 
 export async function notifyTurnComplete(
   title: string,
   body: string
 ): Promise<void> {
-  if (!(await shouldNotifyTurnComplete())) return
-  await invoke("send_notification", { title, body })
+  if (!document.hidden) return
+  if (isDesktop()) {
+    await getTransport().call("send_notification", { title, body })
+  } else {
+    // Web fallback: Browser Notification API
+    if (Notification.permission === "granted") {
+      new Notification(title, { body })
+    } else if (Notification.permission !== "denied") {
+      const permission = await Notification.requestPermission()
+      if (permission === "granted") {
+        new Notification(title, { body })
+      }
+    }
+  }
 }

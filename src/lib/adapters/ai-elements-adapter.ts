@@ -76,14 +76,6 @@ type InlineToolSegment =
   | { kind: "tool_call" | "tool_result"; value: string }
 
 const INLINE_TOOL_TAG_RE = /<(tool_call|tool_result)>\s*([\s\S]*?)\s*<\/\1>/gi
-const adaptedTurnCache = new WeakMap<MessageTurn, Map<string, AdaptedMessage>>()
-
-function buildAdaptedTurnCacheKey(
-  text: AdapterMessageText,
-  isStreaming: boolean
-): string {
-  return `${isStreaming ? "1" : "0"}|${text.attachedResources}|${text.toolCallFailed}`
-}
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -614,13 +606,6 @@ export function adaptMessageTurn(
   text: AdapterMessageText,
   isStreaming: boolean = false
 ): AdaptedMessage {
-  const cacheKey = buildAdaptedTurnCacheKey(text, isStreaming)
-  const cachedByText = adaptedTurnCache.get(turn)
-  const cached = cachedByText?.get(cacheKey)
-  if (cached) {
-    return cached
-  }
-
   const adaptedContent: AdaptedContentPart[] = []
   const resultMap = buildToolResultMap(turn.blocks)
   const matchedResultIds = new Set<string>()
@@ -719,16 +704,11 @@ export function adaptMessageTurn(
     }
   }
 
-  // Mark the last reasoning block (if any) as streaming while the turn is streaming.
-  // Reasoning blocks are not guaranteed to be the last content part (tool calls
-  // can follow), so we scan from the end.
+  // Mark the last reasoning block as streaming if the turn is actively streaming
   if (isStreaming) {
-    for (let i = adaptedContent.length - 1; i >= 0; i -= 1) {
-      const part = adaptedContent[i]
-      if (part?.type === "reasoning") {
-        part.isStreaming = true
-        break
-      }
+    const last = adaptedContent[adaptedContent.length - 1]
+    if (last?.type === "reasoning") {
+      last.isStreaming = true
     }
   }
 
@@ -739,7 +719,7 @@ export function adaptMessageTurn(
   const userImages =
     turn.role === "user" ? extractUserImagesFromBlocks(turn.blocks) : []
 
-  const adaptedMessage: AdaptedMessage = {
+  return {
     id: turn.id,
     role: turn.role,
     content: userSplit.parts,
@@ -751,10 +731,6 @@ export function adaptMessageTurn(
     duration_ms: turn.duration_ms,
     model: turn.model,
   }
-  const nextCachedByText = cachedByText ?? new Map<string, AdaptedMessage>()
-  nextCachedByText.set(cacheKey, adaptedMessage)
-  adaptedTurnCache.set(turn, nextCachedByText)
-  return adaptedMessage
 }
 
 /**

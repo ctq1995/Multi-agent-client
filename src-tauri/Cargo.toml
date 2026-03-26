@@ -29,10 +29,10 @@ dirs = "6"
 walkdir = "2"
 sacp = "11.0.0-alpha.1"
 sacp-tokio = "11.0.0-alpha.1"
-tokio = { version = "1", features = ["process", "io-util", "sync", "macros", "rt"] }
+tokio = { version = "1", features = ["process", "io-util", "sync", "macros", "rt", "net"] }
 uuid = { version = "1", features = ["v4"] }
 futures = "0.3"
-reqwest = { version = "0.12", features = ["stream"] }
+reqwest = { version = "0.12", features = ["stream", "json"] }
 flate2 = "1"
 bzip2 = "0.5"
 tar = "0.4"
@@ -46,9 +46,12 @@ sea-orm-migration = { version = "1.1", features = ["sqlx-sqlite", "runtime-tokio
 toml = "0.8"
 notify = "6"
 base64 = "0.22"
-agent-client-protocol-schema = { version = "0.10", features = ["unstable_session_usage"] }
+agent-client-protocol-schema = { version = "0.10", features = ["unstable_session_usage", "unstable_session_fork"] }
 kill_tree = { version = "0.2", features = ["tokio"] }
 which = "7"
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
+axum = { version = "0.8", features = ["ws"] }
+tower-http = { version = "0.6", features = ["fs", "cors"] }
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-window-state = "2"

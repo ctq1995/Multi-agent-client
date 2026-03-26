@@ -1,9 +1,11 @@
 "use client"
 
-import { useCallback, type ComponentType, type ReactNode } from "react"
+import { useCallback, useEffect, type ComponentType, type ReactNode } from "react"
 import {
   Bot,
   BookOpenText,
+  GitBranch,
+  Globe,
   Keyboard,
   Palette,
   PlugZap,
@@ -19,7 +21,15 @@ import { AppTitleBar } from "@/components/layout/app-title-bar"
 
 interface SettingsNavItem {
   href: string
-  labelKey: "appearance" | "agents" | "mcp" | "skills" | "shortcuts" | "system"
+  labelKey:
+    | "appearance"
+    | "agents"
+    | "mcp"
+    | "skills"
+    | "shortcuts"
+    | "version_control"
+    | "system"
+    | "web_service"
   icon: ComponentType<{ className?: string }>
 }
 
@@ -50,6 +60,16 @@ const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
     icon: Keyboard,
   },
   {
+    href: "/settings/version-control",
+    labelKey: "version_control",
+    icon: GitBranch,
+  },
+  {
+    href: "/settings/web-service",
+    labelKey: "web_service",
+    icon: Globe,
+  },
+  {
     href: "/settings/system",
     labelKey: "system",
     icon: Settings,
@@ -66,14 +86,6 @@ function normalizePath(path: string): string {
   return noTrailingSlash || "/"
 }
 
-function toStaticExportPath(path: string): string {
-  const [pathname, query = ""] = path.split("?")
-  const normalizedPath = normalizePath(pathname)
-  const htmlPath =
-    normalizedPath === "/" ? "/index.html" : `${normalizedPath}.html`
-  return query ? `${htmlPath}?${query}` : htmlPath
-}
-
 function isWindowsRuntime(): boolean {
   if (typeof navigator === "undefined") return false
   const platform = navigator.platform.toLowerCase()
@@ -87,6 +99,10 @@ export function SettingsShell({ children }: SettingsShellProps) {
   const router = useRouter()
   const normalizedPathname = normalizePath(pathname)
 
+  useEffect(() => {
+    document.title = `${t("title")} - Multi-agent-client`
+  }, [t])
+
   const navigateTo = useCallback(
     (href: string) => {
       if (typeof window === "undefined") return
@@ -97,7 +113,7 @@ export function SettingsShell({ children }: SettingsShellProps) {
 
       if (isWindowsRuntime()) {
         // WebView2 on Windows: hard navigation is more reliable than client routing.
-        window.location.assign(toStaticExportPath(target))
+        window.location.assign(target)
         return
       }
 
@@ -125,8 +141,6 @@ export function SettingsShell({ children }: SettingsShellProps) {
               const Icon = item.icon
               const translationKey = `nav.${item.labelKey}` as const
               const active =
-                (normalizedPathname === "/settings" &&
-                  item.href === "/settings/appearance") ||
                 normalizedPathname === item.href ||
                 normalizedPathname.startsWith(`${item.href}/`)
               return (

@@ -11,8 +11,8 @@ import {
   type ReactNode,
 } from "react"
 import { toErrorMessage } from "@/lib/app-error"
-import { getLruValue, setLruValue } from "@/lib/lru-cache"
-import { getFolder, listFolderConversations } from "@/lib/tauri"
+import { getFolder, listFolderConversations } from "@/lib/api"
+import { isDesktop } from "@/lib/transport"
 import type {
   AgentType,
   AgentStats,
@@ -26,7 +26,6 @@ interface SelectedConversation {
 }
 
 interface NewConversationState {
-  agentType: AgentType
   workingDir: string
 }
 
@@ -45,7 +44,7 @@ interface FolderContextValue {
   clearSelection: () => void
 
   newConversation: NewConversationState | null
-  startNewConversation: (agentType: AgentType, workingDir: string) => void
+  startNewConversation: (workingDir: string) => void
   cancelNewConversation: () => void
 
   stats: AgentStats | null
@@ -84,7 +83,6 @@ function computeStats(conversations: DbConversationSummary[]): AgentStats {
 
 /** Module-level cache — survives component unmounts / page navigations. */
 const cache = new Map<string, DbConversationSummary[]>()
-const MAX_FOLDER_CACHE_ENTRIES = 20
 
 interface FolderProviderProps {
   children: ReactNode
@@ -106,7 +104,7 @@ export function FolderProvider({
   // Conversations
   const cacheKey = String(folderId)
   const [conversations, setConversations] = useState<DbConversationSummary[]>(
-    () => getLruValue(cache, cacheKey) ?? []
+    () => cache.get(cacheKey) ?? []
   )
   const [loading, setLoading] = useState(() => !cache.has(cacheKey))
   const [refreshing, setRefreshing] = useState(false)
@@ -155,7 +153,7 @@ export function FolderProvider({
   }, [folderId])
 
   const fetchConversations = useCallback(async () => {
-    const cached = getLruValue(cache, cacheKey)
+    const cached = cache.get(cacheKey)
 
     if (cached) {
       setConversations(cached)
@@ -172,7 +170,7 @@ export function FolderProvider({
         status: null,
       })
       if (!mountedRef.current) return
-      setLruValue(cache, cacheKey, data, MAX_FOLDER_CACHE_ENTRIES)
+      cache.set(cacheKey, data)
       setConversations(data)
     } catch (e) {
       if (!mountedRef.current) return
@@ -198,6 +196,13 @@ export function FolderProvider({
     }
   }, [])
 
+  // Web mode: register this tab's name so that window.open("", "folder-{id}")
+  // from other pages can find and reuse it instead of opening duplicates.
+  useEffect(() => {
+    if (isDesktop() || !folderId) return
+    window.name = `folder-${folderId}`
+  }, [folderId])
+
   const selectConversation = useCallback((id: number, agentType: AgentType) => {
     setSelectedConversation({ id, agentType })
     setNewConversation(null)
@@ -207,13 +212,10 @@ export function FolderProvider({
     setSelectedConversation(null)
   }, [])
 
-  const startNewConversation = useCallback(
-    (agentType: AgentType, workingDir: string) => {
-      setNewConversation({ agentType, workingDir })
-      setSelectedConversation(null)
-    },
-    []
-  )
+  const startNewConversation = useCallback((workingDir: string) => {
+    setNewConversation({ workingDir })
+    setSelectedConversation(null)
+  }, [])
 
   const cancelNewConversation = useCallback(() => {
     setNewConversation(null)

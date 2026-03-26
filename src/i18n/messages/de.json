@@ -28,7 +28,7 @@
       "removeFromHistoryFailed": "Ordner konnte nicht entfernt werden",
       "openSettingsFailed": "Einstellungen konnten nicht geöffnet werden",
       "cloneFailed": "Repository konnte nicht geklont werden",
-      "cloneProgressUnavailable": "Klon-Fortschritt ist nicht verf?gbar (Klonen l?uft weiter)."
+      "cloneProgressUnavailable": "Klon-Fortschrittsverfolgung nicht verfügbar"
     },
     "errors": {
       "unknown": "Unerwarteter Fehler",
@@ -58,6 +58,27 @@
       "clone": "Klonen"
     }
   },
+  "GitCredentialDialog": {
+    "title": "Authentifizierung erforderlich",
+    "description": "Der Remote-Server erfordert Anmeldedaten. Geben Sie Ihren Benutzernamen und Ihr Passwort (oder persönliches Zugriffstoken) ein.",
+    "username": "Benutzername",
+    "usernamePlaceholder": "Benutzername oder E-Mail",
+    "password": "Passwort / Token",
+    "passwordPlaceholder": "Passwort oder persönliches Zugriffstoken",
+    "passwordHint": "Geben Sie Benutzername und Passwort des Servers ein.",
+    "cancel": "Abbrechen",
+    "authenticate": "Authentifizieren",
+    "authenticating": "Authentifizierung...",
+    "invalidCredentials": "Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.",
+    "saveCredentials": "Anmeldedaten für zukünftige Vorgänge speichern",
+    "githubTitle": "GitHub-Authentifizierung",
+    "githubDescription": "Geben Sie ein persönliches Zugriffstoken ein, um sich mit GitHub zu verbinden. Das Token wird validiert und automatisch gespeichert.",
+    "githubToken": "Persönliches Zugriffstoken",
+    "githubTokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "githubTokenHint": "Erstellen Sie ein Token unter GitHub → Settings → Developer settings → Personal access tokens.",
+    "githubAuthenticate": "Validieren & verbinden",
+    "generateToken": "Token erstellen"
+  },
   "SettingsShell": {
     "title": "Einstellungen",
     "preferences": "Präferenzen",
@@ -67,7 +88,9 @@
       "mcp": "MCP",
       "skills": "Skills",
       "shortcuts": "Kurzbefehle",
-      "system": "Systemeinstellungen"
+      "version_control": "Versionskontrolle",
+      "system": "Systemeinstellungen",
+      "web_service": "Webdienst"
     }
   },
   "AppearanceSettings": {
@@ -106,6 +129,7 @@
     "languageSaveSuccess": "Spracheinstellungen wurden gespeichert",
     "languageSaveFailed": "Spracheinstellungen konnten nicht gespeichert werden: {message}",
     "updateTitle": "App-Update",
+    "versionTitle": "Softwareupdate",
     "updateDescription": "Prüft die konfigurierte Release-Quelle auf neue Versionen und installiert sie bei Verfügbarkeit direkt.",
     "currentVersion": "Aktuelle Version",
     "upgradableVersion": "Neueste Version",
@@ -127,6 +151,75 @@
       "downloadFailed": "Das Update-Paket konnte nicht heruntergeladen werden. Bitte später erneut versuchen.",
       "installFailed": "Das Update konnte nicht installiert werden. Bitte App schließen und erneut versuchen.",
       "unknown": "Update fehlgeschlagen. Bitte später erneut versuchen."
+    }
+  },
+  "VersionControlSettings": {
+    "loading": "Laden...",
+    "sectionTitle": "Versionskontrolle",
+    "sectionDescription": "Git-Programm konfigurieren und GitHub-Konten verwalten.",
+    "gitTitle": "Git-Konfiguration",
+    "gitDescription": "Konfigurieren Sie das von der Anwendung verwendete Git-Programm.",
+    "gitDetected": "Git erkannt",
+    "gitNotFound": "Git wurde nicht gefunden",
+    "gitVersion": "Version",
+    "gitPath": "Pfad",
+    "customGitPath": "Benutzerdefinierter Git-Pfad",
+    "customGitPathPlaceholder": "/usr/bin/git",
+    "customGitPathHint": "Leer lassen, um den automatisch erkannten Pfad zu verwenden.",
+    "test": "Testen",
+    "testing": "Teste...",
+    "testSuccess": "Git-Programm ist gültig.",
+    "testFailed": "Git-Test fehlgeschlagen: {message}",
+    "save": "Speichern",
+    "saving": "Speichern...",
+    "saveSuccess": "Git-Einstellungen gespeichert.",
+    "saveFailed": "Speichern fehlgeschlagen: {message}",
+    "githubTitle": "GitHub-Konten",
+    "githubDescription": "GitHub-Konten für die Authentifizierung verwalten. Token werden lokal gespeichert.",
+    "noAccounts": "Keine GitHub-Konten konfiguriert.",
+    "addAccount": "Konto hinzufügen",
+    "serverUrl": "Server-URL",
+    "serverUrlPlaceholder": "https://github.com",
+    "token": "Persönlicher Zugriffstoken",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "generateToken": "Token erstellen",
+    "tokenHint": "Erstellen Sie einen Token unter GitHub → Settings → Developer settings → Personal access tokens.",
+    "validateAndAdd": "Validieren & hinzufügen",
+    "validating": "Validiere...",
+    "addSuccess": "Konto {username} erfolgreich hinzugefügt.",
+    "addFailed": "Konto konnte nicht hinzugefügt werden: {message}",
+    "testConnection": "Testen",
+    "connectionSuccess": "Verbindung erfolgreich.",
+    "connectionFailed": "Verbindung fehlgeschlagen: {message}",
+    "setDefault": "Als Standard festlegen",
+    "defaultLabel": "Standard",
+    "defaultSet": "Standardkonto aktualisiert.",
+    "removeAccount": "Entfernen",
+    "removeConfirmTitle": "Konto entfernen",
+    "removeConfirmMessage": "Möchten Sie das Konto \"{username}\" wirklich entfernen?",
+    "removeConfirm": "Entfernen",
+    "removeCancel": "Abbrechen",
+    "removeSuccess": "Konto entfernt.",
+    "scopes": "Berechtigungen",
+    "loadFailed": "Einstellungen konnten nicht geladen werden: {message}",
+    "gitAccount": {
+      "sectionTitle": "Git-Server-Konten",
+      "sectionDescription": "Verwalten Sie Anmeldedaten für Nicht-GitHub-Git-Server (GitLab, Bitbucket, selbst gehostet usw.).",
+      "noAccounts": "Keine Git-Server-Konten konfiguriert.",
+      "addAccount": "Konto hinzufügen",
+      "addTitle": "Git-Konto hinzufügen",
+      "addDescription": "Geben Sie Serveradresse, Benutzername und Passwort oder Zugriffstoken ein.",
+      "serverUrl": "Server-URL",
+      "serverUrlPlaceholder": "https://gitlab.example.com",
+      "username": "Benutzername",
+      "usernamePlaceholder": "Benutzername oder E-Mail",
+      "password": "Passwort / Token",
+      "passwordPlaceholder": "Passwort oder Zugriffstoken",
+      "passwordHint": "Geben Sie das Passwort oder Zugriffstoken des Servers ein.",
+      "add": "Hinzufügen",
+      "serverRequired": "Server-URL ist erforderlich.",
+      "usernameRequired": "Benutzername ist erforderlich.",
+      "passwordRequired": "Passwort ist erforderlich."
     }
   },
   "ShortcutSettings": {
@@ -407,6 +500,10 @@
     },
     "codex": {
       "configDescription": "Unterstützt schnelle Konfiguration von API-URL, API-Key, Modellname und reasoning effort und synchronisiert mit `auth.json` / `config.toml`.",
+      "authMode": "Authentifizierungsmodus",
+      "chatgptSubscription": "Offizielles Abonnement",
+      "chatgptSubscriptionHint": "Mit offiziellem ChatGPT-Abonnement anmelden, kein API Key erforderlich",
+      "apiKeyHint": "Mit API Key zu OpenAI oder kompatiblen API-Diensten verbinden",
       "selectProvider": "Provider auswählen",
       "modelName": "Modellname",
       "selectReasoningEffort": "Reasoning Effort auswählen",
@@ -519,6 +616,7 @@
       "openClawSaved": "OpenClaw-Konfiguration gespeichert",
       "saveOpenClawFailed": "Speichern der OpenClaw-Konfiguration fehlgeschlagen",
       "configSaved": "Konfiguration gespeichert",
+      "configSavedHint": "Bestehende Sitzungen müssen neu geöffnet werden, damit die Änderungen wirksam werden",
       "saveConfigManagementFailed": "Speichern der Konfigurationsverwaltung fehlgeschlagen"
     },
     "version": {
@@ -533,16 +631,15 @@
       "latest": "{versionText}. Bereits aktuell."
     },
     "modelSelector": {
-      "fetchModels": "Fetch models",
-      "fetchedCount": "{count} models loaded",
-      "fetchFirst": "Fill API URL and API key first",
-      "fetchProviderFirst": "Fill current provider API URL and API key first",
-      "fetchCurrentProviderModelsFirst": "Fetch current provider models first",
-      "configureProviderFirst": "Configure a provider first",
-      "empty": "No models available",
-      "filterHint": "Type to automatically filter models",
-      "select": "Select",
-      "contextWindow": "Context {count}"
+      "filterHint": "Tippen um Modelle zu filtern",
+      "empty": "Keine Modelle gefunden",
+      "select": "Auswählen",
+      "fetchModels": "Modelle abrufen",
+      "fetchedCount": "{count} Modelle abgerufen",
+      "fetchFirst": "Auf Modelle abrufen klicken zum Laden",
+      "configureProviderFirst": "Zuerst einen Anbieter konfigurieren",
+      "fetchProviderFirst": "Auf Abrufen klicken um Anbietermodelle zu laden",
+      "fetchCurrentProviderModelsFirst": "Auf Abrufen klicken um Modelle dieses Anbieters zu laden"
     }
   },
   "SettingsPages": {
@@ -552,6 +649,32 @@
     "title": "Einchecken",
     "invalidFolderId": "Ungültige Ordner-ID",
     "loadingRepo": "Repository wird geladen..."
+  },
+  "MergePage": {
+    "title": "Konflikte lösen",
+    "invalidFolderId": "Ungültige Ordner-ID",
+    "loadingRepo": "Repository wird geladen...",
+    "localVersion": "Lokal (Unsere)",
+    "result": "Ergebnis",
+    "remoteVersion": "Remote (Deren)",
+    "acceptLocal": "Lokal übernehmen",
+    "acceptRemote": "Remote übernehmen",
+    "markResolved": "Als gelöst markieren",
+    "abortMerge": "Abbrechen",
+    "completeMerge": "Merge abschließen",
+    "unresolvedConflicts": "Es gibt noch ungelöste Konfliktmarkierungen in dieser Datei",
+    "fileResolved": "Datei erfolgreich gelöst",
+    "allResolved": "Alle Konflikte gelöst",
+    "conflictFiles": "Konfliktdateien",
+    "loadingFile": "Datei wird geladen...",
+    "preparingMerge": "Merge wird vorbereitet...",
+    "selectFile": "Datei zum Lösen auswählen",
+    "noConflicts": "Keine Konfliktdateien",
+    "skipFile": "Überspringen",
+    "abortSuccess": "Vorgang abgebrochen",
+    "applyAllNonConflicting": "Alle konfliktfreien Änderungen anwenden",
+    "applyLeftNonConflicting": "Lokal anwenden",
+    "applyRightNonConflicting": "Remote anwenden"
   },
   "Folder": {
     "common": {
@@ -570,7 +693,8 @@
       "create": "Erstellen",
       "createAndSwitch": "Erstellen und wechseln",
       "openFile": "Datei öffnen",
-      "viewDiff": "Diff anzeigen"
+      "viewDiff": "Diff anzeigen",
+      "push": "Pushen..."
     },
     "modes": {
       "conversation": "Konversationsmodus",
@@ -611,7 +735,10 @@
       "reloaded": "Konversation neu geladen",
       "reload": "Neu laden",
       "newConversation": "Neue Konversation",
-      "closeConversation": "Konversation schließen"
+      "closeConversation": "Konversation schließen",
+      "forkSession": "Sitzung forken",
+      "forkSessionSuccess": "Sitzung erfolgreich geforkt",
+      "forkSessionFailed": "Sitzung konnte nicht geforkt werden: {error}"
     },
     "conversationCard": {
       "untitledConversation": "Unbenannte Konversation",
@@ -628,11 +755,15 @@
       "save": "Speichern"
     },
     "search": {
-      "dialogTitle": "Konversationen suchen",
+      "dialogTitle": "Suchen",
+      "tabConversations": "Konversationen",
+      "tabFiles": "Dateien",
       "placeholder": "Konversationen suchen...",
+      "filePlaceholder": "Dateien oder Verzeichnisse suchen...",
       "allAgents": "Alle",
       "searching": "Suche...",
       "typeToSearch": "Tippen, um Konversationen zu suchen",
+      "typeToSearchFiles": "Tippen, um Dateien oder Verzeichnisse zu suchen",
       "noResults": "Keine Ergebnisse gefunden.",
       "untitledConversation": "Unbenannte Konversation"
     },
@@ -710,7 +841,9 @@
       "closeFileTab": "Dateitab schließen",
       "close": "Schließen",
       "closeOthers": "Andere schließen",
-      "closeAll": "Alle schließen"
+      "closeAll": "Alle schließen",
+      "preview": "Vorschau",
+      "editSource": "Quelle bearbeiten"
     },
     "terminal": {
       "rename": "Umbenennen",
@@ -752,11 +885,15 @@
       "next": "Weiter",
       "jumpToLine": "Zu Zeile {line} springen",
       "noParsedDiffSections": "Keine geparsten Diff-Abschnitte",
-      "loadingEditor": "Editor wird geladen..."
+      "loadingEditor": "Editor wird geladen...",
+      "imageZoomIn": "Vergrößern",
+      "imageZoomOut": "Verkleinern",
+      "imageZoomReset": "Zoom zurücksetzen"
     },
     "branchDropdown": {
       "toasts": {
         "commitCodeCompleted": "Code-Commit abgeschlossen",
+        "pushCodeCompleted": "Code-Push abgeschlossen",
         "committedFiles": "{count, plural, one {# Datei committet} other {# Dateien committet}}",
         "taskCompleted": "{label} abgeschlossen",
         "taskFailed": "{label} fehlgeschlagen",
@@ -765,6 +902,7 @@
         "allFilesUpToDate": "Alle Dateien sind aktuell",
         "updatedFiles": "{count, plural, one {# Datei aktualisiert} other {# Dateien aktualisiert}}",
         "openCommitWindowFailed": "Commit-Fenster konnte nicht geöffnet werden",
+        "openPushWindowFailed": "Push-Fenster konnte nicht geöffnet werden",
         "upstreamSet": "Upstream-Branch wurde gesetzt",
         "upstreamSetAndPushed": "Upstream-Branch gesetzt und {count, plural, one {# Commit} other {# Commits}} gepusht",
         "noCommitsToPush": "Keine Commits zum Pushen",
@@ -790,7 +928,9 @@
         "deleteTitle": "Branch löschen",
         "mergeDescription": "{branchName} in den aktuellen Branch {currentBranch} mergen?",
         "rebaseDescription": "Aktuellen Branch {currentBranch} auf {branchName} rebasen?",
-        "deleteDescription": "Branch {branchName} löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        "deleteDescription": "Branch {branchName} löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+        "forceDeleteTitle": "Branch erzwungen löschen",
+        "forceDeleteDescription": "Der Branch {branchName} ist nicht vollständig gemergt. Möchten Sie ihn wirklich erzwungen löschen? Diese Aktion kann nicht rückgängig gemacht werden."
       },
       "current": "Aktuell",
       "switchToBranch": "Zu diesem Branch wechseln",
@@ -805,8 +945,9 @@
       "pushCode": "Hochladen...",
       "newBranch": "Neuer Branch...",
       "newWorktree": "Neuer Worktree...",
-      "stashChanges": "Änderungen stashen",
+      "stashChanges": "Änderungen stashen...",
       "stashPop": "Stash anwenden...",
+      "manageRemotes": "Remotes verwalten...",
       "localBranches": "Lokale Branches ({count, plural, one {#} other {#}})",
       "noLocalBranches": "Keine lokalen Branches",
       "remoteBranches": "Remote-Branches ({count, plural, one {#} other {#}})",
@@ -820,7 +961,47 @@
         "newWorktreeDescription": "Neuen Worktree vom aktuellen Branch {branch} erstellen",
         "branchNameLabel": "Branch-Name",
         "worktreePathLabel": "Worktree-Pfad",
-        "worktreePathPlaceholder": "Worktree-Pfad"
+        "worktreePathPlaceholder": "Worktree-Pfad",
+        "manageRemotesTitle": "Remotes verwalten",
+        "manageRemotesEmpty": "Keine Remotes konfiguriert",
+        "remoteNamePlaceholder": "Remote-Name",
+        "remoteUrlPlaceholder": "Remote-URL",
+        "addRemote": "Hinzufügen",
+        "savingRemotes": "Speichern..."
+      },
+      "conflict": {
+        "title": "Merge-Konflikte",
+        "description": "Die folgenden Dateien haben Konflikte, die gelöst werden müssen:",
+        "abort": "Merge abbrechen",
+        "openMergeTool": "Merge-Tool öffnen",
+        "completeMerge": "Merge abschließen",
+        "abortSuccess": "Merge erfolgreich abgebrochen",
+        "completeSuccess": "Merge erfolgreich abgeschlossen"
+      },
+      "stashDialog": {
+        "title": "Änderungen stashen",
+        "description": "Aktuelle Änderungen im Stash speichern",
+        "messageLabel": "Nachricht",
+        "messagePlaceholder": "Stash-Nachricht (optional)",
+        "keepIndex": "Index beibehalten (gestagete Änderungen bleiben erhalten)",
+        "cancel": "Abbrechen",
+        "stash": "Stashen",
+        "success": "Änderungen wurden gestasht",
+        "error": "Stash fehlgeschlagen"
+      },
+      "unstashDialog": {
+        "title": "Stash anwenden",
+        "noStashes": "Keine Stashes vorhanden",
+        "selectFile": "Datei auswählen um Diff anzuzeigen",
+        "viewDiff": "Diff anzeigen",
+        "original": "Original",
+        "modified": "Geändert",
+        "apply": "Anwenden",
+        "drop": "Löschen",
+        "applySuccess": "Stash angewendet",
+        "dropSuccess": "Stash gelöscht",
+        "confirmApply": "Stash {ref} auf das Arbeitsverzeichnis anwenden?",
+        "cancel": "Abbrechen"
       }
     },
     "commitDialog": {
@@ -832,13 +1013,17 @@
         "fileDeleted": "Datei gelöscht",
         "deleteFailed": "Löschen fehlgeschlagen",
         "fileRolledBack": "Datei zurückgesetzt",
-        "rollbackFailed": "Rollback fehlgeschlagen"
+        "rollbackFailed": "Rollback fehlgeschlagen",
+        "dirRolledBack": "Verzeichnis zurückgesetzt",
+        "dirDeleted": "Verzeichnis gelöscht"
       },
       "confirm": {
         "deleteTitle": "Löschen bestätigen",
         "deleteDescription": "Datei \"{file}\" löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
         "rollbackTitle": "Rollback bestätigen",
-        "rollbackDescription": "Datei \"{file}\" auf HEAD zurücksetzen? Ungespeicherte Änderungen gehen verloren."
+        "rollbackDescription": "Datei \"{file}\" auf HEAD zurücksetzen? Ungespeicherte Änderungen gehen verloren.",
+        "rollbackDirDescription": "Verzeichnis \"{dir}\" auf HEAD zurücksetzen? Nicht gespeicherte Änderungen gehen verloren.",
+        "deleteDirDescription": "Verzeichnis \"{dir}\" löschen? Diese Aktion kann nicht rückgängig gemacht werden."
       },
       "actions": {
         "select": "Auswählen",
@@ -868,6 +1053,24 @@
       "clickFileToDiff": "Dateinamen anklicken, um Diff zu sehen",
       "loadingDiff": "Diff wird geladen..."
     },
+    "pushWindow": {
+      "title": "Code pushen",
+      "noUnpushedCommits": "Keine ungepushten Commits",
+      "newBranchNoPushedCommits": "Neuer Branch — pushen, um Remote-Tracking-Branch zu erstellen",
+      "unpushed": "Nicht gepusht",
+      "selectFileToViewDiff": "Datei auswählen, um Unterschiede anzuzeigen",
+      "before": "Vorher",
+      "after": "Nachher",
+      "push": "Pushen",
+      "toasts": {
+        "pushSuccess": "Push erfolgreich",
+        "pushFailed": "Push fehlgeschlagen",
+        "upstreamSet": "Remote-Tracking-Branch wurde eingerichtet",
+        "upstreamSetAndPushed": "Remote-Tracking-Branch eingerichtet und {count} Commits gepusht",
+        "noCommitsToPush": "Keine Commits zum Pushen",
+        "pushedCommits": "{count} Commits gepusht"
+      }
+    },
     "gitLogTab": {
       "filesTitle": "Dateien",
       "expandAllFiles": "Alle Dateien ausklappen",
@@ -877,6 +1080,7 @@
       "noCommitsFound": "Keine Commits gefunden",
       "hash": "Hash-Wert",
       "copyHash": "Hash kopieren",
+      "copyMessage": "Nachricht kopieren",
       "author": "Autor",
       "noFileChangeDetails": "Keine Details zu Dateiänderungen verfügbar.",
       "branchesTitle": "Zweige",
@@ -900,7 +1104,8 @@
       "toasts": {
         "createdAndSwitchedNewBranch": "Neuen Branch erstellt und gewechselt",
         "newBranchFromCommit": "{name} (aus {shortHash})",
-        "createBranchFailed": "Branch konnte nicht erstellt werden"
+        "createBranchFailed": "Branch konnte nicht erstellt werden",
+        "openPushWindowFailed": "Push-Fenster konnte nicht geöffnet werden"
       },
       "branchSelector": {
         "selectBranchPlaceholder": "Branch auswählen...",
@@ -927,7 +1132,8 @@
       "actions": {
         "commitCode": "Code committen",
         "rollback": "Zurücksetzen",
-        "addToVcs": "Zu VCS hinzufügen"
+        "addToVcs": "Zu VCS hinzufügen",
+        "delete": "Löschen"
       },
       "toasts": {
         "noAddableFilesInDir": "Keine geänderten Dateien in diesem Verzeichnis können zu VCS hinzugefügt werden",
@@ -938,11 +1144,16 @@
         "rolledBack": "{name} zurückgesetzt",
         "rollbackFailed": "Rollback fehlgeschlagen",
         "addedFilesToVcs": "{count, plural, one {# Datei} other {# Dateien}} zu VCS hinzugefügt",
-        "rolledBackFiles": "{count, plural, one {# Datei zurückgesetzt} other {# Dateien zurückgesetzt}}"
+        "rolledBackFiles": "{count, plural, one {# Datei zurückgesetzt} other {# Dateien zurückgesetzt}}",
+        "deleted": "{name} gelöscht",
+        "deleteFailed": "Löschen fehlgeschlagen",
+        "deletedFiles": "{count} Dateien gelöscht",
+        "noDeletableFilesInDir": "In diesem Verzeichnis gibt es keine löschbaren geänderten Dateien"
       },
       "directoryDialog": {
         "descriptionAdd": "Dateien unter Verzeichnis {path} auswählen, um sie zu VCS hinzuzufügen.",
         "descriptionRollback": "Dateien unter Verzeichnis {path} auswählen, um sie zurückzusetzen.",
+        "descriptionDelete": "Dateien unter Verzeichnis {path} auswählen, um sie zu löschen. Diese Aktion kann nicht rückgängig gemacht werden.",
         "descriptionFallback": "Dateien auswählen, um fortzufahren.",
         "selectionCount": "{selected} / {total} Dateien ausgewählt",
         "selectAll": "Alle auswählen",
@@ -954,6 +1165,13 @@
         "title": "Rollback bestätigen",
         "descriptionWithTarget": "Lokale Änderungen für {kind} \"{name}\" zurücksetzen?",
         "descriptionFallback": "Lokale Änderungen zurücksetzen?",
+        "kindDirectory": "Verzeichnis",
+        "kindFile": "Datei"
+      },
+      "deleteConfirm": {
+        "title": "Löschen bestätigen",
+        "descriptionWithTarget": "{kind} \"{name}\" löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+        "descriptionFallback": "Diese Aktion kann nicht rückgängig gemacht werden.",
         "kindDirectory": "Verzeichnis",
         "kindFile": "Datei"
       }
@@ -973,6 +1191,9 @@
       "attachToCurrentSession": "An aktuelle Sitzung anhängen",
       "compareWithBranch": "Mit Branch vergleichen...",
       "reloadFromDisk": "Von Datenträger neu laden",
+      "new": "Neu",
+      "newFile": "Datei",
+      "newDirectory": "Verzeichnis",
       "openIn": "Öffnen in",
       "openInTerminal": "Im Terminal öffnen",
       "actions": {
@@ -1002,7 +1223,15 @@
         "rolledBackFiles": "{count, plural, one {# Datei zurückgesetzt} other {# Dateien zurückgesetzt}}",
         "savedAsCopy": "Als Kopie gespeichert",
         "saveCopyFailed": "Speichern als Kopie fehlgeschlagen",
-        "watchStartFailed": "Dateiwatch konnte nicht gestartet werden"
+        "watchStartFailed": "Dateiwatch konnte nicht gestartet werden",
+        "createFailed": "Erstellen fehlgeschlagen"
+      },
+      "createDialog": {
+        "newFile": "Neue Datei",
+        "newDirectory": "Neues Verzeichnis",
+        "description": "Geben Sie einen Namen für das neue {kind} ein.",
+        "placeholderFile": "file-name.ext",
+        "placeholderDirectory": "folder-name"
       },
       "renameDialog": {
         "renameDirectory": "Verzeichnis umbenennen",
@@ -1146,7 +1375,7 @@
       },
       "chatInput": {
         "connecting": "Verbinden...",
-        "agentResponding": "Agent antwortet...",
+        "agentResponding": "{agent} antwortet...",
         "sendMessage": "Nachricht senden..."
       },
       "messageInput": {
@@ -1157,7 +1386,8 @@
         "loadingSettings": "Einstellungen werden geladen...",
         "loadingMode": "Modus wird geladen...",
         "cancel": "Abbrechen",
-        "send": "Senden"
+        "send": "Senden",
+        "forkAndSend": "Fork & Senden"
       },
       "messageQueue": {
         "addToQueue": "Zur Warteschlange",
@@ -1228,11 +1458,13 @@
         "attachedResources": "Angehängte Ressourcen",
         "loading": "Lädt...",
         "error": "Fehler: {message}",
-        "emptyConversation": "Keine Nachrichten in dieser Unterhaltung."
+        "emptyConversation": "Keine Nachrichten in dieser Unterhaltung.",
+        "systemMessage": "Systemnachricht"
       },
       "liveTurnStats": {
         "thinking": "Denkt nach...",
         "streaming": "Übertragung",
+        "elapsedHours": "{value} Std",
         "elapsedMinutes": "{value} Min",
         "elapsedSeconds": "{value} Sek",
         "toolUseCount": "{count} Tool {count, plural, one {use} other {uses}}"
@@ -1335,6 +1567,10 @@
           "todosProgress": "Aufgaben ({done}/{total})",
           "skillWithName": "Skill: {name}",
           "genericWithContext": "{tool} ({context})"
+        },
+        "userText": {
+          "expand": "Mehr anzeigen",
+          "collapse": "Weniger anzeigen"
         }
       }
     },

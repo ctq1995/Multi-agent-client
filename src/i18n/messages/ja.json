@@ -28,7 +28,7 @@
       "removeFromHistoryFailed": "履歴からの削除に失敗しました",
       "openSettingsFailed": "設定を開けませんでした",
       "cloneFailed": "リポジトリのクローンに失敗しました",
-      "cloneProgressUnavailable": "???????????????????????????"
+      "cloneProgressUnavailable": "クローン進捗の追跡は利用できません"
     },
     "errors": {
       "unknown": "予期しないエラーが発生しました",
@@ -58,6 +58,27 @@
       "clone": "クローン"
     }
   },
+  "GitCredentialDialog": {
+    "title": "認証が必要です",
+    "description": "リモートサーバーが認証情報を要求しています。ユーザー名とパスワード（またはアクセストークン）を入力してください。",
+    "username": "ユーザー名",
+    "usernamePlaceholder": "ユーザー名またはメールアドレス",
+    "password": "パスワード / トークン",
+    "passwordPlaceholder": "パスワードまたはアクセストークン",
+    "passwordHint": "サーバーのユーザー名とパスワードを入力してください。",
+    "cancel": "キャンセル",
+    "authenticate": "認証",
+    "authenticating": "認証中...",
+    "invalidCredentials": "認証情報が無効です。再試行してください。",
+    "saveCredentials": "今後の操作のために認証情報を保存する",
+    "githubTitle": "GitHub 認証",
+    "githubDescription": "個人アクセストークンを入力して GitHub に接続します。トークン検証後、自動的にアカウントに保存されます。",
+    "githubToken": "個人アクセストークン",
+    "githubTokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "githubTokenHint": "GitHub → Settings → Developer settings → Personal access tokens でトークンを生成してください。",
+    "githubAuthenticate": "検証して接続",
+    "generateToken": "トークンを生成"
+  },
   "SettingsShell": {
     "title": "設定",
     "preferences": "環境設定",
@@ -67,7 +88,9 @@
       "mcp": "MCP",
       "skills": "Skills",
       "shortcuts": "ショートカット",
-      "system": "システム"
+      "version_control": "バージョン管理",
+      "system": "システム",
+      "web_service": "Webサービス"
     }
   },
   "AppearanceSettings": {
@@ -79,11 +102,6 @@
     "light": "ライト",
     "dark": "ダーク",
     "currentTheme": "現在の有効テーマ: {theme}",
-    "messageSectionTitle": "メッセージ表示",
-    "messageSectionDescription": "チャットで長いユーザーメッセージの表示方法を設定します。",
-    "autoCollapseLongUserMessages": "長いユーザーメッセージを自動折りたたむ",
-    "autoCollapseLongUserMessagesDescription": "長いユーザー入力を既定で折りたたみ、スレッドを読みやすくします。",
-    "autoCollapseLongUserMessagesAria": "長いユーザーメッセージを自動折りたたむ",
     "resolvedTheme": {
       "light": "ライト",
       "dark": "ダーク",
@@ -111,6 +129,7 @@
     "languageSaveSuccess": "言語設定を保存しました",
     "languageSaveFailed": "言語設定の保存に失敗しました: {message}",
     "updateTitle": "アプリ更新",
+    "versionTitle": "ソフトウェアアップデート",
     "updateDescription": "設定されたリリースソースで新しいバージョンを確認し、利用可能なら直接インストールします。",
     "currentVersion": "現在のバージョン",
     "upgradableVersion": "最新バージョン",
@@ -132,6 +151,75 @@
       "downloadFailed": "更新パッケージのダウンロードに失敗しました。しばらくしてから再試行してください。",
       "installFailed": "更新のインストールに失敗しました。アプリを閉じて再試行してください。",
       "unknown": "更新に失敗しました。しばらくしてから再試行してください。"
+    }
+  },
+  "VersionControlSettings": {
+    "loading": "読み込み中...",
+    "sectionTitle": "バージョン管理",
+    "sectionDescription": "Git 実行ファイルの設定と GitHub アカウントの管理。",
+    "gitTitle": "Git 設定",
+    "gitDescription": "アプリケーションで使用する Git 実行ファイルを設定します。",
+    "gitDetected": "Git が検出されました",
+    "gitNotFound": "システムに Git が見つかりません",
+    "gitVersion": "バージョン",
+    "gitPath": "パス",
+    "customGitPath": "カスタム Git パス",
+    "customGitPathPlaceholder": "/usr/bin/git",
+    "customGitPathHint": "空欄の場合、自動検出されたパスを使用します。",
+    "test": "テスト",
+    "testing": "テスト中...",
+    "testSuccess": "Git 実行ファイルは有効です。",
+    "testFailed": "Git テスト失敗：{message}",
+    "save": "保存",
+    "saving": "保存中...",
+    "saveSuccess": "Git 設定を保存しました。",
+    "saveFailed": "保存に失敗しました：{message}",
+    "githubTitle": "GitHub アカウント",
+    "githubDescription": "認証用の GitHub アカウントを管理します。トークンはローカルに保存されます。",
+    "noAccounts": "GitHub アカウントが設定されていません。",
+    "addAccount": "アカウントを追加",
+    "serverUrl": "サーバー URL",
+    "serverUrlPlaceholder": "https://github.com",
+    "token": "個人アクセストークン",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxx",
+    "generateToken": "トークンを生成",
+    "tokenHint": "GitHub → Settings → Developer settings → Personal access tokens でトークンを生成してください。",
+    "validateAndAdd": "検証して追加",
+    "validating": "検証中...",
+    "addSuccess": "アカウント {username} を追加しました。",
+    "addFailed": "アカウントの追加に失敗しました：{message}",
+    "testConnection": "テスト",
+    "connectionSuccess": "接続成功。",
+    "connectionFailed": "接続失敗：{message}",
+    "setDefault": "デフォルトに設定",
+    "defaultLabel": "デフォルト",
+    "defaultSet": "デフォルトアカウントを更新しました。",
+    "removeAccount": "削除",
+    "removeConfirmTitle": "アカウントを削除",
+    "removeConfirmMessage": "アカウント「{username}」を削除してもよろしいですか？",
+    "removeConfirm": "削除",
+    "removeCancel": "キャンセル",
+    "removeSuccess": "アカウントを削除しました。",
+    "scopes": "スコープ",
+    "loadFailed": "設定の読み込みに失敗しました：{message}",
+    "gitAccount": {
+      "sectionTitle": "Git サーバーアカウント",
+      "sectionDescription": "GitHub 以外の Git サーバーの認証情報を管理します（GitLab、Bitbucket、セルフホストなど）。",
+      "noAccounts": "Git サーバーアカウントが設定されていません。",
+      "addAccount": "アカウントを追加",
+      "addTitle": "Git アカウントを追加",
+      "addDescription": "サーバーアドレス、ユーザー名、パスワードまたはアクセストークンを入力してください。",
+      "serverUrl": "サーバー URL",
+      "serverUrlPlaceholder": "https://gitlab.example.com",
+      "username": "ユーザー名",
+      "usernamePlaceholder": "ユーザー名またはメールアドレス",
+      "password": "パスワード / トークン",
+      "passwordPlaceholder": "パスワードまたはアクセストークン",
+      "passwordHint": "サーバーのパスワードまたはアクセストークンを入力してください。",
+      "add": "追加",
+      "serverRequired": "サーバー URL を入力してください。",
+      "usernameRequired": "ユーザー名を入力してください。",
+      "passwordRequired": "パスワードを入力してください。"
     }
   },
   "ShortcutSettings": {
@@ -412,6 +500,10 @@
     },
     "codex": {
       "configDescription": "API URL、API Key、モデル名、reasoning effort を素早く設定でき、`auth.json` / `config.toml` と同期します。",
+      "authMode": "認証方式",
+      "chatgptSubscription": "公式サブスクリプション",
+      "chatgptSubscriptionHint": "ChatGPT 公式サブスクリプションでログイン、API Key 不要",
+      "apiKeyHint": "API Key で OpenAI または互換 API サービスに接続",
       "selectProvider": "プロバイダーを選択",
       "modelName": "モデル名",
       "selectReasoningEffort": "Reasoning Effort を選択",
@@ -524,6 +616,7 @@
       "openClawSaved": "OpenClaw設定を保存しました",
       "saveOpenClawFailed": "OpenClaw設定の保存に失敗しました",
       "configSaved": "設定を保存しました",
+      "configSavedHint": "既存のセッションは再度開く必要があります",
       "saveConfigManagementFailed": "設定管理の保存に失敗しました"
     },
     "version": {
@@ -538,16 +631,15 @@
       "latest": "{versionText}。すでに最新です。"
     },
     "modelSelector": {
-      "fetchModels": "Fetch models",
-      "fetchedCount": "{count} models loaded",
-      "fetchFirst": "Fill API URL and API key first",
-      "fetchProviderFirst": "Fill current provider API URL and API key first",
-      "fetchCurrentProviderModelsFirst": "Fetch current provider models first",
-      "configureProviderFirst": "Configure a provider first",
-      "empty": "No models available",
-      "filterHint": "Type to automatically filter models",
-      "select": "Select",
-      "contextWindow": "Context {count}"
+      "filterHint": "入力してモデルを絞り込む",
+      "empty": "モデルが見つかりません",
+      "select": "選択",
+      "fetchModels": "モデルを取得",
+      "fetchedCount": "{count} 件のモデルを取得しました",
+      "fetchFirst": "モデルを取得をクリックして読み込む",
+      "configureProviderFirst": "最初にプロバイダーを設定してください",
+      "fetchProviderFirst": "取得をクリックしてプロバイダーモデルを読み込む",
+      "fetchCurrentProviderModelsFirst": "取得をクリックしてこのプロバイダーのモデルを読み込む"
     }
   },
   "SettingsPages": {
@@ -557,6 +649,32 @@
     "title": "コミット",
     "invalidFolderId": "無効なフォルダID",
     "loadingRepo": "リポジトリを読み込み中..."
+  },
+  "MergePage": {
+    "title": "コンフリクトの解決",
+    "invalidFolderId": "無効なフォルダID",
+    "loadingRepo": "リポジトリを読み込み中...",
+    "localVersion": "ローカル（自分側）",
+    "result": "結果",
+    "remoteVersion": "リモート（相手側）",
+    "acceptLocal": "ローカルを採用",
+    "acceptRemote": "リモートを採用",
+    "markResolved": "解決済みにする",
+    "abortMerge": "中止",
+    "completeMerge": "マージ完了",
+    "unresolvedConflicts": "ファイルに未解決のコンフリクトマーカーがあります",
+    "fileResolved": "ファイルが解決されました",
+    "allResolved": "すべてのコンフリクトが解決されました",
+    "conflictFiles": "コンフリクトファイル",
+    "loadingFile": "ファイルを読み込み中...",
+    "preparingMerge": "マージを準備中...",
+    "selectFile": "解決するファイルを選択してください",
+    "noConflicts": "コンフリクトファイルなし",
+    "skipFile": "スキップ",
+    "abortSuccess": "操作が中止されました",
+    "applyAllNonConflicting": "競合しない変更をすべて適用",
+    "applyLeftNonConflicting": "ローカルを適用",
+    "applyRightNonConflicting": "リモートを適用"
   },
   "Folder": {
     "common": {
@@ -575,7 +693,8 @@
       "create": "作成",
       "createAndSwitch": "作成して切り替え",
       "openFile": "ファイルを開く",
-      "viewDiff": "差分を見る"
+      "viewDiff": "差分を見る",
+      "push": "プッシュ..."
     },
     "modes": {
       "conversation": "会話モード",
@@ -616,7 +735,10 @@
       "reloaded": "会話を再読み込みしました",
       "reload": "再読み込み",
       "newConversation": "新しい会話",
-      "closeConversation": "会話を閉じる"
+      "closeConversation": "会話を閉じる",
+      "forkSession": "セッションをフォーク",
+      "forkSessionSuccess": "セッションのフォークに成功しました",
+      "forkSessionFailed": "セッションのフォークに失敗しました：{error}"
     },
     "conversationCard": {
       "untitledConversation": "無題の会話",
@@ -633,11 +755,15 @@
       "save": "保存"
     },
     "search": {
-      "dialogTitle": "会話を検索",
+      "dialogTitle": "検索",
+      "tabConversations": "会話",
+      "tabFiles": "ファイル",
       "placeholder": "会話を検索...",
+      "filePlaceholder": "ファイルまたはディレクトリを検索...",
       "allAgents": "すべて",
       "searching": "検索中...",
       "typeToSearch": "入力して会話を検索",
+      "typeToSearchFiles": "入力してファイルまたはディレクトリを検索",
       "noResults": "結果が見つかりません。",
       "untitledConversation": "無題の会話"
     },
@@ -715,7 +841,9 @@
       "closeFileTab": "ファイルタブを閉じる",
       "close": "閉じる",
       "closeOthers": "他を閉じる",
-      "closeAll": "すべて閉じる"
+      "closeAll": "すべて閉じる",
+      "preview": "プレビュー",
+      "editSource": "ソースを編集"
     },
     "terminal": {
       "rename": "名前を変更",
@@ -757,11 +885,15 @@
       "next": "次",
       "jumpToLine": "{line} 行へ移動",
       "noParsedDiffSections": "解析済みの差分セクションがありません",
-      "loadingEditor": "エディターを読み込み中..."
+      "loadingEditor": "エディターを読み込み中...",
+      "imageZoomIn": "拡大",
+      "imageZoomOut": "縮小",
+      "imageZoomReset": "ズームをリセット"
     },
     "branchDropdown": {
       "toasts": {
         "commitCodeCompleted": "コードコミットが完了しました",
+        "pushCodeCompleted": "コードプッシュが完了しました",
         "committedFiles": "{count, plural, one {# 個のファイルをコミット} other {# 個のファイルをコミット}}",
         "taskCompleted": "{label} が完了しました",
         "taskFailed": "{label} が失敗しました",
@@ -770,6 +902,7 @@
         "allFilesUpToDate": "すべてのファイルは最新です",
         "updatedFiles": "{count, plural, one {# 個のファイルを更新} other {# 個のファイルを更新}}",
         "openCommitWindowFailed": "コミットウィンドウを開けませんでした",
+        "openPushWindowFailed": "プッシュウィンドウを開けませんでした",
         "upstreamSet": "アップストリームブランチを設定しました",
         "upstreamSetAndPushed": "アップストリームブランチを設定し、{count, plural, one {# 件のコミット} other {# 件のコミット}}をプッシュしました",
         "noCommitsToPush": "プッシュするコミットはありません",
@@ -795,7 +928,9 @@
         "deleteTitle": "ブランチを削除",
         "mergeDescription": "{branchName} を現在のブランチ {currentBranch} にマージしますか？",
         "rebaseDescription": "現在のブランチ {currentBranch} を {branchName} にリベースしますか？",
-        "deleteDescription": "ブランチ {branchName} を削除しますか？この操作は元に戻せません。"
+        "deleteDescription": "ブランチ {branchName} を削除しますか？この操作は元に戻せません。",
+        "forceDeleteTitle": "ブランチを強制削除",
+        "forceDeleteDescription": "ブランチ {branchName} はまだ完全にマージされていません。強制削除してもよろしいですか？この操作は元に戻せません。"
       },
       "current": "現在",
       "switchToBranch": "このブランチに切り替え",
@@ -810,8 +945,9 @@
       "pushCode": "プッシュ...",
       "newBranch": "新規ブランチ...",
       "newWorktree": "新規ワークツリー...",
-      "stashChanges": "変更を stash",
+      "stashChanges": "スタッシュ...",
       "stashPop": "stash を pop...",
+      "manageRemotes": "リモート管理...",
       "localBranches": "ローカルブランチ ({count, plural, one {#} other {#}})",
       "noLocalBranches": "ローカルブランチはありません",
       "remoteBranches": "リモートブランチ ({count, plural, one {#} other {#}})",
@@ -825,7 +961,47 @@
         "newWorktreeDescription": "現在のブランチ {branch} から新しいワークツリーを作成",
         "branchNameLabel": "ブランチ名",
         "worktreePathLabel": "ワークツリーのパス",
-        "worktreePathPlaceholder": "ワークツリーのパス"
+        "worktreePathPlaceholder": "ワークツリーのパス",
+        "manageRemotesTitle": "リモート管理",
+        "manageRemotesEmpty": "リモートが設定されていません",
+        "remoteNamePlaceholder": "リモート名",
+        "remoteUrlPlaceholder": "リモート URL",
+        "addRemote": "追加",
+        "savingRemotes": "保存中..."
+      },
+      "conflict": {
+        "title": "マージコンフリクト",
+        "description": "以下のファイルにコンフリクトがあります。解決が必要です：",
+        "abort": "マージを中止",
+        "openMergeTool": "マージツールを開く",
+        "completeMerge": "マージ完了",
+        "abortSuccess": "マージが中止されました",
+        "completeSuccess": "マージが完了しました"
+      },
+      "stashDialog": {
+        "title": "変更をスタッシュ",
+        "description": "現在の変更をスタッシュに保存",
+        "messageLabel": "メッセージ",
+        "messagePlaceholder": "スタッシュメッセージ（任意）",
+        "keepIndex": "インデックスを保持（ステージ済みの変更はそのまま）",
+        "cancel": "キャンセル",
+        "stash": "スタッシュ",
+        "success": "変更がスタッシュされました",
+        "error": "スタッシュに失敗しました"
+      },
+      "unstashDialog": {
+        "title": "スタッシュを適用",
+        "noStashes": "スタッシュがありません",
+        "selectFile": "ファイルを選択して差分を表示",
+        "viewDiff": "差分を表示",
+        "original": "元",
+        "modified": "変更後",
+        "apply": "適用",
+        "drop": "削除",
+        "applySuccess": "スタッシュを適用しました",
+        "dropSuccess": "スタッシュを削除しました",
+        "confirmApply": "スタッシュ {ref} を作業ディレクトリに適用しますか？",
+        "cancel": "キャンセル"
       }
     },
     "commitDialog": {
@@ -837,13 +1013,17 @@
         "fileDeleted": "ファイルを削除しました",
         "deleteFailed": "削除に失敗しました",
         "fileRolledBack": "ファイルをロールバックしました",
-        "rollbackFailed": "ロールバックに失敗しました"
+        "rollbackFailed": "ロールバックに失敗しました",
+        "dirRolledBack": "ディレクトリをロールバックしました",
+        "dirDeleted": "ディレクトリを削除しました"
       },
       "confirm": {
         "deleteTitle": "削除の確認",
         "deleteDescription": "ファイル \"{file}\" を削除しますか？この操作は元に戻せません。",
         "rollbackTitle": "ロールバックの確認",
-        "rollbackDescription": "ファイル \"{file}\" を HEAD にロールバックしますか？未保存の変更は失われます。"
+        "rollbackDescription": "ファイル \"{file}\" を HEAD にロールバックしますか？未保存の変更は失われます。",
+        "rollbackDirDescription": "ディレクトリ「{dir}」をHEADにロールバックしますか？未保存の変更は失われます。",
+        "deleteDirDescription": "ディレクトリ「{dir}」を削除しますか？この操作は元に戻せません。"
       },
       "actions": {
         "select": "選択",
@@ -873,6 +1053,24 @@
       "clickFileToDiff": "ファイル名をクリックして差分を表示",
       "loadingDiff": "差分を読み込み中..."
     },
+    "pushWindow": {
+      "title": "コードをプッシュ",
+      "noUnpushedCommits": "未プッシュのコミットはありません",
+      "newBranchNoPushedCommits": "新しいブランチ — プッシュしてリモート追跡ブランチを作成",
+      "unpushed": "未プッシュ",
+      "selectFileToViewDiff": "ファイルを選択して差分を表示",
+      "before": "変更前",
+      "after": "変更後",
+      "push": "プッシュ",
+      "toasts": {
+        "pushSuccess": "プッシュ成功",
+        "pushFailed": "プッシュ失敗",
+        "upstreamSet": "リモート追跡ブランチが設定されました",
+        "upstreamSetAndPushed": "リモート追跡ブランチを設定し、{count}件のコミットをプッシュしました",
+        "noCommitsToPush": "プッシュするコミットはありません",
+        "pushedCommits": "{count}件のコミットをプッシュしました"
+      }
+    },
     "gitLogTab": {
       "filesTitle": "ファイル",
       "expandAllFiles": "すべてのファイルを展開",
@@ -882,6 +1080,7 @@
       "noCommitsFound": "コミットが見つかりません",
       "hash": "ハッシュ",
       "copyHash": "ハッシュをコピー",
+      "copyMessage": "メッセージをコピー",
       "author": "作成者",
       "noFileChangeDetails": "ファイル変更の詳細はありません。",
       "branchesTitle": "ブランチ",
@@ -905,7 +1104,8 @@
       "toasts": {
         "createdAndSwitchedNewBranch": "新しいブランチを作成して切り替えました",
         "newBranchFromCommit": "{name}（{shortHash} から）",
-        "createBranchFailed": "ブランチ作成に失敗しました"
+        "createBranchFailed": "ブランチ作成に失敗しました",
+        "openPushWindowFailed": "プッシュウィンドウを開けませんでした"
       },
       "branchSelector": {
         "selectBranchPlaceholder": "ブランチを選択...",
@@ -932,7 +1132,8 @@
       "actions": {
         "commitCode": "コードをコミット",
         "rollback": "ロールバック",
-        "addToVcs": "VCS に追加"
+        "addToVcs": "VCS に追加",
+        "delete": "削除"
       },
       "toasts": {
         "noAddableFilesInDir": "このディレクトリには VCS に追加できる変更ファイルがありません",
@@ -943,11 +1144,16 @@
         "rolledBack": "{name} をロールバックしました",
         "rollbackFailed": "ロールバックに失敗しました",
         "addedFilesToVcs": "{count, plural, one {# 個のファイルを VCS に追加} other {# 個のファイルを VCS に追加}}",
-        "rolledBackFiles": "{count, plural, one {# 個のファイルをロールバック} other {# 個のファイルをロールバック}}"
+        "rolledBackFiles": "{count, plural, one {# 個のファイルをロールバック} other {# 個のファイルをロールバック}}",
+        "deleted": "{name} を削除しました",
+        "deleteFailed": "削除に失敗しました",
+        "deletedFiles": "{count} 個のファイルを削除しました",
+        "noDeletableFilesInDir": "このディレクトリには削除可能な変更ファイルがありません"
       },
       "directoryDialog": {
         "descriptionAdd": "ディレクトリ {path} 配下で VCS に追加するファイルを選択してください。",
         "descriptionRollback": "ディレクトリ {path} 配下でロールバックするファイルを選択してください。",
+        "descriptionDelete": "ディレクトリ {path} 配下で削除するファイルを選択してください。この操作は元に戻せません。",
         "descriptionFallback": "続行するファイルを選択してください。",
         "selectionCount": "{selected} / {total} を選択",
         "selectAll": "すべて選択",
@@ -959,6 +1165,13 @@
         "title": "ロールバックの確認",
         "descriptionWithTarget": "{kind} \"{name}\" のローカル変更をロールバックしますか？",
         "descriptionFallback": "ローカル変更をロールバックしますか？",
+        "kindDirectory": "ディレクトリ",
+        "kindFile": "ファイル"
+      },
+      "deleteConfirm": {
+        "title": "削除の確認",
+        "descriptionWithTarget": "{kind}「{name}」を削除しますか？この操作は元に戻せません。",
+        "descriptionFallback": "この操作は元に戻せません。",
         "kindDirectory": "ディレクトリ",
         "kindFile": "ファイル"
       }
@@ -978,6 +1191,9 @@
       "attachToCurrentSession": "現在のセッションに添付",
       "compareWithBranch": "ブランチと比較...",
       "reloadFromDisk": "ディスクから再読み込み",
+      "new": "新規作成",
+      "newFile": "ファイル",
+      "newDirectory": "ディレクトリ",
       "openIn": "で開く",
       "openInTerminal": "ターミナルで開く",
       "actions": {
@@ -1007,7 +1223,15 @@
         "rolledBackFiles": "{count, plural, one {# 件のファイルをロールバックしました} other {# 件のファイルをロールバックしました}}",
         "savedAsCopy": "コピーとして保存しました",
         "saveCopyFailed": "コピーとして保存できませんでした",
-        "watchStartFailed": "ファイル監視の開始に失敗しました"
+        "watchStartFailed": "ファイル監視の開始に失敗しました",
+        "createFailed": "作成に失敗しました"
+      },
+      "createDialog": {
+        "newFile": "新規ファイル",
+        "newDirectory": "新規ディレクトリ",
+        "description": "新しい{kind}の名前を入力してください。",
+        "placeholderFile": "file-name.ext",
+        "placeholderDirectory": "folder-name"
       },
       "renameDialog": {
         "renameDirectory": "ディレクトリ名を変更",
@@ -1147,12 +1371,11 @@
       },
       "messageThread": {
         "emptyTitle": "まだメッセージはありません",
-        "emptyDescription": "会話を開始するとここにメッセージが表示されます",
-        "scrollToBottom": "一番下へスクロール"
+        "emptyDescription": "会話を開始するとここにメッセージが表示されます"
       },
       "chatInput": {
         "connecting": "接続中...",
-        "agentResponding": "エージェントが応答中...",
+        "agentResponding": "{agent} が応答中...",
         "sendMessage": "メッセージを送信..."
       },
       "messageInput": {
@@ -1163,7 +1386,8 @@
         "loadingSettings": "設定を読み込み中...",
         "loadingMode": "モードを読み込み中...",
         "cancel": "キャンセル",
-        "send": "送信"
+        "send": "送信",
+        "forkAndSend": "フォークして送信"
       },
       "messageQueue": {
         "addToQueue": "キューに追加",
@@ -1234,11 +1458,13 @@
         "attachedResources": "添付リソース",
         "loading": "読み込み中...",
         "error": "エラー: {message}",
-        "emptyConversation": "この会話にはメッセージがありません。"
+        "emptyConversation": "この会話にはメッセージがありません。",
+        "systemMessage": "システムメッセージ"
       },
       "liveTurnStats": {
         "thinking": "考え中...",
         "streaming": "ストリーミング中",
+        "elapsedHours": "{value}時間",
         "elapsedMinutes": "{value}分",
         "elapsedSeconds": "{value}秒",
         "toolUseCount": "{count} 個のツール {count, plural, one {use} other {uses}}"
@@ -1266,10 +1492,6 @@
         "showingTailOutput": "パフォーマンスのため、ストリーミング中は末尾出力を表示しています。",
         "result": "結果",
         "unknown": "不明",
-        "userText": {
-          "expand": "全文を表示",
-          "collapse": "折りたたむ"
-        },
         "replaceAll": "すべて置換",
         "filesCount": "ファイル: {count}",
         "update": "更新",
@@ -1345,6 +1567,10 @@
           "todosProgress": "タスク ({done}/{total})",
           "skillWithName": "Skill: {name}",
           "genericWithContext": "{tool}（{context}）"
+        },
+        "userText": {
+          "expand": "もっと見る",
+          "collapse": "折りたたむ"
         }
       }
     },

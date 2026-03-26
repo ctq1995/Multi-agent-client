@@ -5,7 +5,7 @@ import { ChevronRight, FileIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFolderContext } from "@/contexts/folder-context"
 import { useTabContext } from "@/contexts/tab-context"
-import { useConversationTimelineTurns } from "@/contexts/conversation-runtime-context"
+import { useConversationRuntime } from "@/contexts/conversation-runtime-context"
 import { useWorkspaceContext } from "@/contexts/workspace-context"
 import { useConversationDetail } from "@/hooks/use-conversation-detail"
 import { extractSessionFilesGrouped } from "@/lib/session-files"
@@ -55,14 +55,14 @@ function toFolderRelativePath(filePath: string, folderPath?: string): string {
 function SessionFilesContent({ conversationId }: { conversationId: number }) {
   const t = useTranslations("Folder.sessionFiles")
   const { loading } = useConversationDetail(conversationId)
+  const { getTimelineTurns } = useConversationRuntime()
   const { openSessionFileDiff } = useWorkspaceContext()
   const { folder } = useFolderContext()
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
-  const timelineTurns = useConversationTimelineTurns(conversationId)
 
   const turns = useMemo(
-    () => timelineTurns.map((item) => item.turn),
-    [timelineTurns]
+    () => getTimelineTurns(conversationId).map((item) => item.turn),
+    [conversationId, getTimelineTurns]
   )
   const groups = useMemo(
     () => (turns.length > 0 ? extractSessionFilesGrouped(turns) : []),

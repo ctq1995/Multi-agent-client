@@ -852,7 +852,7 @@ fn agent_local_config_path(agent_type: AgentType) -> Option<PathBuf> {
     }
 }
 
-fn load_agent_local_config_json(agent_type: AgentType) -> Option<String> {
+pub(crate) fn load_agent_local_config_json(agent_type: AgentType) -> Option<String> {
     if agent_type == AgentType::Codex {
         return load_codex_local_config_json();
     }
@@ -1235,7 +1235,7 @@ fn important_env_targets(agent_type: AgentType) -> (&'static str, &'static str, 
     }
 }
 
-fn build_runtime_env_from_setting(
+pub(crate) fn build_runtime_env_from_setting(
     agent_type: AgentType,
     setting: Option<&crate::db::entities::agent_setting::Model>,
     local_config_json: Option<&str>,
@@ -2045,5 +2045,305 @@ pub async fn acp_delete_agent_skill(
         fs::remove_file(&skill_path)
             .map_err(|e| AcpError::protocol(format!("failed to delete skill file: {e}")))?;
     }
+    Ok(())
+}
+
+// --- pub(crate) core functions for web handler access ---
+
+#[tauri::command]
+pub async fn acp_fork(
+    connection_id: String,
+    manager: State<'_, ConnectionManager>,
+) -> Result<crate::acp::types::ForkResultInfo, AcpError> {
+    manager
+        .fork_session(&connection_id)
+        .await
+}
+
+#[tauri::command]
+pub async fn acp_get_agent_status(
+    agent_type: AgentType,
+    db: State<'_, AppDatabase>,
+) -> Result<crate::acp::types::AcpAgentStatus, AcpError> {
+    acp_get_agent_status_inner(agent_type, &db).await
+}
+
+pub(crate) fn is_cmd_available(cmd: &str) -> bool {
+    which::which(cmd).is_ok()
+}
+
+pub(crate) async fn acp_get_agent_status_inner(
+    agent_type: AgentType,
+    db: &AppDatabase,
+) -> Result<crate::acp::types::AcpAgentStatus, AcpError> {
+    let setting = agent_setting_service::get_by_agent_type(&db.conn, agent_type)
+        .await
+        .map_err(|e| AcpError::protocol(e.to_string()))?;
+    let enabled = setting.as_ref().map(|m| m.enabled).unwrap_or(true);
+    let installed_version = setting.and_then(|m| m.installed_version);
+    let meta = registry::get_agent_meta(agent_type);
+    let available = match &meta.distribution {
+        registry::AgentDistribution::Binary { platforms, .. } => {
+            let platform = registry::current_platform();
+            platforms.iter().any(|p| p.platform == platform)
+        }
+        _ => true,
+    };
+    Ok(crate::acp::types::AcpAgentStatus {
+        agent_type,
+        available,
+        enabled,
+        installed_version,
+    })
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) async fn acp_update_agent_preferences_core(
+    agent_type: AgentType,
+    enabled: bool,
+    env: BTreeMap<String, String>,
+    config_json: Option<String>,
+    opencode_auth_json: Option<String>,
+    codex_auth_json: Option<String>,
+    codex_config_toml: Option<String>,
+    db: &AppDatabase,
+    app: &tauri::AppHandle,
+) -> Result<(), AcpError> {
+    let default = agent_setting_service::AgentDefaultInput {
+        agent_type,
+        registry_id: registry::registry_id_for(agent_type).to_string(),
+        default_sort_order: i32::MAX / 2,
+    };
+    agent_setting_service::ensure_defaults(&db.conn, &[default])
+        .await
+        .map_err(|e| AcpError::protocol(e.to_string()))?;
+
+    let env_json = if env.is_empty() {
+        None
+    } else {
+        Some(serde_json::to_string(&env).map_err(|e| AcpError::protocol(e.to_string()))?)
+    };
+    let config_json = config_json.and_then(|raw| {
+        let trimmed = raw.trim();
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed.to_string())
+        }
+    });
+    let opencode_auth_json = opencode_auth_json.and_then(|raw| {
+        let trimmed = raw.trim();
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed.to_string())
+        }
+    });
+    if let Some(raw) = config_json.as_deref() {
+        let parsed = serde_json::from_str::<serde_json::Value>(raw)
+            .map_err(|e| AcpError::protocol(format!("invalid config_json: {e}")))?;
+        if !parsed.is_object() {
+            return Err(AcpError::protocol(
+                "invalid config_json: root must be a JSON object",
+            ));
+        }
+    }
+
+    let patch = agent_setting_service::AgentSettingsUpdate { enabled, env_json };
+    agent_setting_service::update(&db.conn, agent_type, patch)
+        .await
+        .map_err(|e| AcpError::protocol(e.to_string()))?;
+
+    if agent_type == AgentType::Codex {
+        if codex_auth_json.is_some() || codex_config_toml.is_some() {
+            persist_codex_native_config_files(
+                codex_auth_json.as_deref(),
+                codex_config_toml.as_deref(),
+            )?;
+        }
+        emit_acp_agents_updated(app, "preferences_updated", Some(agent_type));
+        return Ok(());
+    }
+
+    if agent_type == AgentType::OpenCode {
+        if let Some(raw_auth) = opencode_auth_json.as_deref() {
+            persist_opencode_auth_json(raw_auth)?;
+        }
+        if let Some(raw) = config_json.as_deref() {
+            persist_agent_local_config_json(agent_type, Some(raw))?;
+        }
+        emit_acp_agents_updated(app, "preferences_updated", Some(agent_type));
+        return Ok(());
+    }
+
+    let mut local_patch_value = config_json
+        .as_deref()
+        .and_then(|raw| serde_json::from_str::<serde_json::Value>(raw).ok())
+        .filter(|value| value.is_object())
+        .unwrap_or_else(|| serde_json::json!({}));
+    if !env.is_empty() {
+        let env_json_value =
+            serde_json::to_value(&env).map_err(|e| AcpError::protocol(e.to_string()))?;
+        if let Some(obj) = local_patch_value.as_object_mut() {
+            obj.insert("env".to_string(), env_json_value);
+        }
+    }
+    let local_patch_json = serde_json::to_string(&local_patch_value)
+        .map_err(|e| AcpError::protocol(format!("serialize local patch failed: {e}")))?;
+    persist_agent_local_config_json(agent_type, Some(local_patch_json.as_str()))?;
+    emit_acp_agents_updated(app, "preferences_updated", Some(agent_type));
+    Ok(())
+}
+
+pub(crate) async fn acp_download_agent_binary_core(
+    agent_type: AgentType,
+    app: &tauri::AppHandle,
+) -> Result<(), AcpError> {
+    let meta = registry::get_agent_meta(agent_type);
+    match meta.distribution {
+        registry::AgentDistribution::Binary {
+            version,
+            cmd,
+            platforms,
+            ..
+        } => {
+            let platform = registry::current_platform();
+            let fallback = platforms
+                .iter()
+                .find(|p| p.platform == platform)
+                .ok_or_else(|| {
+                    AcpError::PlatformNotSupported(format!(
+                        "{} is not available on {platform}",
+                        meta.name
+                    ))
+                })?;
+            let _ = binary_cache::ensure_binary_for_agent(agent_type, version, fallback.url, cmd)
+                .await?;
+            emit_acp_agents_updated(app, "binary_downloaded", Some(agent_type));
+            Ok(())
+        }
+        registry::AgentDistribution::Npx { .. } | registry::AgentDistribution::Uvx { .. } => Err(
+            AcpError::protocol("download is only supported for binary agents"),
+        ),
+    }
+}
+
+pub(crate) async fn acp_detect_agent_local_version_core(
+    agent_type: AgentType,
+    conn: &sea_orm::DatabaseConnection,
+) -> Result<Option<String>, AcpError> {
+    let detected = detect_local_version(agent_type).await;
+    if let Some(version) = detected {
+        let _ = agent_setting_service::set_installed_version(conn, agent_type, Some(version.clone()))
+            .await;
+        return Ok(Some(version));
+    }
+    let fallback = agent_setting_service::get_by_agent_type(conn, agent_type)
+        .await
+        .ok()
+        .flatten()
+        .and_then(|m| m.installed_version);
+    Ok(fallback)
+}
+
+pub(crate) async fn acp_prepare_npx_agent_core(
+    agent_type: AgentType,
+    registry_version: Option<String>,
+    db: &AppDatabase,
+    app: &tauri::AppHandle,
+) -> Result<String, AcpError> {
+    let meta = registry::get_agent_meta(agent_type);
+    match meta.distribution {
+        registry::AgentDistribution::Npx { package, .. } => {
+            let default = agent_setting_service::AgentDefaultInput {
+                agent_type,
+                registry_id: registry::registry_id_for(agent_type).to_string(),
+                default_sort_order: i32::MAX / 2,
+            };
+            agent_setting_service::ensure_defaults(&db.conn, &[default])
+                .await
+                .map_err(|e| AcpError::protocol(e.to_string()))?;
+
+            let existing = agent_setting_service::get_by_agent_type(&db.conn, agent_type)
+                .await
+                .ok()
+                .flatten()
+                .and_then(|m| m.installed_version);
+
+            prepare_npx_package(package).await?;
+            let resolved = detect_local_version(agent_type)
+                .await
+                .or_else(|| version_from_package_spec(package))
+                .or_else(|| {
+                    registry_version
+                        .as_deref()
+                        .and_then(normalize_version_candidate)
+                })
+                .or(existing)
+                .ok_or_else(|| {
+                    AcpError::protocol(
+                        "npx install succeeded but failed to determine local version",
+                    )
+                })?;
+
+            agent_setting_service::set_installed_version(
+                &db.conn,
+                agent_type,
+                Some(resolved.clone()),
+            )
+            .await
+            .map_err(|e| AcpError::protocol(e.to_string()))?;
+            emit_acp_agents_updated(app, "npx_prepared", Some(agent_type));
+            Ok(resolved)
+        }
+        registry::AgentDistribution::Binary { .. } | registry::AgentDistribution::Uvx { .. } => {
+            Err(AcpError::protocol("prepare is only supported for npx agents"))
+        }
+    }
+}
+
+pub(crate) async fn acp_uninstall_agent_core(
+    agent_type: AgentType,
+    db: &AppDatabase,
+    app: &tauri::AppHandle,
+) -> Result<(), AcpError> {
+    let meta = registry::get_agent_meta(agent_type);
+    match meta.distribution {
+        registry::AgentDistribution::Binary { .. } => {
+            binary_cache::clear_agent_cache(agent_type)?;
+        }
+        registry::AgentDistribution::Npx { package, .. } => {
+            uninstall_npx_package(package).await?;
+        }
+        registry::AgentDistribution::Uvx { package, .. } => {
+            uninstall_uvx_package(package).await?;
+        }
+    }
+    agent_setting_service::set_installed_version(&db.conn, agent_type, None)
+        .await
+        .map_err(|e| AcpError::protocol(e.to_string()))?;
+    emit_acp_agents_updated(app, "agent_uninstalled", Some(agent_type));
+    Ok(())
+}
+
+pub(crate) async fn acp_reorder_agents_core(
+    agent_types: &[AgentType],
+    db: &AppDatabase,
+    app: &tauri::AppHandle,
+) -> Result<(), AcpError> {
+    if agent_types.is_empty() {
+        return Ok(());
+    }
+    agent_setting_service::reorder(&db.conn, agent_types)
+        .await
+        .map_err(|e| {
+            let message = e.to_string();
+            if message.contains("database or disk is full") || message.contains("(code: 13)") {
+                AcpError::protocol("无法保存排序：数据库可写空间不足。请释放磁盘空间后重试。")
+            } else {
+                AcpError::protocol(message)
+            }
+        })?;
+    emit_acp_agents_updated(app, "agent_reordered", None);
     Ok(())
 }

@@ -20,6 +20,7 @@ interface ConversationShellProps {
   status: ConnectionStatus | null
   promptCapabilities: PromptCapabilitiesInfo
   defaultPath?: string
+  agentName?: string
   error: string | null
   pendingPermission: PendingPermission | null
   pendingQuestion: PendingQuestion | null
@@ -51,12 +52,14 @@ interface ConversationShellProps {
   isEditingQueueItem?: boolean
   onSaveQueueEdit?: (draft: PromptDraft) => void
   onCancelQueueEdit?: () => void
+  onForkSend?: (draft: PromptDraft, modeId?: string | null) => void
 }
 
 export function ConversationShell({
   status,
   promptCapabilities,
   defaultPath,
+  agentName,
   error,
   pendingPermission,
   pendingQuestion,
@@ -88,6 +91,7 @@ export function ConversationShell({
   isEditingQueueItem,
   onSaveQueueEdit,
   onCancelQueueEdit,
+  onForkSend,
 }: ConversationShellProps) {
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -105,6 +109,7 @@ export function ConversationShell({
           status={status}
           promptCapabilities={promptCapabilities}
           defaultPath={defaultPath}
+          agentName={agentName}
           onFocus={onFocus}
           onSend={onSend}
           onCancel={onCancel}
@@ -129,6 +134,7 @@ export function ConversationShell({
           isEditingQueueItem={isEditingQueueItem}
           onSaveQueueEdit={onSaveQueueEdit}
           onCancelQueueEdit={onCancelQueueEdit}
+          onForkSend={onForkSend}
         />
       )}
 
