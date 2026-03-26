@@ -1,152 +1,232 @@
 "use client"
 
-import { memo, useCallback, useEffect, useRef, useState } from "react"
-import type { RefObject } from "react"
-import { ChevronUpIcon, ChevronDownIcon, XIcon } from "lucide-react"
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { BookOpen, User, Bot, ArrowDown, Wrench } from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { AdaptedContentPart } from "@/lib/adapters/ai-elements-adapter"
+
+export interface TurnRound {
+  /** DOM id of the user turn element */
+  turnId: string
+  /** User message text summary */
+  userSummary: string
+  /** Assistant reply summary (empty if not yet replied) */
+  assistantSummary: string
+  /** Whether the assistant turn has tool calls */
+  hasTools: boolean
+}
+
+const HIDE_DELAY = 150
+
+function extractTextSummary(parts: AdaptedContentPart[], maxLen = 40): string {
+  for (const part of parts) {
+    if (part.type === "text" && part.text.trim()) {
+      const t = part.text.trim()
+      return t.length <= maxLen ? t : t.slice(0, maxLen - 1) + "…"
+    }
+  }
+  return ""
+}
+
+function hasToolCallParts(parts: AdaptedContentPart[]): boolean {
+  return parts.some((p) => p.type === "tool-call")
+}
 
 interface TurnNavigatorProps {
-  userTurnIds: string[]
+  rounds: TurnRound[]
+  currentRoundIndex: number
+  onScrollToRound: (index: number) => void
+  onScrollToBottom: () => void
   onClose: () => void
-  scrollContainerRef?: RefObject<HTMLElement | null>
 }
 
 export const TurnNavigator = memo(function TurnNavigator({
-  userTurnIds,
+  rounds,
+  currentRoundIndex,
+  onScrollToRound,
+  onScrollToBottom,
   onClose,
-  scrollContainerRef,
 }: TurnNavigatorProps) {
-  const [activeIndex, setActiveIndex] = useState<number>(-1)
-  const scrollListRef = useRef<HTMLDivElement>(null)
+  const [isPanelVisible, setIsPanelVisible] = useState(false)
 
-  // Use IntersectionObserver to track which user turn is currently visible
-  useEffect(() => {
-    if (userTurnIds.length === 0) return
+  const isHoveringBallRef = useRef(false)
+  const isHoveringPanelRef = useRef(false)
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const currentItemRef = useRef<HTMLDivElement>(null)
 
-    const root = (scrollContainerRef?.current as Element | null) ?? null
+  const clearHideTimer = useCallback(() => {
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current)
+      hideTimerRef.current = null
+    }
+  }, [])
 
-    const observers: IntersectionObserver[] = []
-    const visibleSet = new Set<string>()
-
-    const updateActive = () => {
-      // Pick the first visible turn in document order
-      for (let i = 0; i < userTurnIds.length; i++) {
-        if (visibleSet.has(userTurnIds[i])) {
-          setActiveIndex(i)
-          return
-        }
+  const scheduleHide = useCallback(() => {
+    clearHideTimer()
+    hideTimerRef.current = setTimeout(() => {
+      if (!isHoveringBallRef.current && !isHoveringPanelRef.current) {
+        setIsPanelVisible(false)
       }
-    }
+    }, HIDE_DELAY)
+  }, [clearHideTimer])
 
-    userTurnIds.forEach((id) => {
-      const el = document.getElementById(id)
-      if (!el) return
+  useEffect(() => () => clearHideTimer(), [clearHideTimer])
 
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              visibleSet.add(id)
-            } else {
-              visibleSet.delete(id)
-            }
-          })
-          updateActive()
-        },
-        { root, threshold: 0.1 }
-      )
-      observer.observe(el)
-      observers.push(observer)
-    })
-
-    return () => {
-      observers.forEach((o) => o.disconnect())
-    }
-  }, [userTurnIds, scrollContainerRef])
-
-  // Scroll nav pill so active item is visible
+  // Scroll active item into view when panel opens or active round changes
   useEffect(() => {
-    if (activeIndex < 0 || !scrollListRef.current) return
-    const btn = scrollListRef.current.children[activeIndex] as HTMLElement | undefined
-    btn?.scrollIntoView({ block: "nearest", inline: "center" })
-  }, [activeIndex])
+    if (isPanelVisible && currentItemRef.current) {
+      currentItemRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" })
+    }
+  }, [isPanelVisible, currentRoundIndex])
 
-  const scrollToTurn = useCallback(
+  const handleRoundClick = useCallback(
     (index: number) => {
-      const id = userTurnIds[index]
-      if (!id) return
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+      onScrollToRound(index)
+      setIsPanelVisible(false)
     },
-    [userTurnIds]
+    [onScrollToRound]
   )
 
-  const goPrev = useCallback(() => {
-    const target = activeIndex > 0 ? activeIndex - 1 : 0
-    scrollToTurn(target)
-  }, [activeIndex, scrollToTurn])
+  const handleScrollToBottom = useCallback(() => {
+    onScrollToBottom()
+    setIsPanelVisible(false)
+  }, [onScrollToBottom])
 
-  const goNext = useCallback(() => {
-    const last = userTurnIds.length - 1
-    const target = activeIndex < last ? activeIndex + 1 : last
-    scrollToTurn(target)
-  }, [activeIndex, userTurnIds.length, scrollToTurn])
+  const panelStyle = useMemo(
+    () => ({ right: "72px", top: "50%", transform: "translateY(-50%)", maxHeight: "70vh" }),
+    []
+  )
+
+  if (rounds.length === 0) return null
 
   return (
-    <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2">
-      <div className="pointer-events-auto flex items-center gap-1 rounded-full border bg-card/80 px-2 py-1 shadow-lg backdrop-blur">
-        {/* Close */}
-        <button
-          onClick={onClose}
-          title="Hide navigator"
-          className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-        >
-          <XIcon className="h-3 w-3" />
-        </button>
-
-        <div className="mx-0.5 h-4 w-px bg-border" />
-
-        {/* Prev */}
-        <button
-          onClick={goPrev}
-          disabled={activeIndex <= 0}
-          title="Previous turn"
-          className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-        >
-          <ChevronUpIcon className="h-3.5 w-3.5" />
-        </button>
-
-        {/* Turn number pills */}
-        <div
-          ref={scrollListRef}
-          className="flex max-w-[12rem] items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {userTurnIds.map((id, index) => (
-            <button
-              key={id}
-              onClick={() => scrollToTurn(index)}
-              title={`Turn ${index + 1}`}
-              className={cn(
-                "flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-1.5 text-[11px] font-medium transition-colors",
-                index === activeIndex
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              {index + 1}
-            </button>
-          ))}
-        </div>
-
-        {/* Next */}
-        <button
-          onClick={goNext}
-          disabled={activeIndex >= userTurnIds.length - 1}
-          title="Next turn"
-          className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-        >
-          <ChevronDownIcon className="h-3.5 w-3.5" />
-        </button>
+    <>
+      {/* Floating ball */}
+      <div
+        className={cn(
+          "absolute right-4 top-1/2 -translate-y-1/2 z-20",
+          "w-10 h-10 rounded-full",
+          "bg-primary/90 backdrop-blur-sm",
+          "shadow-lg shadow-primary/20",
+          "flex items-center justify-center cursor-pointer",
+          "transition-all duration-200 hover:scale-110 hover:bg-primary"
+        )}
+        onMouseEnter={() => {
+          isHoveringBallRef.current = true
+          clearHideTimer()
+          setIsPanelVisible(true)
+        }}
+        onMouseLeave={() => {
+          isHoveringBallRef.current = false
+          scheduleHide()
+        }}
+      >
+        <BookOpen className="w-4 h-4 text-white" />
       </div>
-    </div>
+
+      {/* Flyout panel */}
+      {isPanelVisible && (
+        <div
+          className={cn(
+            "absolute w-60 bg-card/95 backdrop-blur-sm",
+            "border border-border rounded-lg shadow-lg shadow-primary/10",
+            "overflow-hidden flex flex-col",
+            "z-20"
+          )}
+          style={panelStyle}
+          onMouseEnter={() => {
+            isHoveringPanelRef.current = true
+            clearHideTimer()
+          }}
+          onMouseLeave={() => {
+            isHoveringPanelRef.current = false
+            scheduleHide()
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30 shrink-0">
+            <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5" />
+              对话导航
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{rounds.length} 轮</span>
+              <button
+                onClick={onClose}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                title="关闭导航"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Round list */}
+          <div className="overflow-y-auto flex-1 min-h-0">
+            {rounds.map((round, idx) => (
+              <div
+                key={round.turnId}
+                ref={idx === currentRoundIndex ? currentItemRef : null}
+                className={cn(
+                  "px-3 py-2 border-b border-border/50 cursor-pointer transition-colors",
+                  "hover:bg-muted/50",
+                  idx === currentRoundIndex && "bg-primary/10 border-l-2 border-l-primary"
+                )}
+                onClick={() => handleRoundClick(idx)}
+              >
+                {/* Round header */}
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-medium text-muted-foreground bg-muted rounded px-1 py-0.5">
+                    #{idx + 1}
+                  </span>
+                  {round.hasTools && (
+                    <Wrench className="w-3 h-3 text-muted-foreground" />
+                  )}
+                </div>
+
+                {/* User summary */}
+                <div className="flex items-start gap-1.5 mb-1">
+                  <User className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                  <p className="text-xs text-foreground/80 leading-relaxed line-clamp-2">
+                    {round.userSummary || "[图片/文件]"}
+                  </p>
+                </div>
+
+                {/* Assistant summary */}
+                {round.assistantSummary ? (
+                  <div className="flex items-start gap-1.5">
+                    <Bot className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+                    <p className={cn(
+                      "text-xs leading-relaxed line-clamp-1",
+                      idx === currentRoundIndex ? "text-muted-foreground" : "text-muted-foreground/70"
+                    )}>
+                      {round.assistantSummary}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-1.5">
+                    <Bot className="w-3 h-3 text-muted-foreground/50 shrink-0 mt-0.5" />
+                    <p className="text-xs text-muted-foreground/50 italic">等待回复...</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div className="p-2 border-t border-border bg-muted/20 shrink-0">
+            <button
+              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
+              onClick={handleScrollToBottom}
+            >
+              <ArrowDown className="w-3.5 h-3.5" />
+              回到底部
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   )
 })
+
+export { extractTextSummary, hasToolCallParts }

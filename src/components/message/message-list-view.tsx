@@ -15,7 +15,8 @@ import { UserResourceLinks } from "./user-resource-links"
 import { UserImageAttachments } from "./user-image-attachments"
 import { useSessionStats } from "@/contexts/session-stats-context"
 import { AgentPlanOverlay } from "@/components/chat/agent-plan-overlay"
-import { TurnNavigator } from "@/components/chat/turn-navigator"
+import { TurnNavigator, extractTextSummary, hasToolCallParts } from "@/components/chat/turn-navigator"
+import type { TurnRound } from "@/components/chat/turn-navigator"
 import { useChatDisplaySettings } from "@/hooks/use-chat-display-settings"
 import {
   MessageThread,
@@ -343,14 +344,69 @@ export function MessageListView({
   const agentPlanOverlayKey = liveMessage?.id ?? `history-${conversationId}`
 
   const { settings, setShowTurnNavigator } = useChatDisplaySettings()
+  const [currentRoundIndex, setCurrentRoundIndex] = useState(0)
 
-  const userTurnIds = useMemo(
-    () =>
-      threadItems
-        .filter((item) => item.kind === "turn" && item.group.role === "user")
-        .map((item) => `turn-user-${item.kind === "turn" ? item.group.id : ""}`),
-    [threadItems]
-  )
+  // Build turn rounds pairing user + following assistant turns
+  const turnRounds = useMemo((): TurnRound[] => {
+    const rounds: TurnRound[] = []
+    const turns = threadItems.filter((item) => item.kind === "turn")
+    for (let i = 0; i < turns.length; i++) {
+      const item = turns[i]
+      if (item.kind !== "turn" || item.group.role !== "user") continue
+      const userSummary = extractTextSummary(item.group.parts)
+      // Look ahead for the next assistant turn
+      let assistantSummary = ""
+      let hasTools = false
+      for (let j = i + 1; j < turns.length; j++) {
+        const next = turns[j]
+        if (next.kind !== "turn") break
+        if (next.group.role === "user") break
+        if (next.group.role === "assistant") {
+          assistantSummary = extractTextSummary(next.group.parts)
+          hasTools = hasToolCallParts(next.group.parts)
+        }
+      }
+      rounds.push({
+        turnId: `turn-user-${item.group.id}`,
+        userSummary,
+        assistantSummary,
+        hasTools,
+      })
+    }
+    return rounds
+  }, [threadItems])
+
+  // Track current visible round via IntersectionObserver
+  useEffect(() => {
+    if (turnRounds.length === 0) return
+    const visibleMap = new Map<string, boolean>()
+    const observers: IntersectionObserver[] = []
+
+    const updateCurrent = () => {
+      for (let i = 0; i < turnRounds.length; i++) {
+        if (visibleMap.get(turnRounds[i].turnId)) {
+          setCurrentRoundIndex(i)
+          return
+        }
+      }
+    }
+
+    turnRounds.forEach(({ turnId }) => {
+      const el = document.getElementById(turnId)
+      if (!el) return
+      const obs = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => visibleMap.set(turnId, e.isIntersecting))
+          updateCurrent()
+        },
+        { threshold: 0.1 }
+      )
+      obs.observe(el)
+      observers.push(obs)
+    })
+
+    return () => observers.forEach((o) => o.disconnect())
+  }, [turnRounds])
 
   const hasRenderableContent = threadItems.length > 0 || Boolean(liveMessage)
 
@@ -406,9 +462,19 @@ export function MessageListView({
         planKey={historicalPlanKey}
         defaultExpanded={connStatus === "prompting"}
       />
-      {settings.showTurnNavigator && userTurnIds.length > 1 && (
+      {settings.showTurnNavigator && turnRounds.length > 1 && (
         <TurnNavigator
-          userTurnIds={userTurnIds}
+          rounds={turnRounds}
+          currentRoundIndex={currentRoundIndex}
+          onScrollToRound={(idx) => {
+            const el = document.getElementById(turnRounds[idx].turnId)
+            el?.scrollIntoView({ behavior: "smooth", block: "start" })
+          }}
+          onScrollToBottom={() => {
+            const last = turnRounds[turnRounds.length - 1]
+            const el = document.getElementById(last.turnId)
+            el?.scrollIntoView({ behavior: "smooth", block: "end" })
+          }}
           onClose={() => setShowTurnNavigator(false)}
         />
       )}
