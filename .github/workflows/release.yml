@@ -76,7 +76,7 @@ jobs:
             const tag = context.ref.replace("refs/tags/", "");
             const { owner, repo } = context.repo;
             const prerelease = process.env.PRERELEASE === "true";
-            const releaseName = `codeg ${tag}`;
+            const releaseName = `Multi-agent-client ${tag}`;
             const { data: tagRef } = await github.rest.git.getRef({
               owner,
               repo,
@@ -328,7 +328,7 @@ jobs:
           prerelease: ${{ needs.create-draft-release.outputs.prerelease }}
           tauriScript: pnpm tauri
           args: --target ${{ matrix.target }}
-          includeUpdaterJson: true
+          includeUpdaterJson: false
           retryAttempts: 2
 
   publish-release:
