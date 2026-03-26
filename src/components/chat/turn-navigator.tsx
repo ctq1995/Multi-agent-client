@@ -1,28 +1,29 @@
 "use client"
 
 import { memo, useCallback, useEffect, useRef, useState } from "react"
+import type { RefObject } from "react"
 import { ChevronUpIcon, ChevronDownIcon, XIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useStickToBottomContext } from "use-stick-to-bottom"
 
 interface TurnNavigatorProps {
   userTurnIds: string[]
   onClose: () => void
+  scrollContainerRef?: RefObject<HTMLElement | null>
 }
 
 export const TurnNavigator = memo(function TurnNavigator({
   userTurnIds,
   onClose,
+  scrollContainerRef,
 }: TurnNavigatorProps) {
   const [activeIndex, setActiveIndex] = useState<number>(-1)
   const scrollListRef = useRef<HTMLDivElement>(null)
-  const { scrollRef } = useStickToBottomContext()
 
   // Use IntersectionObserver to track which user turn is currently visible
   useEffect(() => {
     if (userTurnIds.length === 0) return
 
-    const root = scrollRef?.current as Element | null
+    const root = (scrollContainerRef?.current as Element | null) ?? null
 
     const observers: IntersectionObserver[] = []
     const visibleSet = new Set<string>()
@@ -61,7 +62,7 @@ export const TurnNavigator = memo(function TurnNavigator({
     return () => {
       observers.forEach((o) => o.disconnect())
     }
-  }, [userTurnIds, scrollRef])
+  }, [userTurnIds, scrollContainerRef])
 
   // Scroll nav pill so active item is visible
   useEffect(() => {
