@@ -306,9 +306,9 @@ async fn prepare_npx_package(package: &str) -> Result<(), AcpError> {
     if !output.status.success() {
         let err = String::from_utf8_lossy(&output.stderr).trim().to_string();
         let msg = if err.is_empty() {
-            "failed to prepare npx package".to_string()
+            format!("failed to prepare npx package '{package}'. Try running: npx {package} --version")
         } else {
-            format!("failed to prepare npx package: {err}")
+            format!("failed to prepare npx package '{package}': {err}")
         };
         return Err(AcpError::protocol(msg));
     }
@@ -983,7 +983,6 @@ fn skill_storage_spec(agent_type: AgentType) -> Option<SkillStorageSpec> {
             global_dirs: vec![home_dir_or_default().join(".openclaw").join("skills")],
             project_rel_dirs: vec!["skills"],
         }),
-        _ => None,
     }
 }
 
@@ -1311,7 +1310,11 @@ pub async fn acp_connect(
 
     if let registry::AgentDistribution::Npx { package, .. } = meta.distribution {
         if detect_npx_cached_version(package).await.is_none() {
-            prepare_npx_package(package).await?;
+            prepare_npx_package(package).await.map_err(|e| {
+                AcpError::protocol(format!(
+                    "Failed to prepare {agent_type}: {e}. You can install it manually from Settings > Agents."
+                ))
+            })?;
         } else {
             ensure_npx_cached_bins_executable(package).await?;
         }
@@ -1862,7 +1865,7 @@ pub async fn acp_reorder_agents(
         .map_err(|e| {
             let message = e.to_string();
             if message.contains("database or disk is full") || message.contains("(code: 13)") {
-                AcpError::protocol("无法保存排序：数据库可写空间不足。请释放磁盘空间后重试。")
+                AcpError::protocol("Cannot save order: database or disk is full. Please free up disk space and try again.")
             } else {
                 AcpError::protocol(message)
             }
@@ -1880,7 +1883,7 @@ pub async fn acp_list_agent_skills(
         return Ok(AgentSkillsListResult {
             supported: false,
             message: Some(format!(
-                "{agent_type} 暂不支持在设置页管理 Skills（当前仅支持 Claude Code / Codex / OpenCode / Gemini CLI / OpenClaw）"
+                "{agent_type} does not support managing Skills in settings (currently only Claude Code / Codex / OpenCode / Gemini CLI / OpenClaw are supported)"
             )),
             locations: Vec::new(),
             skills: Vec::new(),
@@ -2339,7 +2342,7 @@ pub(crate) async fn acp_reorder_agents_core(
         .map_err(|e| {
             let message = e.to_string();
             if message.contains("database or disk is full") || message.contains("(code: 13)") {
-                AcpError::protocol("无法保存排序：数据库可写空间不足。请释放磁盘空间后重试。")
+                AcpError::protocol("Cannot save order: database or disk is full. Please free up disk space and try again.")
             } else {
                 AcpError::protocol(message)
             }

@@ -2,6 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { BookOpen, User, Bot, ArrowDown, Wrench } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import type { AdaptedContentPart } from "@/lib/adapters/ai-elements-adapter"
 
@@ -47,6 +48,7 @@ export const TurnNavigator = memo(function TurnNavigator({
   onScrollToBottom,
   onClose,
 }: TurnNavigatorProps) {
+  const t = useTranslations("TurnNavigator")
   const [isPanelVisible, setIsPanelVisible] = useState(false)
 
   const isHoveringBallRef = useRef(false)
@@ -147,14 +149,14 @@ export const TurnNavigator = memo(function TurnNavigator({
           <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30 shrink-0">
             <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
               <BookOpen className="w-3.5 h-3.5" />
-              对话导航
+              {t("title")}
             </span>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{rounds.length} 轮</span>
+              <span className="text-xs text-muted-foreground">{t("turns", { count: rounds.length })}</span>
               <button
                 onClick={onClose}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                title="关闭导航"
+                title={t("closeTitle")}
               >
                 ✕
               </button>
@@ -188,7 +190,7 @@ export const TurnNavigator = memo(function TurnNavigator({
                 <div className="flex items-start gap-1.5 mb-1">
                   <User className="w-3 h-3 text-primary shrink-0 mt-0.5" />
                   <p className="text-xs text-foreground/80 leading-relaxed line-clamp-2">
-                    {round.userSummary || "[图片/文件]"}
+                    {round.userSummary || t("imagePlaceholder")}
                   </p>
                 </div>
 
@@ -206,7 +208,7 @@ export const TurnNavigator = memo(function TurnNavigator({
                 ) : (
                   <div className="flex items-start gap-1.5">
                     <Bot className="w-3 h-3 text-muted-foreground/50 shrink-0 mt-0.5" />
-                    <p className="text-xs text-muted-foreground/50 italic">等待回复...</p>
+                    <p className="text-xs text-muted-foreground/50 italic">{t("waitingForReply")}</p>
                   </div>
                 )}
               </div>
@@ -220,7 +222,7 @@ export const TurnNavigator = memo(function TurnNavigator({
               onClick={handleScrollToBottom}
             >
               <ArrowDown className="w-3.5 h-3.5" />
-              回到底部
+              {t("scrollToBottom")}
             </button>
           </div>
         </div>

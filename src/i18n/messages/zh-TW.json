@@ -113,6 +113,14 @@
     "autoCollapseLongMessages": "自動折疊超長使用者訊息",
     "autoCollapseLongMessagesDescription": "超過約10行的使用者訊息自動折疊，點擊可展開。"
   },
+  "TurnNavigator": {
+    "title": "對話導航",
+    "turns": "{count} 輪",
+    "closeTitle": "關閉導航",
+    "imagePlaceholder": "[圖片/檔案]",
+    "waitingForReply": "等待回覆...",
+    "scrollToBottom": "回到底部"
+  },
   "SystemSettings": {
     "loading": "載入中...",
     "sectionTitle": "系統管理",
@@ -650,6 +658,37 @@
   "SettingsPages": {
     "agentsLoading": "載入 Agent 設定中..."
   },
+  "LoginPage": {
+    "title": "Multi-agent-client",
+    "subtitle": "輸入存取 Token 以連接到桌面端",
+    "tokenPlaceholder": "Access Token",
+    "connect": "連接",
+    "connecting": "連接中...",
+    "tokenHint": "Token 可在桌面端 設定 → Web 服務 中取得",
+    "errorInvalidToken": "Token 無效，請檢查後重試",
+    "errorConnectionFailed": "連接失敗 (HTTP {status})",
+    "errorUnreachable": "無法連接到伺服器"
+  },
+  "WebServiceSettings": {
+    "title": "Web 服務",
+    "description": "啟用後可透過瀏覽器遠端存取 Multi-agent-client",
+    "port": "連接埠",
+    "processing": "處理中...",
+    "stop": "停止",
+    "start": "啟動",
+    "startFailed": "啟動失敗",
+    "stopFailed": "停止失敗",
+    "accessAddress": "存取位址",
+    "accessToken": "存取 Token",
+    "tokenHint": "Web 客戶端首次存取時需輸入此 Token",
+    "open": "開啟",
+    "hide": "隱藏",
+    "show": "顯示",
+    "copy": "複製",
+    "status": "狀態",
+    "running": "執行中",
+    "stopped": "已停止"
+  },
   "CommitPage": {
     "title": "提交程式碼",
     "invalidFolderId": "無效的 folderId",
@@ -680,6 +719,24 @@
     "applyAllNonConflicting": "套用所有非衝突變更",
     "applyLeftNonConflicting": "套用本地",
     "applyRightNonConflicting": "套用遠端"
+  },
+  "Chat": {
+    "connectionStatus": {
+      "connected": "代理已連接",
+      "connecting": "連接中...",
+      "prompting": "代理回應中...",
+      "error": "連接錯誤"
+    },
+    "linkSafety": {
+      "openLocalFile": "開啟本地檔案？",
+      "openExternalLink": "開啟外部連結？",
+      "descriptionLocal": "即將在檔案面板中開啟本地檔案。",
+      "descriptionExternal": "即將訪問外部網站。",
+      "cancel": "取消",
+      "opening": "開啟中...",
+      "openFile": "開啟檔案",
+      "openLink": "開啟連結"
+    }
   },
   "Folder": {
     "common": {
@@ -996,6 +1053,7 @@
       },
       "unstashDialog": {
         "title": "取消貯藏",
+        "invalidFolderId": "無效的資料夾 ID",
         "noStashes": "沒有貯藏記錄",
         "selectFile": "選擇檔案查看差異",
         "viewDiff": "查看差異",
@@ -1060,6 +1118,7 @@
     },
     "pushWindow": {
       "title": "推送程式碼",
+      "invalidFolderId": "無效的資料夾 ID",
       "noUnpushedCommits": "沒有未推送的提交",
       "newBranchNoPushedCommits": "新分支 — 推送以建立遠端追蹤分支",
       "unpushed": "未推送",

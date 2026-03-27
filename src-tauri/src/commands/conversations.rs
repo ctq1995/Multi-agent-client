@@ -142,7 +142,6 @@ pub async fn get_conversation(
             AgentType::OpenCode => Box::new(OpenCodeParser::new()),
             AgentType::Gemini => Box::new(GeminiParser::new()),
             AgentType::OpenClaw => Box::new(OpenClawParser::new()),
-            _ => return Err(AppCommandError::not_found(format!("No parser for agent type: {agent_type:?}"))),
         };
 
         parser
@@ -276,7 +275,6 @@ pub async fn get_folder_conversation_core(
                 AgentType::OpenCode => Box::new(OpenCodeParser::new()),
                 AgentType::Gemini => Box::new(GeminiParser::new()),
                 AgentType::OpenClaw => Box::new(OpenClawParser::new()),
-                _ => return Ok((vec![], None, None)),
             };
             match parser.get_conversation(&eid) {
                 Ok(d) => Ok((d.turns, d.session_stats, None)),

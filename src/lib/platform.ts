@@ -75,7 +75,7 @@ export async function openFileDialog(options?: {
   // For file selection, use a hidden file input.
   if (options?.directory) {
     const path = window.prompt(
-      options?.title ?? "输入服务端目录路径 (Enter server directory path)"
+      options?.title ?? "Enter server directory path"
     )
     return path || null
   }

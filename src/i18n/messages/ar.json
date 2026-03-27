@@ -113,6 +113,14 @@
     "autoCollapseLongMessages": "طي الرسائل الطويلة تلقائيًا",
     "autoCollapseLongMessagesDescription": "يتم طي رسائل المستخدم التي تتجاوز ~10 أسطر تلقائيًا. انقر للتوسيع."
   },
+  "TurnNavigator": {
+    "title": "متصفح المحادثة",
+    "turns": "{count} جولات",
+    "closeTitle": "إغلاق المتصفح",
+    "imagePlaceholder": "[صورة/ملف]",
+    "waitingForReply": "في انتظار الرد...",
+    "scrollToBottom": "الانتقال للأسفل"
+  },
   "SystemSettings": {
     "loading": "جارٍ التحميل...",
     "sectionTitle": "إدارة النظام",
@@ -650,6 +658,37 @@
   "SettingsPages": {
     "agentsLoading": "جارٍ تحميل إعدادات الوكلاء..."
   },
+  "LoginPage": {
+    "title": "Multi-agent-client",
+    "subtitle": "أدخل رمز الوصول للاتصال بالتطبيق",
+    "tokenPlaceholder": "Access Token",
+    "connect": "اتصال",
+    "connecting": "جارٍ الاتصال...",
+    "tokenHint": "الرمز متاح في الإعدادات ← خدمة الويب",
+    "errorInvalidToken": "رمز غير صالح، يرجى التحقق والمحاولة مجدداً",
+    "errorConnectionFailed": "فشل الاتصال (HTTP {status})",
+    "errorUnreachable": "تعذر الوصول إلى الخادم"
+  },
+  "WebServiceSettings": {
+    "title": "خدمة الويب",
+    "description": "تمكين الوصول عن بُعد إلى Multi-agent-client عبر المتصفح",
+    "port": "المنفذ",
+    "processing": "جارٍ المعالجة...",
+    "stop": "إيقاف",
+    "start": "تشغيل",
+    "startFailed": "فشل التشغيل",
+    "stopFailed": "فشل الإيقاف",
+    "accessAddress": "عنوان الوصول",
+    "accessToken": "رمز الوصول",
+    "tokenHint": "يحتاج عميل الويب إلى هذا الرمز عند أول وصول",
+    "open": "فتح",
+    "hide": "إخفاء",
+    "show": "إظهار",
+    "copy": "نسخ",
+    "status": "الحالة",
+    "running": "يعمل",
+    "stopped": "متوقف"
+  },
   "CommitPage": {
     "title": "التزام",
     "invalidFolderId": "معرّف المجلد غير صالح",
@@ -680,6 +719,24 @@
     "applyAllNonConflicting": "تطبيق جميع التغييرات غير المتعارضة",
     "applyLeftNonConflicting": "تطبيق المحلي",
     "applyRightNonConflicting": "تطبيق البعيد"
+  },
+  "Chat": {
+    "connectionStatus": {
+      "connected": "العميل متصل",
+      "connecting": "جارٍ الاتصال...",
+      "prompting": "العميل يستجيب...",
+      "error": "خطأ في الاتصال"
+    },
+    "linkSafety": {
+      "openLocalFile": "فتح ملف محلي؟",
+      "openExternalLink": "فتح رابط خارجي؟",
+      "descriptionLocal": "أنت على وشك فتح ملف محلي في لوحة الملفات.",
+      "descriptionExternal": "أنت على وشك زيارة موقع ويب خارجي.",
+      "cancel": "إلغاء",
+      "opening": "جارٍ الفتح...",
+      "openFile": "فتح الملف",
+      "openLink": "فتح الرابط"
+    }
   },
   "Folder": {
     "common": {
@@ -996,6 +1053,7 @@
       },
       "unstashDialog": {
         "title": "تطبيق المخبأ",
+        "invalidFolderId": "معرف المجلد غير صالح",
         "noStashes": "لا توجد تخبئات",
         "selectFile": "اختر ملفاً لعرض الفرق",
         "viewDiff": "عرض الفرق",
@@ -1060,6 +1118,7 @@
     },
     "pushWindow": {
       "title": "دفع الكود",
+      "invalidFolderId": "معرف المجلد غير صالح",
       "noUnpushedCommits": "لا توجد التزامات غير مدفوعة",
       "newBranchNoPushedCommits": "فرع جديد — ادفع لإنشاء فرع تتبع عن بُعد",
       "unpushed": "غير مدفوع",

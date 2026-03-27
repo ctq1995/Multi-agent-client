@@ -113,6 +113,14 @@
     "autoCollapseLongMessages": "Lange Nachrichten automatisch einklappen",
     "autoCollapseLongMessagesDescription": "Benutzernachrichten mit mehr als ~10 Zeilen werden automatisch eingeklappt. Zum Ausklappen klicken."
   },
+  "TurnNavigator": {
+    "title": "Gesprächsnavigator",
+    "turns": "{count} Runden",
+    "closeTitle": "Navigator schließen",
+    "imagePlaceholder": "[Bild/Datei]",
+    "waitingForReply": "Warte auf Antwort...",
+    "scrollToBottom": "Nach unten scrollen"
+  },
   "SystemSettings": {
     "loading": "Wird geladen...",
     "sectionTitle": "Systemverwaltung",
@@ -650,6 +658,37 @@
   "SettingsPages": {
     "agentsLoading": "Agent-Einstellungen werden geladen..."
   },
+  "LoginPage": {
+    "title": "Multi-agent-client",
+    "subtitle": "Zugriffstoken eingeben, um die Desktop-App zu verbinden",
+    "tokenPlaceholder": "Access Token",
+    "connect": "Verbinden",
+    "connecting": "Verbinde...",
+    "tokenHint": "Token in Desktop-Einstellungen → Web-Dienst",
+    "errorInvalidToken": "Ungültiges Token, bitte erneut prüfen",
+    "errorConnectionFailed": "Verbindung fehlgeschlagen (HTTP {status})",
+    "errorUnreachable": "Server nicht erreichbar"
+  },
+  "WebServiceSettings": {
+    "title": "Web-Dienst",
+    "description": "Ermöglicht Remote-Zugriff auf Multi-agent-client über den Browser",
+    "port": "Port",
+    "processing": "Verarbeitung...",
+    "stop": "Stoppen",
+    "start": "Starten",
+    "startFailed": "Start fehlgeschlagen",
+    "stopFailed": "Stopp fehlgeschlagen",
+    "accessAddress": "Zugriffsadresse",
+    "accessToken": "Zugriffstoken",
+    "tokenHint": "Web-Client benötigt dieses Token beim ersten Zugriff",
+    "open": "Öffnen",
+    "hide": "Ausblenden",
+    "show": "Anzeigen",
+    "copy": "Kopieren",
+    "status": "Status",
+    "running": "Läuft",
+    "stopped": "Gestoppt"
+  },
   "CommitPage": {
     "title": "Einchecken",
     "invalidFolderId": "Ungültige Ordner-ID",
@@ -680,6 +719,24 @@
     "applyAllNonConflicting": "Alle konfliktfreien Änderungen anwenden",
     "applyLeftNonConflicting": "Lokal anwenden",
     "applyRightNonConflicting": "Remote anwenden"
+  },
+  "Chat": {
+    "connectionStatus": {
+      "connected": "Agent verbunden",
+      "connecting": "Verbinde...",
+      "prompting": "Agent antwortet...",
+      "error": "Verbindungsfehler"
+    },
+    "linkSafety": {
+      "openLocalFile": "Lokale Datei öffnen?",
+      "openExternalLink": "Externen Link öffnen?",
+      "descriptionLocal": "Sie sind dabei, eine lokale Datei im Dateibereich zu öffnen.",
+      "descriptionExternal": "Sie sind dabei, eine externe Website zu besuchen.",
+      "cancel": "Abbrechen",
+      "opening": "Öffne...",
+      "openFile": "Datei öffnen",
+      "openLink": "Link öffnen"
+    }
   },
   "Folder": {
     "common": {
@@ -996,6 +1053,7 @@
       },
       "unstashDialog": {
         "title": "Stash anwenden",
+        "invalidFolderId": "Ungültige Ordner-ID",
         "noStashes": "Keine Stashes vorhanden",
         "selectFile": "Datei auswählen um Diff anzuzeigen",
         "viewDiff": "Diff anzeigen",
@@ -1060,6 +1118,7 @@
     },
     "pushWindow": {
       "title": "Code pushen",
+      "invalidFolderId": "Ungültige Ordner-ID",
       "noUnpushedCommits": "Keine ungepushten Commits",
       "newBranchNoPushedCommits": "Neuer Branch — pushen, um Remote-Tracking-Branch zu erstellen",
       "unpushed": "Nicht gepusht",

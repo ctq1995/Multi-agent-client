@@ -1,6 +1,6 @@
 [package]
 name = "multi-agent-client"
-version = "0.1.4"
+version = "1.1.0"
 description = "Agent Code Generation App"
 authors = ["feitao"]
 edition = "2021"

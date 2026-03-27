@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { Check, Copy, ExternalLink, Eye, EyeOff } from "lucide-react"
 import {
   startWebServer,
@@ -11,29 +12,21 @@ import {
 import { openUrl } from "@/lib/platform"
 
 function AddressCard({ label, value }: { label: string; value: string }) {
-  const [hovered, setHovered] = useState(false)
-
   return (
     <div className="space-y-1.5">
       <div className="text-xs font-medium text-muted-foreground">{label}</div>
       <div
         className="group relative flex items-center rounded-md border bg-muted/40 px-3 py-2"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
       >
         <code className="min-w-0 flex-1 truncate text-sm select-all">
           {value}
         </code>
-        <div
-          className={`ml-2 flex shrink-0 items-center gap-1 transition-opacity ${
-            hovered ? "opacity-100" : "opacity-0"
-          }`}
-        >
+        <div className="ml-2 flex shrink-0 items-center gap-1">
           <button
             type="button"
             onClick={() => openUrl(value)}
             className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            title="打开"
+            title={label}
           >
             <ExternalLink className="h-3.5 w-3.5" />
           </button>
@@ -43,8 +36,19 @@ function AddressCard({ label, value }: { label: string; value: string }) {
   )
 }
 
-function TokenCard({ label, value }: { label: string; value: string }) {
-  const [hovered, setHovered] = useState(false)
+function TokenCard({
+  label,
+  value,
+  hideLabel,
+  showLabel,
+  copyLabel,
+}: {
+  label: string
+  value: string
+  hideLabel: string
+  showLabel: string
+  copyLabel: string
+}) {
   const [copied, setCopied] = useState(false)
   const [revealed, setRevealed] = useState(false)
 
@@ -63,22 +67,16 @@ function TokenCard({ label, value }: { label: string; value: string }) {
       <div className="text-xs font-medium text-muted-foreground">{label}</div>
       <div
         className="group relative flex items-center rounded-md border bg-muted/40 px-3 py-2"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
       >
         <code className="min-w-0 flex-1 truncate text-sm select-all">
           {displayValue}
         </code>
-        <div
-          className={`ml-2 flex shrink-0 items-center gap-1 transition-opacity ${
-            hovered ? "opacity-100" : "opacity-0"
-          }`}
-        >
+        <div className="ml-2 flex shrink-0 items-center gap-1">
           <button
             type="button"
             onClick={() => setRevealed((v) => !v)}
             className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            title={revealed ? "隐藏" : "显示"}
+            title={revealed ? hideLabel : showLabel}
           >
             {revealed ? (
               <EyeOff className="h-3.5 w-3.5" />
@@ -90,7 +88,7 @@ function TokenCard({ label, value }: { label: string; value: string }) {
             type="button"
             onClick={handleCopy}
             className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            title="复制"
+            title={copyLabel}
           >
             {copied ? (
               <Check className="h-3.5 w-3.5 text-green-500" />
@@ -105,6 +103,7 @@ function TokenCard({ label, value }: { label: string; value: string }) {
 }
 
 export function WebServiceSettings() {
+  const t = useTranslations("WebServiceSettings")
   const [status, setStatus] = useState<WebServerInfo | null>(null)
   const [port, setPort] = useState("3080")
   const [loading, setLoading] = useState(false)
@@ -138,7 +137,7 @@ export function WebServiceSettings() {
       const msg =
         e && typeof e === "object" && "message" in e
           ? (e as { message: string }).message
-          : "启动失败"
+          : t("startFailed")
       setError(msg)
     } finally {
       setLoading(false)
@@ -151,7 +150,7 @@ export function WebServiceSettings() {
       await stopWebServer()
       setStatus(null)
     } catch {
-      setError("停止失败")
+      setError(t("stopFailed"))
     } finally {
       setLoading(false)
     }
@@ -162,16 +161,16 @@ export function WebServiceSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium">Web 服务</h3>
+        <h3 className="text-lg font-medium">{t("title")}</h3>
         <p className="text-sm text-muted-foreground">
-          启用后可通过浏览器远程访问 Multi-agent-client
+          {t("description")}
         </p>
       </div>
 
       <div className="space-y-4">
         {/* Port config */}
         <div className="flex items-center gap-4">
-          <label className="w-20 text-sm font-medium">端口</label>
+          <label className="w-20 text-sm font-medium">{t("port")}</label>
           <input
             type="number"
             value={port}
@@ -185,7 +184,7 @@ export function WebServiceSettings() {
 
         {/* Start/Stop button */}
         <div className="flex items-center gap-4">
-          <label className="w-20 text-sm font-medium">状态</label>
+          <label className="w-20 text-sm font-medium">{t("status")}</label>
           <div className="flex items-center gap-3">
             <span
               className={`inline-block h-2 w-2 rounded-full ${
@@ -193,7 +192,7 @@ export function WebServiceSettings() {
               }`}
             />
             <span className="text-sm">
-              {isRunning ? "运行中" : "已停止"}
+              {isRunning ? t("running") : t("stopped")}
             </span>
             <button
               onClick={isRunning ? handleStop : handleStart}
@@ -201,10 +200,10 @@ export function WebServiceSettings() {
               className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
             >
               {loading
-                ? "处理中..."
+                ? t("processing")
                 : isRunning
-                  ? "停止"
-                  : "启动"}
+                  ? t("stop")
+                  : t("start")}
             </button>
           </div>
         </div>
@@ -217,11 +216,17 @@ export function WebServiceSettings() {
         {isRunning && (
           <div className="space-y-3">
             {status.addresses.map((addr) => (
-              <AddressCard key={addr} label="访问地址" value={addr} />
+              <AddressCard key={addr} label={t("accessAddress")} value={addr} />
             ))}
-            <TokenCard label="访问 Token" value={status.token} />
+            <TokenCard
+              label={t("accessToken")}
+              value={status.token}
+              hideLabel={t("hide")}
+              showLabel={t("show")}
+              copyLabel={t("copy")}
+            />
             <p className="text-xs text-muted-foreground">
-              Web 客户端首次访问时需输入此 Token
+              {t("tokenHint")}
             </p>
           </div>
         )}

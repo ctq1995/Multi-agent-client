@@ -88,7 +88,11 @@ async fn check_npx_environment(node_required: Option<&str>) -> Vec<CheckItem> {
         if let Some(required) = node_required {
             // Extract node version string from the cached node_available message
             // (format: "Node.js v20.19.0 available")
-            let node_ver = extract_node_version_from_message(&checks[0].message);
+            let node_ver = checks
+                .iter()
+                .find(|c| c.check_id == "node_available")
+                .map(|c| extract_node_version_from_message(&c.message))
+                .unwrap_or_default();
             checks.push(build_node_version_check(node_ver.as_deref(), required));
         }
         return checks;

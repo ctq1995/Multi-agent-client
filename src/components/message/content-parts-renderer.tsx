@@ -841,16 +841,23 @@ function extractEditChangesPayload(
 
 // ── tool icon mapping ────────────────────────────────────────────────
 
-const ICON_CLASS = "size-4 text-muted-foreground"
+const ICON_READ = "size-4 text-blue-500"
+const ICON_WRITE = "size-4 text-green-500"
+const ICON_EDIT = "size-4 text-amber-500"
+const ICON_EXEC = "size-4 text-orange-500"
+const ICON_SEARCH = "size-4 text-purple-500"
+const ICON_WEB = "size-4 text-cyan-500"
+const ICON_TASK = "size-4 text-indigo-500"
+const ICON_SKILL = "size-4 text-violet-500"
 
 function getTaskToolIcon(input: string | null): ReactNode {
-  if (!input) return <ListTodoIcon className={ICON_CLASS} />
+  if (!input) return <ListTodoIcon className={ICON_TASK} />
   const t = extractJsonField(input, "subagent_type")?.toLowerCase()
-  if (!t) return <ListTodoIcon className={ICON_CLASS} />
-  if (t.includes("explore")) return <CompassIcon className={ICON_CLASS} />
-  if (t.includes("plan")) return <MapIcon className={ICON_CLASS} />
-  if (t.includes("bash")) return <TerminalIcon className={ICON_CLASS} />
-  return <WrenchIcon className={ICON_CLASS} />
+  if (!t) return <ListTodoIcon className={ICON_TASK} />
+  if (t.includes("explore")) return <CompassIcon className={ICON_TASK} />
+  if (t.includes("plan")) return <MapIcon className={ICON_TASK} />
+  if (t.includes("bash")) return <TerminalIcon className={ICON_EXEC} />
+  return <WrenchIcon className={ICON_TASK} />
 }
 
 function getToolIcon(
@@ -859,29 +866,29 @@ function getToolIcon(
 ): ReactNode | undefined {
   const name = toolName.toLowerCase()
   if (name === "read" || name === "read file")
-    return <FileTextIcon className={ICON_CLASS} />
-  if (name === "edit") return <FilePenLineIcon className={ICON_CLASS} />
+    return <FileTextIcon className={ICON_READ} />
+  if (name === "edit") return <FilePenLineIcon className={ICON_EDIT} />
   if (name === "write" || name === "notebookedit")
-    return <FilePlusIcon className={ICON_CLASS} />
+    return <FilePlusIcon className={ICON_WRITE} />
   if (name === "bash" || name === "exec_command")
-    return <TerminalIcon className={ICON_CLASS} />
-  if (name === "apply_patch") return <FilePenLineIcon className={ICON_CLASS} />
+    return <TerminalIcon className={ICON_EXEC} />
+  if (name === "apply_patch") return <FilePenLineIcon className={ICON_EDIT} />
   if (name === "glob" || name === "grep")
-    return <SearchIcon className={ICON_CLASS} />
+    return <SearchIcon className={ICON_SEARCH} />
   if (name === "webfetch" || name === "websearch")
-    return <GlobeIcon className={ICON_CLASS} />
-  if (name === "todowrite") return <ListTodoIcon className={ICON_CLASS} />
+    return <GlobeIcon className={ICON_WEB} />
+  if (name === "todowrite") return <ListTodoIcon className={ICON_TASK} />
   if (name === "task") return getTaskToolIcon(input ?? null)
   if (name === "taskcreate" || name === "taskupdate" || name === "tasklist")
-    return <ListTodoIcon className={ICON_CLASS} />
+    return <ListTodoIcon className={ICON_TASK} />
   if (name === "agent") return getTaskToolIcon(input ?? null)
-  if (name === "skill") return <SparklesIcon className={ICON_CLASS} />
+  if (name === "skill") return <SparklesIcon className={ICON_SKILL} />
   if (
     name === "enterplanmode" ||
     name === "exitplanmode" ||
     name === "switch_mode"
   )
-    return <ListTodoIcon className={ICON_CLASS} />
+    return <ListTodoIcon className={ICON_TASK} />
   return undefined
 }
 

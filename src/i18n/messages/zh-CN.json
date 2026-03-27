@@ -113,6 +113,14 @@
     "autoCollapseLongMessages": "自动折叠超长用户消息",
     "autoCollapseLongMessagesDescription": "超过约10行的用户消息自动折叠，点击可展开。"
   },
+  "TurnNavigator": {
+    "title": "对话导航",
+    "turns": "{count} 轮",
+    "closeTitle": "关闭导航",
+    "imagePlaceholder": "[图片/文件]",
+    "waitingForReply": "等待回复...",
+    "scrollToBottom": "回到底部"
+  },
   "SystemSettings": {
     "loading": "加载中...",
     "sectionTitle": "系统管理",
@@ -650,6 +658,37 @@
   "SettingsPages": {
     "agentsLoading": "加载 Agent 设置中..."
   },
+  "LoginPage": {
+    "title": "Multi-agent-client",
+    "subtitle": "输入访问 Token 以连接到桌面端",
+    "tokenPlaceholder": "Access Token",
+    "connect": "连接",
+    "connecting": "连接中...",
+    "tokenHint": "Token 可在桌面端 设置 → Web 服务 中获取",
+    "errorInvalidToken": "Token 无效，请检查后重试",
+    "errorConnectionFailed": "连接失败 (HTTP {status})",
+    "errorUnreachable": "无法连接到服务器"
+  },
+  "WebServiceSettings": {
+    "title": "Web 服务",
+    "description": "启用后可通过浏览器远程访问 Multi-agent-client",
+    "port": "端口",
+    "processing": "处理中...",
+    "stop": "停止",
+    "start": "启动",
+    "startFailed": "启动失败",
+    "stopFailed": "停止失败",
+    "accessAddress": "访问地址",
+    "accessToken": "访问 Token",
+    "tokenHint": "Web 客户端首次访问时需输入此 Token",
+    "open": "打开",
+    "hide": "隐藏",
+    "show": "显示",
+    "copy": "复制",
+    "status": "状态",
+    "running": "运行中",
+    "stopped": "已停止"
+  },
   "CommitPage": {
     "title": "提交代码",
     "invalidFolderId": "无效的 folderId",
@@ -680,6 +719,24 @@
     "applyAllNonConflicting": "应用所有非冲突变更",
     "applyLeftNonConflicting": "应用本地",
     "applyRightNonConflicting": "应用远程"
+  },
+  "Chat": {
+    "connectionStatus": {
+      "connected": "代理已连接",
+      "connecting": "连接中...",
+      "prompting": "代理响应中...",
+      "error": "连接错误"
+    },
+    "linkSafety": {
+      "openLocalFile": "打开本地文件？",
+      "openExternalLink": "打开外部链接？",
+      "descriptionLocal": "即将在文件面板中打开本地文件。",
+      "descriptionExternal": "即将访问外部网站。",
+      "cancel": "取消",
+      "opening": "打开中...",
+      "openFile": "打开文件",
+      "openLink": "打开链接"
+    }
   },
   "Folder": {
     "common": {
@@ -996,6 +1053,7 @@
       },
       "unstashDialog": {
         "title": "取消贮藏",
+        "invalidFolderId": "无效的文件夹 ID",
         "noStashes": "没有贮藏记录",
         "selectFile": "选择文件查看差异",
         "viewDiff": "查看差异",
@@ -1060,6 +1118,7 @@
     },
     "pushWindow": {
       "title": "推送代码",
+      "invalidFolderId": "无效的文件夹 ID",
       "noUnpushedCommits": "没有未推送的提交",
       "newBranchNoPushedCommits": "新分支 — 推送以创建远程跟踪分支",
       "unpushed": "未推送",

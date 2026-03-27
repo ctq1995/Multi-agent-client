@@ -1,24 +1,9 @@
 export type AgentType =
   | "claude_code"
   | "codex"
-  | "open_code"
-  | "auggie"
-  | "autohand"
-  | "cline"
-  | "codebuddy_code"
-  | "corust_agent"
   | "gemini"
-  | "github_copilot"
-  | "goose"
-  | "junie"
-  | "qoder"
-  | "qwen_code"
-  | "factory_droid"
-  | "kimi"
-  | "minion_code"
-  | "mistral_vibe"
   | "open_claw"
-  | "stakpak"
+  | "open_code"
 
 export type AppErrorCode =
   | "invalid_input"
@@ -236,47 +221,17 @@ export function compareAgentType(a: AgentType, b: AgentType): number {
 export const AGENT_LABELS: Record<AgentType, string> = {
   claude_code: "Claude Code",
   codex: "Codex CLI",
-  open_code: "OpenCode",
-  auggie: "Auggie",
-  autohand: "Autohand",
-  cline: "Cline",
-  codebuddy_code: "Codebuddy Code",
-  corust_agent: "Corust Agent",
   gemini: "Gemini CLI",
-  github_copilot: "GitHub Copilot",
-  goose: "goose",
-  junie: "Junie",
-  qoder: "Qoder CLI",
-  qwen_code: "Qwen Code",
-  factory_droid: "Factory Droid",
-  kimi: "Kimi CLI",
-  minion_code: "Minion Code",
-  mistral_vibe: "Mistral Vibe",
   open_claw: "OpenClaw",
-  stakpak: "Stakpak",
+  open_code: "OpenCode",
 }
 
 export const AGENT_COLORS: Record<AgentType, string> = {
   claude_code: "bg-orange-500",
   codex: "bg-green-500",
-  open_code: "bg-blue-500",
-  auggie: "bg-purple-500",
-  autohand: "bg-emerald-500",
-  cline: "bg-rose-500",
-  codebuddy_code: "bg-violet-500",
-  corust_agent: "bg-amber-500",
   gemini: "bg-blue-400",
-  github_copilot: "bg-gray-600",
-  goose: "bg-lime-500",
-  junie: "bg-pink-500",
-  qoder: "bg-teal-500",
-  qwen_code: "bg-purple-600",
-  factory_droid: "bg-yellow-600",
-  kimi: "bg-sky-500",
-  minion_code: "bg-fuchsia-500",
-  mistral_vibe: "bg-orange-600",
   open_claw: "bg-emerald-600",
-  stakpak: "bg-slate-500",
+  open_code: "bg-blue-500",
 }
 
 // ACP connection status (matches Rust ConnectionStatus)

@@ -72,8 +72,8 @@ export class WebTransport implements Transport {
   }
 
   private static redirectToLogin() {
-    if (window.location.pathname.startsWith("/login")) return
     localStorage.removeItem("codeg_token")
+    if (window.location.pathname.startsWith("/login")) return
     window.location.href = "/login"
   }
 

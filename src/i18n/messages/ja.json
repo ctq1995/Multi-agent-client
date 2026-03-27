@@ -113,6 +113,14 @@
     "autoCollapseLongMessages": "長いユーザーメッセージを自動折りたたみ",
     "autoCollapseLongMessagesDescription": "約10行を超えるユーザーメッセージを自動的に折りたたみます。クリックで展開できます。"
   },
+  "TurnNavigator": {
+    "title": "会話ナビゲーター",
+    "turns": "{count} ターン",
+    "closeTitle": "ナビゲーターを閉じる",
+    "imagePlaceholder": "[画像/ファイル]",
+    "waitingForReply": "返信待ち...",
+    "scrollToBottom": "最下部へ"
+  },
   "SystemSettings": {
     "loading": "読み込み中...",
     "sectionTitle": "システム管理",
@@ -650,6 +658,37 @@
   "SettingsPages": {
     "agentsLoading": "エージェント設定を読み込み中..."
   },
+  "LoginPage": {
+    "title": "Multi-agent-client",
+    "subtitle": "アクセストークンを入力してデスクトップに接続",
+    "tokenPlaceholder": "Access Token",
+    "connect": "接続",
+    "connecting": "接続中...",
+    "tokenHint": "トークンはデスクトップの 設定 → Web サービス で確認できます",
+    "errorInvalidToken": "無効なトークンです。確認してもう一度お試しください",
+    "errorConnectionFailed": "接続失敗 (HTTP {status})",
+    "errorUnreachable": "サーバーに接続できません"
+  },
+  "WebServiceSettings": {
+    "title": "Web サービス",
+    "description": "ブラウザから Multi-agent-client にリモートアクセスできます",
+    "port": "ポート",
+    "processing": "処理中...",
+    "stop": "停止",
+    "start": "起動",
+    "startFailed": "起動失敗",
+    "stopFailed": "停止失敗",
+    "accessAddress": "アクセスアドレス",
+    "accessToken": "アクセストークン",
+    "tokenHint": "Web クライアントの初回アクセス時にこのトークンが必要です",
+    "open": "開く",
+    "hide": "非表示",
+    "show": "表示",
+    "copy": "コピー",
+    "status": "状態",
+    "running": "実行中",
+    "stopped": "停止済み"
+  },
   "CommitPage": {
     "title": "コミット",
     "invalidFolderId": "無効なフォルダID",
@@ -680,6 +719,24 @@
     "applyAllNonConflicting": "競合しない変更をすべて適用",
     "applyLeftNonConflicting": "ローカルを適用",
     "applyRightNonConflicting": "リモートを適用"
+  },
+  "Chat": {
+    "connectionStatus": {
+      "connected": "エージェント接続済み",
+      "connecting": "接続中...",
+      "prompting": "エージェント応答中...",
+      "error": "接続エラー"
+    },
+    "linkSafety": {
+      "openLocalFile": "ローカルファイルを開く？",
+      "openExternalLink": "外部リンクを開く？",
+      "descriptionLocal": "ファイルパネルでローカルファイルを開こうとしています。",
+      "descriptionExternal": "外部ウェブサイトにアクセスしようとしています。",
+      "cancel": "キャンセル",
+      "opening": "開いています...",
+      "openFile": "ファイルを開く",
+      "openLink": "リンクを開く"
+    }
   },
   "Folder": {
     "common": {
@@ -996,6 +1053,7 @@
       },
       "unstashDialog": {
         "title": "スタッシュを適用",
+        "invalidFolderId": "無効なフォルダー ID",
         "noStashes": "スタッシュがありません",
         "selectFile": "ファイルを選択して差分を表示",
         "viewDiff": "差分を表示",
@@ -1060,6 +1118,7 @@
     },
     "pushWindow": {
       "title": "コードをプッシュ",
+      "invalidFolderId": "無効なフォルダー ID",
       "noUnpushedCommits": "未プッシュのコミットはありません",
       "newBranchNoPushedCommits": "新しいブランチ — プッシュしてリモート追跡ブランチを作成",
       "unpushed": "未プッシュ",

@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 import { openUrl } from "@/lib/platform"
 import type { LinkSafetyConfig, LinkSafetyModalProps } from "streamdown"
 import { toast } from "sonner"
@@ -163,6 +164,7 @@ function LinkSafetyModal({
 }: LinkSafetyModalProps & {
   onAction: (url: string) => Promise<void>
 }) {
+  const t = useTranslations("Chat.linkSafety")
   const [opening, setOpening] = useState(false)
   const localTarget = useMemo(() => parseLocalFileTarget(url), [url])
   const isLocalFile = Boolean(localTarget)
@@ -185,21 +187,19 @@ function LinkSafetyModal({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {isLocalFile ? "Open local file?" : "Open external link?"}
+            {isLocalFile ? t("openLocalFile") : t("openExternalLink")}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {isLocalFile
-              ? "You're about to open a local file in the Files panel."
-              : "You're about to visit an external website."}
+            {isLocalFile ? t("descriptionLocal") : t("descriptionExternal")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="max-h-28 overflow-auto rounded-md bg-muted px-3 py-2 font-mono text-xs break-all">
           {url}
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={opening}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={opening}>{t("cancel")}</AlertDialogCancel>
           <AlertDialogAction disabled={opening} onClick={handleAction}>
-            {opening ? "Opening..." : isLocalFile ? "Open file" : "Open link"}
+            {opening ? t("opening") : isLocalFile ? t("openFile") : t("openLink")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

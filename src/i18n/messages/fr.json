@@ -113,6 +113,14 @@
     "autoCollapseLongMessages": "Replier automatiquement les longs messages",
     "autoCollapseLongMessagesDescription": "Les messages utilisateur de plus de ~10 lignes sont automatiquement repliés. Cliquez pour développer."
   },
+  "TurnNavigator": {
+    "title": "Navigateur de conversation",
+    "turns": "{count} tours",
+    "closeTitle": "Fermer le navigateur",
+    "imagePlaceholder": "[Image/Fichier]",
+    "waitingForReply": "En attente de réponse...",
+    "scrollToBottom": "Aller en bas"
+  },
   "SystemSettings": {
     "loading": "Chargement...",
     "sectionTitle": "Gestion du système",
@@ -650,6 +658,37 @@
   "SettingsPages": {
     "agentsLoading": "Chargement des paramètres des agents..."
   },
+  "LoginPage": {
+    "title": "Multi-agent-client",
+    "subtitle": "Entrez votre jeton d'accès pour vous connecter",
+    "tokenPlaceholder": "Access Token",
+    "connect": "Connecter",
+    "connecting": "Connexion...",
+    "tokenHint": "Le jeton se trouve dans Paramètres → Service Web",
+    "errorInvalidToken": "Jeton invalide, veuillez vérifier et réessayer",
+    "errorConnectionFailed": "Échec de connexion (HTTP {status})",
+    "errorUnreachable": "Impossible de contacter le serveur"
+  },
+  "WebServiceSettings": {
+    "title": "Service Web",
+    "description": "Permet l'accès distant à Multi-agent-client via un navigateur",
+    "port": "Port",
+    "processing": "Traitement...",
+    "stop": "Arrêter",
+    "start": "Démarrer",
+    "startFailed": "Échec du démarrage",
+    "stopFailed": "Échec de l'arrêt",
+    "accessAddress": "Adresse d'accès",
+    "accessToken": "Jeton d'accès",
+    "tokenHint": "Ce jeton est requis lors du premier accès depuis un client web",
+    "open": "Ouvrir",
+    "hide": "Masquer",
+    "show": "Afficher",
+    "copy": "Copier",
+    "status": "État",
+    "running": "En cours",
+    "stopped": "Arrêté"
+  },
   "CommitPage": {
     "title": "Valider",
     "invalidFolderId": "ID de dossier invalide",
@@ -680,6 +719,24 @@
     "applyAllNonConflicting": "Appliquer tous les changements non conflictuels",
     "applyLeftNonConflicting": "Appliquer local",
     "applyRightNonConflicting": "Appliquer distant"
+  },
+  "Chat": {
+    "connectionStatus": {
+      "connected": "Agent connecté",
+      "connecting": "Connexion...",
+      "prompting": "Agent en cours de réponse...",
+      "error": "Erreur de connexion"
+    },
+    "linkSafety": {
+      "openLocalFile": "Ouvrir le fichier local ?",
+      "openExternalLink": "Ouvrir le lien externe ?",
+      "descriptionLocal": "Vous êtes sur le point d'ouvrir un fichier local dans le panneau Fichiers.",
+      "descriptionExternal": "Vous êtes sur le point de visiter un site web externe.",
+      "cancel": "Annuler",
+      "opening": "Ouverture...",
+      "openFile": "Ouvrir le fichier",
+      "openLink": "Ouvrir le lien"
+    }
   },
   "Folder": {
     "common": {
@@ -996,6 +1053,7 @@
       },
       "unstashDialog": {
         "title": "Appliquer la remise",
+        "invalidFolderId": "ID de dossier invalide",
         "noStashes": "Aucune remise trouvée",
         "selectFile": "Sélectionner un fichier pour voir le diff",
         "viewDiff": "Voir le diff",
@@ -1060,6 +1118,7 @@
     },
     "pushWindow": {
       "title": "Pousser le code",
+      "invalidFolderId": "ID de dossier invalide",
       "noUnpushedCommits": "Aucun commit non poussé",
       "newBranchNoPushedCommits": "Nouvelle branche — pousser pour créer la branche de suivi distante",
       "unpushed": "Non poussé",

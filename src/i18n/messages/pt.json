@@ -113,6 +113,14 @@
     "autoCollapseLongMessages": "Recolher mensagens longas automaticamente",
     "autoCollapseLongMessagesDescription": "Mensagens do usuário com mais de ~10 linhas são recolhidas automaticamente. Clique para expandir."
   },
+  "TurnNavigator": {
+    "title": "Navegador de conversa",
+    "turns": "{count} turnos",
+    "closeTitle": "Fechar navegador",
+    "imagePlaceholder": "[Imagem/Arquivo]",
+    "waitingForReply": "Aguardando resposta...",
+    "scrollToBottom": "Ir para o final"
+  },
   "SystemSettings": {
     "loading": "Carregando...",
     "sectionTitle": "Gerenciamento do sistema",
@@ -650,6 +658,37 @@
   "SettingsPages": {
     "agentsLoading": "Carregando configurações de agentes..."
   },
+  "LoginPage": {
+    "title": "Multi-agent-client",
+    "subtitle": "Insira seu token de acesso para conectar",
+    "tokenPlaceholder": "Access Token",
+    "connect": "Conectar",
+    "connecting": "Conectando...",
+    "tokenHint": "O token está em Configurações → Serviço Web",
+    "errorInvalidToken": "Token inválido, verifique e tente novamente",
+    "errorConnectionFailed": "Falha na conexão (HTTP {status})",
+    "errorUnreachable": "Não foi possível conectar ao servidor"
+  },
+  "WebServiceSettings": {
+    "title": "Serviço Web",
+    "description": "Permite acesso remoto ao Multi-agent-client pelo navegador",
+    "port": "Porta",
+    "processing": "Processando...",
+    "stop": "Parar",
+    "start": "Iniciar",
+    "startFailed": "Falha ao iniciar",
+    "stopFailed": "Falha ao parar",
+    "accessAddress": "Endereço de acesso",
+    "accessToken": "Token de acesso",
+    "tokenHint": "O cliente web precisa deste token no primeiro acesso",
+    "open": "Abrir",
+    "hide": "Ocultar",
+    "show": "Mostrar",
+    "copy": "Copiar",
+    "status": "Status",
+    "running": "Em execução",
+    "stopped": "Parado"
+  },
   "CommitPage": {
     "title": "Confirmar",
     "invalidFolderId": "ID de pasta inválido",
@@ -680,6 +719,24 @@
     "applyAllNonConflicting": "Aplicar todas as alterações sem conflito",
     "applyLeftNonConflicting": "Aplicar local",
     "applyRightNonConflicting": "Aplicar remoto"
+  },
+  "Chat": {
+    "connectionStatus": {
+      "connected": "Agente conectado",
+      "connecting": "Conectando...",
+      "prompting": "Agente respondendo...",
+      "error": "Erro de conexão"
+    },
+    "linkSafety": {
+      "openLocalFile": "Abrir arquivo local?",
+      "openExternalLink": "Abrir link externo?",
+      "descriptionLocal": "Você está prestes a abrir um arquivo local no painel de arquivos.",
+      "descriptionExternal": "Você está prestes a visitar um site externo.",
+      "cancel": "Cancelar",
+      "opening": "Abrindo...",
+      "openFile": "Abrir arquivo",
+      "openLink": "Abrir link"
+    }
   },
   "Folder": {
     "common": {
@@ -996,6 +1053,7 @@
       },
       "unstashDialog": {
         "title": "Aplicar stash",
+        "invalidFolderId": "ID de pasta inválido",
         "noStashes": "Nenhum stash encontrado",
         "selectFile": "Selecione um ficheiro para ver diferenças",
         "viewDiff": "Ver diferenças",
@@ -1060,6 +1118,7 @@
     },
     "pushWindow": {
       "title": "Enviar código",
+      "invalidFolderId": "ID de pasta inválido",
       "noUnpushedCommits": "Nenhum commit não enviado",
       "newBranchNoPushedCommits": "Nova branch — enviar para criar branch de rastreamento remota",
       "unpushed": "Não enviado",

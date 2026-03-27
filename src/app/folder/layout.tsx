@@ -56,7 +56,7 @@ function FolderDocumentTitle() {
   const { folder } = useFolderContext()
 
   useEffect(() => {
-    document.title = folder ? `${folder.name} - codeg` : "codeg"
+    document.title = folder ? `${folder.name} - Multi-agent-client` : "Multi-agent-client"
   }, [folder])
 
   return null

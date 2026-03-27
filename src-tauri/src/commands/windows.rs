@@ -264,7 +264,7 @@ pub async fn open_commit_window(
 
     let url = WebviewUrl::App(format!("commit?folderId={folder_id}").into());
     let builder = WebviewWindowBuilder::new(&app, &label, url)
-        .title(format!("提交代码 - {}", folder.name))
+        .title(format!("Commit - {}", folder.name))
         .inner_size(1220.0, 820.0)
         .min_inner_size(980.0, 620.0)
         .always_on_top(true)
@@ -424,7 +424,7 @@ pub async fn open_merge_window(
     }
     let url = WebviewUrl::App(url_str.into());
     let builder = WebviewWindowBuilder::new(&app, &label, url)
-        .title(format!("解决冲突 - {}", folder.name))
+        .title(format!("Resolve Conflicts - {}", folder.name))
         .inner_size(1400.0, 900.0)
         .min_inner_size(1100.0, 650.0)
         .always_on_top(true)

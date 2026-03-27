@@ -124,21 +124,21 @@ async fn build_agent(
         AgentDistribution::Npx {
             package, args, env, ..
         } => {
-            let cmd = package;
             let merged_env = merge_agent_env(env, runtime_env);
             let mut parts: Vec<String> = Vec::new();
             for (k, v) in &merged_env {
                 parts.push(format!("{k}={v}"));
             }
-            parts.push(
-                which::which(cmd)
-                    .map(|p| p.to_string_lossy().to_string())
-                    .unwrap_or_else(|_| {
-                        crate::process::normalized_program(cmd)
-                            .to_string_lossy()
-                            .to_string()
-                    }),
-            );
+            // Resolve the npx executable path (handles Windows .cmd shim)
+            let npx_exe = which::which(crate::process::normalized_program("npx"))
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_else(|_| {
+                    crate::process::normalized_program("npx")
+                        .to_string_lossy()
+                        .to_string()
+                });
+            parts.push(npx_exe);
+            parts.push(package.to_string());
             for a in args {
                 parts.push((*a).into());
             }
@@ -525,7 +525,7 @@ async fn run_connection(
 
     Client
         .builder()
-        .name("codeg")
+        .name("multi-agent-client")
         .on_receive_request(
             {
                 let conn_id = conn_id.clone();

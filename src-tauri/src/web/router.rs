@@ -20,7 +20,7 @@ pub fn build_router(app: tauri::AppHandle, token: String, static_dir: std::path:
     let token_for_ws = token.clone();
 
     let api = Router::new()
-        .route("/health", post(health_check))
+        .route("/health", get(health_check).post(health_check))
         // ─── Conversations ───
         .route("/list_conversations", post(handlers::conversations::list_conversations))
         .route("/get_conversation", post(handlers::conversations::get_conversation))

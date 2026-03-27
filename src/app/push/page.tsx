@@ -96,7 +96,7 @@ function PushPageInner() {
       <main className="min-h-0 flex-1">
         {!hasValidFolderId ? (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            Invalid folder ID
+            {t("invalidFolderId")}
           </div>
         ) : loading ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">

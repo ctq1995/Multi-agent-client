@@ -1,6 +1,6 @@
 use keyring::Entry;
 
-const SERVICE_NAME: &str = "codeg";
+const SERVICE_NAME: &str = "polaris-multi-agent-client";
 
 fn token_key(account_id: &str) -> String {
     format!("github-token:{}", account_id)

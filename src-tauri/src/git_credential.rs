@@ -24,10 +24,10 @@ pub fn create_credential_helper_script(
 
     #[cfg(unix)]
     {
-        let script_path = app_data_dir.join("git-credential-codeg.sh");
+        let script_path = app_data_dir.join("git-credential-polaris.sh");
         let content = format!(
             r#"#!/bin/sh
-# Codeg credential helper — calls the app binary to look up credentials.
+# Polaris credential helper — calls the app binary to look up credentials.
 # Only responds to "get" action; ignores "store" and "erase".
 [ "$1" != "get" ] && exit 0
 exec "{binary}" --credential-helper < /dev/stdin
@@ -42,7 +42,7 @@ exec "{binary}" --credential-helper < /dev/stdin
 
     #[cfg(windows)]
     {
-        let script_path = app_data_dir.join("git-credential-codeg.bat");
+        let script_path = app_data_dir.join("git-credential-polaris.bat");
         let content = format!(
             r#"@echo off
 if not "%~1"=="get" exit /b 0

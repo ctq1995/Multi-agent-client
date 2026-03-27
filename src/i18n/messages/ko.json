@@ -113,6 +113,14 @@
     "autoCollapseLongMessages": "긴 사용자 메시지 자동 접기",
     "autoCollapseLongMessagesDescription": "약 10줄을 초과하는 사용자 메시지를 자동으로 접습니다. 클릭하여 펼칠 수 있습니다."
   },
+  "TurnNavigator": {
+    "title": "대화 탐색기",
+    "turns": "{count} 턴",
+    "closeTitle": "탐색기 닫기",
+    "imagePlaceholder": "[이미지/파일]",
+    "waitingForReply": "답변 대기 중...",
+    "scrollToBottom": "맨 아래로"
+  },
   "SystemSettings": {
     "loading": "로딩 중...",
     "sectionTitle": "시스템 관리",
@@ -650,6 +658,37 @@
   "SettingsPages": {
     "agentsLoading": "에이전트 설정을 불러오는 중..."
   },
+  "LoginPage": {
+    "title": "Multi-agent-client",
+    "subtitle": "액세스 토큰을 입력하여 데스크톱에 연결",
+    "tokenPlaceholder": "Access Token",
+    "connect": "연결",
+    "connecting": "연결 중...",
+    "tokenHint": "토큰은 데스크톱 설정 → Web 서비스에서 확인할 수 있습니다",
+    "errorInvalidToken": "유효하지 않은 토큰입니다. 확인 후 다시 시도하세요",
+    "errorConnectionFailed": "연결 실패 (HTTP {status})",
+    "errorUnreachable": "서버에 연결할 수 없습니다"
+  },
+  "WebServiceSettings": {
+    "title": "Web 서비스",
+    "description": "브라우저를 통해 Multi-agent-client에 원격 접근할 수 있습니다",
+    "port": "포트",
+    "processing": "처리 중...",
+    "stop": "중지",
+    "start": "시작",
+    "startFailed": "시작 실패",
+    "stopFailed": "중지 실패",
+    "accessAddress": "접속 주소",
+    "accessToken": "액세스 토큰",
+    "tokenHint": "웹 클라이언트 최초 접속 시 이 토큰이 필요합니다",
+    "open": "열기",
+    "hide": "숨기기",
+    "show": "표시",
+    "copy": "복사",
+    "status": "상태",
+    "running": "실행 중",
+    "stopped": "중지됨"
+  },
   "CommitPage": {
     "title": "커밋",
     "invalidFolderId": "유효하지 않은 폴더 ID",
@@ -680,6 +719,24 @@
     "applyAllNonConflicting": "충돌하지 않는 모든 변경 적용",
     "applyLeftNonConflicting": "로컬 적용",
     "applyRightNonConflicting": "원격 적용"
+  },
+  "Chat": {
+    "connectionStatus": {
+      "connected": "에이전트 연결됨",
+      "connecting": "연결 중...",
+      "prompting": "에이전트 응답 중...",
+      "error": "연결 오류"
+    },
+    "linkSafety": {
+      "openLocalFile": "로컬 파일을 열까요?",
+      "openExternalLink": "외부 링크를 열까요?",
+      "descriptionLocal": "파일 패널에서 로컬 파일을 열려고 합니다.",
+      "descriptionExternal": "외부 웹사이트를 방문하려고 합니다.",
+      "cancel": "취소",
+      "opening": "여는 중...",
+      "openFile": "파일 열기",
+      "openLink": "링크 열기"
+    }
   },
   "Folder": {
     "common": {
@@ -996,6 +1053,7 @@
       },
       "unstashDialog": {
         "title": "스태시 적용",
+        "invalidFolderId": "유효하지 않은 폴더 ID",
         "noStashes": "스태시가 없습니다",
         "selectFile": "파일을 선택하여 차이 보기",
         "viewDiff": "차이 보기",
@@ -1060,6 +1118,7 @@
     },
     "pushWindow": {
       "title": "코드 푸시",
+      "invalidFolderId": "유효하지 않은 폴더 ID",
       "noUnpushedCommits": "푸시되지 않은 커밋이 없습니다",
       "newBranchNoPushedCommits": "새 브랜치 — 푸시하여 원격 추적 브랜치 생성",
       "unpushed": "미푸시",

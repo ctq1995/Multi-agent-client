@@ -42,7 +42,7 @@ export function AddGitHubAccountDialog({
   const handleGenerateToken = useCallback(async () => {
     const base = serverUrl.trim().replace(/\/+$/, "") || "https://github.com"
     const params = new URLSearchParams({
-      description: "codeg",
+      description: "Multi-agent-client",
       scopes: "repo,read:org,workflow,gist,read:user,user:email",
     })
     const url = `${base}/settings/tokens/new?${params.toString()}`

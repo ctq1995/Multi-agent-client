@@ -79,7 +79,7 @@ function CommitPageInner() {
     : t("title")
 
   useEffect(() => {
-    document.title = `${pageTitle} - codeg`
+    document.title = `${pageTitle} - Multi-agent-client`
   }, [pageTitle])
 
   return (

@@ -324,8 +324,7 @@ export function SystemNetworkSettings() {
           <div className="rounded-md border bg-muted/20 px-3 py-3 text-xs space-y-2">
             <div className="flex items-center justify-between gap-3">
               <p className="text-muted-foreground">
-                {t("currentVersion")}：
-                {currentVersion ? `v${currentVersion}` : "-"}
+                {t("currentVersion")}: {currentVersion ? `v${currentVersion}` : "-"}
               </p>
               {checkingUpdate ? (
                 <Button
@@ -384,7 +383,7 @@ export function SystemNetworkSettings() {
               <div className="space-y-2 pt-2 border-t border-border/70">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-medium">
-                    {t("upgradableVersion")}：v{availableUpdate.version}
+                    {t("upgradableVersion")}: v{availableUpdate.version}
                   </span>
                   {formattedUpdateDate && (
                     <span className="text-muted-foreground text-[11px]">

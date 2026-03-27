@@ -113,6 +113,14 @@
     "autoCollapseLongMessages": "Auto-collapse long user messages",
     "autoCollapseLongMessagesDescription": "Automatically collapse user messages longer than ~10 lines. Click to expand."
   },
+  "TurnNavigator": {
+    "title": "Conversation Navigator",
+    "turns": "{count} turns",
+    "closeTitle": "Close navigator",
+    "imagePlaceholder": "[Image/File]",
+    "waitingForReply": "Waiting for reply...",
+    "scrollToBottom": "Scroll to bottom"
+  },
   "SystemSettings": {
     "loading": "Loading...",
     "sectionTitle": "System Management",
@@ -650,6 +658,37 @@
   "SettingsPages": {
     "agentsLoading": "Loading agent settings..."
   },
+  "LoginPage": {
+    "title": "Multi-agent-client",
+    "subtitle": "Enter your access token to connect to the desktop app",
+    "tokenPlaceholder": "Access Token",
+    "connect": "Connect",
+    "connecting": "Connecting...",
+    "tokenHint": "Token can be found in desktop Settings → Web Service",
+    "errorInvalidToken": "Invalid token, please check and try again",
+    "errorConnectionFailed": "Connection failed (HTTP {status})",
+    "errorUnreachable": "Unable to reach server"
+  },
+  "WebServiceSettings": {
+    "title": "Web Service",
+    "description": "Enable remote browser access to Multi-agent-client",
+    "port": "Port",
+    "processing": "Processing...",
+    "stop": "Stop",
+    "start": "Start",
+    "startFailed": "Start failed",
+    "stopFailed": "Stop failed",
+    "accessAddress": "Access Address",
+    "accessToken": "Access Token",
+    "tokenHint": "This token is required on first access from a web client",
+    "open": "Open",
+    "hide": "Hide",
+    "show": "Show",
+    "copy": "Copy",
+    "status": "Status",
+    "running": "Running",
+    "stopped": "Stopped"
+  },
   "CommitPage": {
     "title": "Commit",
     "invalidFolderId": "Invalid folder ID",
@@ -680,6 +719,24 @@
     "applyAllNonConflicting": "Apply All Non-Conflicting",
     "applyLeftNonConflicting": "Apply Local",
     "applyRightNonConflicting": "Apply Remote"
+  },
+  "Chat": {
+    "connectionStatus": {
+      "connected": "Agent connected",
+      "connecting": "Connecting...",
+      "prompting": "Agent responding...",
+      "error": "Connection error"
+    },
+    "linkSafety": {
+      "openLocalFile": "Open local file?",
+      "openExternalLink": "Open external link?",
+      "descriptionLocal": "You're about to open a local file in the Files panel.",
+      "descriptionExternal": "You're about to visit an external website.",
+      "cancel": "Cancel",
+      "opening": "Opening...",
+      "openFile": "Open file",
+      "openLink": "Open link"
+    }
   },
   "Folder": {
     "common": {
@@ -996,6 +1053,7 @@
       },
       "unstashDialog": {
         "title": "Unstash Changes",
+        "invalidFolderId": "Invalid folder ID",
         "noStashes": "No stashes found",
         "selectFile": "Select a file to view diff",
         "viewDiff": "View Diff",
@@ -1060,6 +1118,7 @@
     },
     "pushWindow": {
       "title": "Push Code",
+      "invalidFolderId": "Invalid folder ID",
       "noUnpushedCommits": "No unpushed commits",
       "newBranchNoPushedCommits": "New branch — push to create remote tracking branch",
       "unpushed": "Unpushed",

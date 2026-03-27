@@ -1,17 +1,12 @@
+import { useTranslations } from "next-intl"
 import type { ConnectionStatus } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
-const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
-  connected: { color: "bg-green-500", label: "Agent connected" },
-  connecting: {
-    color: "bg-blue-500 animate-pulse",
-    label: "Connecting...",
-  },
-  prompting: {
-    color: "bg-yellow-500 animate-pulse",
-    label: "Agent responding...",
-  },
-  error: { color: "bg-red-500", label: "Connection error" },
+const STATUS_COLORS: Record<string, string> = {
+  connected: "bg-green-500",
+  connecting: "bg-blue-500 animate-pulse",
+  prompting: "bg-yellow-500 animate-pulse",
+  error: "bg-red-500",
 }
 
 interface ConnectionStatusIndicatorProps {
@@ -21,17 +16,17 @@ interface ConnectionStatusIndicatorProps {
 export function ConnectionStatusIndicator({
   status,
 }: ConnectionStatusIndicatorProps) {
+  const t = useTranslations("Chat.connectionStatus")
+
   if (!status || status === "disconnected") return null
 
-  const config = STATUS_CONFIG[status]
-  if (!config) return null
+  const color = STATUS_COLORS[status]
+  if (!color) return null
 
   return (
     <div className="px-4 py-1 text-xs text-muted-foreground border-t border-border flex items-center gap-1.5">
-      <span
-        className={cn("inline-block h-1.5 w-1.5 rounded-full", config.color)}
-      />
-      {config.label}
+      <span className={cn("inline-block h-1.5 w-1.5 rounded-full", color)} />
+      {t(status as "connected" | "connecting" | "prompting" | "error")}
     </div>
   )
 }
